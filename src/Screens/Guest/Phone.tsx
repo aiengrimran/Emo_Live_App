@@ -5,21 +5,44 @@ import {
   ImageBackground,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
   TextInput,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function Phone() {
+  const [loading, setLoading] = useState(false);
+  const [showInput, setShowInput] = useState(false);
+  const sendCode = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setShowInput(true);
+      setLoading(true);
+    }, 600);
+  };
+  const VerifyOtp = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setShowInput(false);
+      setLoading(true);
+    }, 600);
+  };
+  const submitAction = () => {
+    if (showInput) {
+      VerifyOtp();
+      return;
+    }
+    sendCode();
+  };
   return (
     <View style={styles.container}>
       <ImageBackground
-        //   blurRadius=
         style={styles.image}
         source={require('../../assets/images/girl.jpeg')}>
         <View
           style={{
             flex: 1,
-            // backgroundColor: 'rgba(255, 0, 0, 0.5)',
             justifyContent: 'space-between',
           }}>
           <View
@@ -30,8 +53,7 @@ export default function Phone() {
           <View
             style={{
               height: '60%',
-              //   borderT
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
             }}>
             <View style={{width: '80%', alignSelf: 'center'}}>
               <Text style={styles.heading}>Meow Live</Text>
@@ -44,15 +66,54 @@ export default function Phone() {
                 </Text>
               </View>
             </View>
-            <View>
-              <TextInput style={styles.input} />
-              <TextInput style={styles.input} />
-              <TextInput style={styles.input} />
-              <TextInput style={styles.input} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'red',
+              }}>
+              <View style={{width: 20}}>
+                <Icon name="chevron-down" color="#fff" size={20} />
+              </View>
+              <TextInput
+                style={{
+                  backgroundColor: '#fff',
+                  //   backgroundColor: 20,
+                  borderColor: '#494759',
+                  borderWidth: 1,
+                  borderRadius: 3,
+                  //   width: '20%',
+                  width: 30,
+                  height: 50,
+                  //   padding: 40,
+                }}
+              />
             </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                marginTop: 20,
+              }}>
+              <TextInput keyboardType="decimal-pad" style={styles.input} />
+              <TextInput keyboardType="decimal-pad" style={styles.input} />
+              <TextInput keyboardType="decimal-pad" style={styles.input} />
+              <TextInput keyboardType="decimal-pad" style={styles.input} />
+            </View>
+            <TouchableOpacity
+              style={{alignSelf: 'center', marginTop: 20, width: '40%'}}>
+              <Text
+                style={{
+                  fontWeight: '600',
+                  fontSize: 20,
+                  color: '#ed0043',
+                }}>
+                Resend Code
+              </Text>
+            </TouchableOpacity>
 
-            <View style={{marginTop: 20}}>
-              <TouchableOpacity style={styles.googleBtn}>
+            <View style={{marginTop: 30}}>
+              <TouchableOpacity onPress={submitAction} style={styles.googleBtn}>
                 <View>
                   <Text
                     style={{
@@ -99,7 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '500',
     color: '#fff',
-    marginTop: 40,
+    marginTop: 20,
     textAlign: 'center',
   },
   googleBtn: {
@@ -121,8 +182,9 @@ const styles = StyleSheet.create({
   input: {
     height: 50,
     width: 50,
-    borderColor: 'red',
+    borderColor: '#494759',
     borderWidth: 1,
+    borderRadius: 3,
   },
   agreeTxt: {
     fontSize: 18,

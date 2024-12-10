@@ -12,10 +12,7 @@ import React from 'react';
 export default function Landing({navigation}) {
   return (
     <View style={styles.container}>
-      <ImageBackground
-        //   blurRadius=
-        style={styles.image}
-        source={require('../../assets/images/girl.jpeg')}>
+      <View style={styles.image}>
         <View
           style={{
             flex: 1,
@@ -30,43 +27,18 @@ export default function Landing({navigation}) {
           <View
             style={{
               height: '60%',
-              //   borderT
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
             }}>
-            <View style={{width: '80%', alignSelf: 'center'}}>
-              <Text style={styles.heading}>Meow Live</Text>
+            <View style={{width: '80%', alignSelf: 'center', marginTop: 50}}>
+              <Text style={styles.heading}>Camera</Text>
               <View>
                 <Text style={styles.subText}>
-                  Experience the Live experience
+                  Allow Access to take pictures Live & videos
                 </Text>
               </View>
             </View>
 
-            <View style={{marginTop: 20}}>
-              <TouchableOpacity
-                style={styles.googleBtn}
-                onPress={() => alert('Working ...')}>
-                <View
-                  style={{
-                    alignSelf: 'center',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    width: '98%',
-                    marginLeft: '1%',
-                    justifyContent: 'center',
-                  }}>
-                  <Icon name="google" size={30} color="#900" />
-                  <Text
-                    style={{
-                      marginLeft: 10,
-                      //   textAlign: 'center',
-                      //   color: '#fff',
-                      fontWeight: '500',
-                    }}>
-                    Google
-                  </Text>
-                </View>
-              </TouchableOpacity>
+            <View style={{marginTop: 60}}>
               <TouchableOpacity
                 onPress={() => navigation.navigate('Home')}
                 style={[styles.faceBtn]}>
@@ -77,7 +49,7 @@ export default function Landing({navigation}) {
                       color: '#fff',
                       fontWeight: '500',
                     }}>
-                    Login In With Facebook
+                    Allow
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -91,22 +63,14 @@ export default function Landing({navigation}) {
                       color: '#fff',
                       fontWeight: '500',
                     }}>
-                    Login In With Phone
+                    Don't Allow
                   </Text>
                 </View>
               </TouchableOpacity>
             </View>
-            <View style={{marginTop: 20}}>
-              <Text style={styles.agreeTxt}>
-                By creating account or signing in, you agree to,
-              </Text>
-              <Text style={styles.privacyUrl}>
-                our user agreement and privacy policy
-              </Text>
-            </View>
           </View>
         </View>
-      </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -133,30 +97,19 @@ const styles = StyleSheet.create({
     marginTop: 40,
     textAlign: 'center',
   },
-  googleBtn: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    flexDirection: 'row',
-    // alignItems: 'center',
-    width: '100%',
-    height: 60,
-    // justifyContent: 'center',
-  },
   faceBtn: {
     marginTop: 20,
-    backgroundColor: '#4055c6',
+    backgroundColor: '#ef0143',
     borderRadius: 30,
     justifyContent: 'center',
-    // alignItems: 'center',
     width: '100%',
     height: 60,
   },
   phoneBtn: {
     marginTop: 20,
-    backgroundColor: '#1d1f31',
+    backgroundColor: '#1D1F31',
     borderRadius: 30,
     justifyContent: 'center',
-    // alignItems: 'center',
     width: '100%',
     height: 60,
   },
