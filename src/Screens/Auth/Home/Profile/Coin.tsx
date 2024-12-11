@@ -46,10 +46,7 @@ export default function Coin({navigation}) {
           style={{
             flexDirection: 'row',
             marginTop: 30,
-            // justifyContent: 'center',
             justifyContent: 'space-evenly',
-            // justifyContent: 'space-between',
-            // justifyContent: 'space-around',
             alignItems: 'center',
           }}>
           <View style={styles.info}>
@@ -107,9 +104,9 @@ export default function Coin({navigation}) {
         </TouchableOpacity>
       </View>
       {tab == 1 ? (
-        <Diamond></Diamond>
+        <Diamond navigation={navigation}></Diamond>
       ) : (
-        <Beans></Beans>
+        <Beans navigation={navigation}></Beans>
 
         //   <Beans></Beans>
       )}
@@ -224,7 +221,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Diamond = () => {
+const Diamond = ({navigation}) => {
   return (
     <>
       <View
@@ -233,7 +230,9 @@ const Diamond = () => {
           flexDirection: 'row',
           justifyContent: 'space-around',
         }}>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -246,7 +245,9 @@ const Diamond = () => {
             <Text style={styles.cardPrice}>$1.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -259,7 +260,9 @@ const Diamond = () => {
             <Text style={styles.cardPrice}>$2.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -279,7 +282,10 @@ const Diamond = () => {
           flexDirection: 'row',
           justifyContent: 'space-around',
         }}>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -292,7 +298,10 @@ const Diamond = () => {
             <Text style={styles.cardPrice}>$14.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -305,7 +314,10 @@ const Diamond = () => {
             <Text style={styles.cardPrice}>$29.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/diamonds.png')}
@@ -323,7 +335,7 @@ const Diamond = () => {
   );
 };
 
-const Beans = () => {
+const Beans = ({navigation}) => {
   return (
     <>
       <View
@@ -332,7 +344,9 @@ const Beans = () => {
           flexDirection: 'row',
           justifyContent: 'space-around',
         }}>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}
@@ -345,7 +359,9 @@ const Beans = () => {
             <Text style={styles.cardPrice}>$1.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}
@@ -358,7 +374,9 @@ const Beans = () => {
             <Text style={styles.cardPrice}>$2.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}
@@ -378,7 +396,11 @@ const Beans = () => {
           flexDirection: 'row',
           justifyContent: 'space-around',
         }}>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}
@@ -391,7 +413,11 @@ const Beans = () => {
             <Text style={styles.cardPrice}>$14.99</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}
@@ -404,7 +430,11 @@ const Beans = () => {
             <Text style={styles.cardPrice}>$29.9</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}
+          onPress={() => navigation.navigate('PurchaseVIP')}>
           <Image
             style={{height: 90, width: 90}}
             source={require('../../../../assets/images/beans.png')}

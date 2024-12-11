@@ -12,35 +12,22 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 
 export default function Search({navigation}) {
+  const LogoutUser = () => {
+    try {
+      alert('logout');
+    } catch (error) {}
+  };
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => navigation.navigate('VIP')}
-        style={{
-          flexDirection: 'row',
-          width: '30%',
-          position: 'absolute',
-          top: 20,
-          left: 10,
-          alignItems: 'center',
-          backgroundColor: '#494759',
-          padding: 10,
-          borderRadius: 16,
-        }}>
+        style={styles.vipBtn}>
         <Icon name="crown" color="#f0df00" size={20} />
         <Text style={{color: '#f0df00'}}>Check VIP</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          width: '20%',
-          position: 'absolute',
-          top: 10,
-          right: -20,
-          alignItems: 'center',
-          padding: 10,
-          borderRadius: 16,
-        }}>
+        onPress={() => navigation.navigate('EditProfile')}
+        style={styles.editBtn}>
         <Icon name="account-edit" color="#fff" size={30} />
       </TouchableOpacity>
       <View style={{alignSelf: 'center', alignItems: 'center'}}>
@@ -69,37 +56,13 @@ export default function Search({navigation}) {
           </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 30,
-            // justifyContent: 'center',
-            justifyContent: 'space-evenly',
-            // justifyContent: 'space-between',
-            // justifyContent: 'space-around',
-            alignItems: 'center',
-          }}>
+        <View style={styles.accountInfo}>
           <View style={styles.gender}>
             <Icon name="gender-male" color="#fff" size={20} />
-            <Text
-              style={{
-                marginLeft: 5,
-                color: '#fff',
-                fontSize: 18,
-                fontWeight: '500',
-              }}>
-              Female
-            </Text>
+            <Text style={styles.genderTxt}>Female</Text>
           </View>
           <View style={styles.level}>
-            <Text
-              style={{
-                color: 'black',
-                fontWeight: '600',
-                fontSize: 17,
-              }}>
-              Lv:17
-            </Text>
+            <Text style={styles.levelTxt}>Lv:17</Text>
           </View>
           <View style={styles.gender}>
             <Icon name="security" color="#fff" size={20} />
@@ -107,169 +70,162 @@ export default function Search({navigation}) {
           </View>
         </View>
       </View>
-      {/* account */}
-      <View>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 10,
-            // justifyContent: 'center',
-            justifyContent: 'space-evenly',
-            // justifyContent: 'space-between',
-            // justifyContent: 'space-around',
-            alignItems: 'center',
-          }}>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>23m</Text>
-            <Text style={styles.infoText}>Fans</Text>
+      <ScrollView>
+        {/* account */}
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 10,
+              justifyContent: 'space-evenly',
+              alignItems: 'center',
+            }}>
+            <View style={styles.info}>
+              <Text style={styles.infoHeading}>23m</Text>
+              <Text style={styles.infoText}>Fans</Text>
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.infoHeading}>154</Text>
+              <Text style={styles.infoText}>Following</Text>
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.infoHeading}>42</Text>
+              <Text style={styles.infoText}>Friends</Text>
+            </View>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>154</Text>
-            <Text style={styles.infoText}>Following</Text>
-          </View>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>42</Text>
-            <Text style={styles.infoText}>Friends</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 10,
+              // justifyContent: 'center',
+              justifyContent: 'space-evenly',
+              // justifyContent: 'space-between',
+              // justifyContent: 'space-around',
+              alignItems: 'center',
+            }}>
+            <View style={styles.info}>
+              <Text style={styles.infoHeading}>1435</Text>
+              <Text style={styles.infoText}>Diamond</Text>
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.infoHeading}>247.4k</Text>
+              <Text style={styles.infoText}>Beans</Text>
+            </View>
           </View>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 10,
-            // justifyContent: 'center',
-            justifyContent: 'space-evenly',
-            // justifyContent: 'space-between',
-            // justifyContent: 'space-around',
-            alignItems: 'center',
-          }}>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>1435</Text>
-            <Text style={styles.infoText}>Diamond</Text>
-          </View>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>247.4k</Text>
-            <Text style={styles.infoText}>Beans</Text>
-          </View>
-        </View>
-      </View>
-      {/* info end */}
+        {/* info end */}
 
-      <View style={{marginTop: 20}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Inbox')}
-            style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="message-processing-outline" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Messages</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Agency')}
-            style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="account-group" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Agencies</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="weight-lifter" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Create Family</Text>
-          </TouchableOpacity>
+        <View style={{marginTop: 20}}>
+          <View style={styles.actionBtn}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Inbox')}
+              style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon
+                  name="message-processing-outline"
+                  size={35}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.actionTxr}>Messages</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Agency')}
+              style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="account-group" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Agencies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="weight-lifter" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Create Family</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconsRow}>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="wallet" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Wallet</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('JoinAgency')}>
+              <View style={styles.icon}>
+                <IconF name="handshake-simple" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Join Agency</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="star" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Level</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconsRow}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Ranking')}
+              style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon
+                  name="message-processing-outline"
+                  size={35}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.actionTxr}>Ranking</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon
+                  name="book-open-page-variant-outline"
+                  size={35}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.actionTxr}>Terms</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="bag-checked" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Baggage</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconsRow}>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon
+                  name="message-processing-outline"
+                  size={35}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.actionTxr}>Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon
+                  name="book-open-page-variant-outline"
+                  size={35}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.actionTxr}>Terms</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <View style={styles.icon}>
+                <Icon name="logout" size={35} color="#fff" />
+              </View>
+              <Text style={styles.actionTxr}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="wallet" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Wallet</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <IconF name="handshake-simple" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Join Agency</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="star" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Level</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Ranking')}
-            style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="message-processing-outline" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Ranking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon
-                name="book-open-page-variant-outline"
-                size={35}
-                color="#fff"
-              />
-            </View>
-            <Text style={styles.actionTxr}>Terms</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="bag-checked" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Baggage</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="message-processing-outline" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon
-                name="book-open-page-variant-outline"
-                size={35}
-                color="#fff"
-              />
-            </View>
-            <Text style={styles.actionTxr}>Terms</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="bag-checked" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Baggage</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -303,12 +259,30 @@ const styles = StyleSheet.create({
     width: '25%',
     // alignSelf: 'center',
   },
+  levelTxt: {
+    color: 'black',
+    fontWeight: '600',
+    fontSize: 17,
+  },
+  accountInfo: {
+    flexDirection: 'row',
+    marginTop: 30,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
   gender: {
     backgroundColor: 'grey',
     borderRadius: 15,
     flexDirection: 'row',
     padding: 5,
   },
+  genderTxt: {
+    marginLeft: 5,
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  iconBtn: {alignItems: 'center', width: '30%'},
   level: {
     backgroundColor: '#07fef8',
     borderRadius: 15,
@@ -321,10 +295,42 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 5,
   },
+  actionBtn: {
+    flexDirection: 'row',
+    width: '95%',
+    justifyContent: 'space-between',
+  },
+  iconsRow: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    width: '95%',
+    justifyContent: 'space-between',
+  },
   infoText: {
     color: '#868791',
     fontSize: 17,
     fontWeight: '500',
+  },
+  vipBtn: {
+    flexDirection: 'row',
+    width: '30%',
+    position: 'absolute',
+    top: 20,
+    left: 10,
+    alignItems: 'center',
+    backgroundColor: '#494759',
+    padding: 10,
+    borderRadius: 16,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    width: '20%',
+    position: 'absolute',
+    top: 10,
+    right: -20,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 16,
   },
   icon: {
     borderWidth: 1,

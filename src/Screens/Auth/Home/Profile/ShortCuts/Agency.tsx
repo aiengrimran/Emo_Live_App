@@ -24,7 +24,9 @@ export default function Inbox({navigation}) {
       </TouchableOpacity>
       <View style={{marginTop: 40}}>
         <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
+          <TouchableOpacity
+            style={styles.profile}
+            onPress={() => navigation.navigate('JoinAgency')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -47,7 +49,9 @@ export default function Inbox({navigation}) {
           </TouchableOpacity>
         </View>
         <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
+          <TouchableOpacity
+            style={styles.profile}
+            onPress={() => navigation.navigate('JoinAgency')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -70,7 +74,9 @@ export default function Inbox({navigation}) {
           </TouchableOpacity>
         </View>
         <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
+          <TouchableOpacity
+            style={styles.profile}
+            onPress={() => navigation.navigate('JoinAgency')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -93,7 +99,9 @@ export default function Inbox({navigation}) {
           </TouchableOpacity>
         </View>
         <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
+          <TouchableOpacity
+            style={styles.profile}
+            onPress={() => navigation.navigate('JoinAgency')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -132,7 +140,6 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     fontWeight: '600',
     color: '#fff',
-    // textAlign: 'center',
   },
   image: {
     flex: 1,
