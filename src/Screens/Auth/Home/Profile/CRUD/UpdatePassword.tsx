@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import IconF from 'react-native-vector-icons/FontAwesome6';
+import appStyles from '../../../../../styles/styles';
+import { colors } from '../../../../../styles/colors';
 export default function JoinAgency({navigation}) {
+
   const [tab, setTab] = useState(1);
   const [gender, setGender] = useState('female');
 
@@ -28,11 +30,16 @@ export default function JoinAgency({navigation}) {
   };
   return (
     <View style={styles.container}>
+      <View style={[appStyles.backBtn]}>
+
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.backBtn}>
-        <Icon name="arrow-left-thin" color="#fff" size={40} />
+        <Icon name="arrow-left-thin" color="#fff" size={25} />
       </TouchableOpacity>
+      <Text style={[appStyles.headline, {color:colors.complimentary}]}>Password</Text>
+      </View>
+
       <View style={{marginTop: 30}}>
         <View>
           <Text
@@ -95,9 +102,10 @@ export default function JoinAgency({navigation}) {
           />
         </View>
       </View>
-      <TouchableOpacity style={styles.btn} onPress={sendRequest}>
+      <TouchableOpacity style={[appStyles.bottomBtn]} onPress={sendRequest}>
+      {/* <TouchableOpacity style={styles.btn} onPress={sendRequest}> */}
         <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
-          Update Password
+          Forget Password
         </Text>
       </TouchableOpacity>
     </View>
@@ -120,9 +128,9 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     flexDirection: 'row',
-    width: '30%',
+    // width: '30%',
     // position: 'absolute',
-    top: 20,
+    // top: 20,
     left: 10,
     alignItems: 'center',
     padding: 10,

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import appStyles from '../../../../../styles/styles';
+import {colors} from '../../../../../styles/colors';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 export default function JoinAgency({navigation}) {
   const [tab, setTab] = useState(1);
@@ -28,11 +30,15 @@ export default function JoinAgency({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backBtn}>
-        <Icon name="arrow-left-thin" color="#fff" size={40} />
-      </TouchableOpacity>
+      <View style={[appStyles.backBtn]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}>
+          <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
+        </TouchableOpacity>
+        <Text style={styles.heading}>Join Agency</Text>
+      </View>
+
       <View style={{marginTop: 30}}>
         <View>
           <Text
@@ -129,6 +135,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderRadius: 16,
+  },
+  heading: {
+    fontSize: 22,
+    marginLeft: 20,
+    fontWeight: '600',
+    color: '#fff',
   },
   genderBtn: {
     borderColor: 'grey',

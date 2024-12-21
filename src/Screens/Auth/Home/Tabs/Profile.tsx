@@ -6,15 +6,24 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
-import React from 'react';
+import React, {useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
+import Context from '../../../../Context/Context';
+import {colors} from '../../../../styles/colors';
+import appStyles from '../../../../styles/styles';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
-  const LogoutUser = () => {
+  const {userAuthInfo} = useContext(Context);
+  const {setToken} = userAuthInfo;
+  const LogoutUser = async () => {
     try {
-      alert('logout');
+      // await AsyncStorage.removeItem("loggedUser")
+      setToken(null);
+      // alert('logout');
     } catch (error) {}
   };
   return (
@@ -22,35 +31,36 @@ export default function Search({navigation}) {
       <TouchableOpacity
         onPress={() => navigation.navigate('VIP')}
         style={styles.vipBtn}>
-        <Icon name="crown" color="#f0df00" size={20} />
-        <Text style={{color: '#f0df00'}}>Check VIP</Text>
+        <Icon name="crown" color={colors.yellow} size={25} />
+        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
+          Check VIP
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => navigation.navigate('EditProfile')}
         style={styles.editBtn}>
-        <Icon name="account-edit" color="#fff" size={30} />
+        <Icon name="account-edit" color={colors.complimentary} size={25} />
       </TouchableOpacity>
-      <View style={{alignSelf: 'center', alignItems: 'center'}}>
+
+      <View
+        style={{
+          alignSelf: 'center',
+          alignItems: 'center',
+          marginTop: Platform.OS == 'ios' ? 50 : 10,
+        }}>
         <Image
-          style={{width: 120, height: 120, borderRadius: 80}}
+          style={appStyles.userAvatar}
           source={require('../../../../assets/images/live/girl1.jpg')}
         />
         <Text style={styles.userText}>Emma Smith</Text>
-        <View
-          style={{
-            marginTop: 10,
-            flexDirection: 'row',
-            alignItems: 'center',
-            width: '60%',
-            justifyContent: 'space-between',
-          }}>
+        <View style={styles.userInfo}>
           <Text style={styles.userDesc}>ID:388</Text>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <Icon
               style={{marginTop: 5}}
               name="google-maps"
-              color="#fff"
-              size={20}
+              color={colors.complimentary}
+              size={25}
             />
             <Text style={[styles.userDesc, {marginLeft: 2}]}>Chicago, USA</Text>
           </View>
@@ -58,14 +68,23 @@ export default function Search({navigation}) {
 
         <View style={styles.accountInfo}>
           <View style={styles.gender}>
-            <Icon name="gender-male" color="#fff" size={20} />
+            <Icon name="gender-male" color={colors.complimentary} size={20} />
             <Text style={styles.genderTxt}>Female</Text>
           </View>
           <View style={styles.level}>
             <Text style={styles.levelTxt}>Lv:17</Text>
           </View>
-          <View style={styles.gender}>
-            <Icon name="security" color="#fff" size={20} />
+          <View
+            style={[
+              styles.gender,
+              {
+                backgroundColor: colors.LG,
+                borderColor: colors.lines,
+                borderWidth: 1,
+                borderRadius: 25,
+              },
+            ]}>
+            {/* <Icon name="security" color="#fff" size={20} /> */}
             <Text style={styles.infoHeading}>Top-up Agent</Text>
           </View>
         </View>
@@ -73,42 +92,27 @@ export default function Search({navigation}) {
       <ScrollView>
         {/* account */}
         <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 10,
-              justifyContent: 'space-evenly',
-              alignItems: 'center',
-            }}>
+          <View style={styles.account}>
             <View style={styles.info}>
-              <Text style={styles.infoHeading}>23m</Text>
+              <Text style={styles.accountStatus}>23m</Text>
               <Text style={styles.infoText}>Fans</Text>
             </View>
             <View style={styles.info}>
-              <Text style={styles.infoHeading}>154</Text>
+              <Text style={styles.accountStatus}>154</Text>
               <Text style={styles.infoText}>Following</Text>
             </View>
             <View style={styles.info}>
-              <Text style={styles.infoHeading}>42</Text>
+              <Text style={styles.accountStatus}>42</Text>
               <Text style={styles.infoText}>Friends</Text>
             </View>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 10,
-              // justifyContent: 'center',
-              justifyContent: 'space-evenly',
-              // justifyContent: 'space-between',
-              // justifyContent: 'space-around',
-              alignItems: 'center',
-            }}>
+          <View style={styles.secondRow}>
             <View style={styles.info}>
-              <Text style={styles.infoHeading}>1435</Text>
+              <Text style={styles.accountStatus}>1435</Text>
               <Text style={styles.infoText}>Diamond</Text>
             </View>
             <View style={styles.info}>
-              <Text style={styles.infoHeading}>247.4k</Text>
+              <Text style={styles.accountStatus}>247.4k</Text>
               <Text style={styles.infoText}>Beans</Text>
             </View>
           </View>
@@ -123,8 +127,8 @@ export default function Search({navigation}) {
               <View style={styles.icon}>
                 <Icon
                   name="message-processing-outline"
-                  size={35}
-                  color="#fff"
+                  size={33}
+                  color={colors.complimentary}
                 />
               </View>
               <Text style={styles.actionTxr}>Messages</Text>
@@ -133,13 +137,21 @@ export default function Search({navigation}) {
               onPress={() => navigation.navigate('Agency')}
               style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="account-group" size={35} color="#fff" />
+                <Icon
+                  name="account-group"
+                  size={33}
+                  color={colors.complimentary}
+                />
               </View>
               <Text style={styles.actionTxr}>Agencies</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="weight-lifter" size={35} color="#fff" />
+                <Icon
+                  name="weight-lifter"
+                  size={33}
+                  color={colors.complimentary}
+                />
               </View>
               <Text style={styles.actionTxr}>Create Family</Text>
             </TouchableOpacity>
@@ -147,7 +159,7 @@ export default function Search({navigation}) {
           <View style={styles.iconsRow}>
             <TouchableOpacity style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="wallet" size={35} color="#fff" />
+                <Icon name="wallet" size={33} color={colors.complimentary} />
               </View>
               <Text style={styles.actionTxr}>Wallet</Text>
             </TouchableOpacity>
@@ -155,13 +167,17 @@ export default function Search({navigation}) {
               style={styles.iconBtn}
               onPress={() => navigation.navigate('JoinAgency')}>
               <View style={styles.icon}>
-                <IconF name="handshake-simple" size={35} color="#fff" />
+                <IconF
+                  name="handshake-simple"
+                  size={33}
+                  color={colors.complimentary}
+                />
               </View>
               <Text style={styles.actionTxr}>Join Agency</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="star" size={35} color="#fff" />
+                <Icon name="star" size={33} color={colors.complimentary} />
               </View>
               <Text style={styles.actionTxr}>Level</Text>
             </TouchableOpacity>
@@ -173,8 +189,8 @@ export default function Search({navigation}) {
               <View style={styles.icon}>
                 <Icon
                   name="message-processing-outline"
-                  size={35}
-                  color="#fff"
+                  size={33}
+                  color={colors.complimentary}
                 />
               </View>
               <Text style={styles.actionTxr}>Ranking</Text>
@@ -183,26 +199,32 @@ export default function Search({navigation}) {
               <View style={styles.icon}>
                 <Icon
                   name="book-open-page-variant-outline"
-                  size={35}
-                  color="#fff"
+                  size={33}
+                  color={colors.complimentary}
                 />
               </View>
               <Text style={styles.actionTxr}>Terms</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="bag-checked" size={35} color="#fff" />
+                <Icon
+                  name="bag-checked"
+                  size={33}
+                  color={colors.complimentary}
+                />
               </View>
               <Text style={styles.actionTxr}>Baggage</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.iconsRow}>
-            <TouchableOpacity style={styles.iconBtn}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('Settings')}>
               <View style={styles.icon}>
                 <Icon
                   name="message-processing-outline"
-                  size={35}
-                  color="#fff"
+                  size={33}
+                  color={colors.complimentary}
                 />
               </View>
               <Text style={styles.actionTxr}>Settings</Text>
@@ -211,15 +233,15 @@ export default function Search({navigation}) {
               <View style={styles.icon}>
                 <Icon
                   name="book-open-page-variant-outline"
-                  size={35}
-                  color="#fff"
+                  size={33}
+                  color={colors.complimentary}
                 />
               </View>
               <Text style={styles.actionTxr}>Terms</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
+            <TouchableOpacity onPress={LogoutUser} style={styles.iconBtn}>
               <View style={styles.icon}>
-                <Icon name="logout" size={35} color="#fff" />
+                <Icon name="logout" size={33} color={colors.complimentary} />
               </View>
               <Text style={styles.actionTxr}>Logout</Text>
             </TouchableOpacity>
@@ -233,21 +255,18 @@ export default function Search({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d1f31',
+    backgroundColor: colors.LG,
     padding: 10,
   },
 
   image: {
     flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
   },
   userSection: {
     marginTop: 20,
     borderBottomColor: 'grey',
     borderBottomWidth: 1,
     flexDirection: 'row',
-    // alignItems: 'center',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingBottom: 10,
@@ -255,18 +274,24 @@ const styles = StyleSheet.create({
   profile: {
     flexDirection: 'row',
   },
+  secondRow: {
+    flexDirection: 'row',
+    marginTop: 20,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    alignSelf: 'center',
+    width: '70%',
+  },
   info: {
     width: '25%',
-    // alignSelf: 'center',
   },
   levelTxt: {
-    color: 'black',
-    fontWeight: '600',
-    fontSize: 17,
+    color: colors.dominant,
+    ...appStyles.bodyRg,
   },
   accountInfo: {
     flexDirection: 'row',
-    marginTop: 30,
+    marginTop: 20,
     justifyContent: 'space-evenly',
     alignItems: 'center',
   },
@@ -274,25 +299,47 @@ const styles = StyleSheet.create({
     backgroundColor: 'grey',
     borderRadius: 15,
     flexDirection: 'row',
+    justifyContent: 'center',
     padding: 5,
+  },
+  accountStatus: {
+    ...appStyles.headline2,
+    color: colors.complimentary,
   },
   genderTxt: {
     marginLeft: 5,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
+    marginTop: 2,
+    ...appStyles.bodyRg,
+    color: colors.complimentary,
+  },
+  account: {
+    flexDirection: 'row',
+    marginTop: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '90%',
+    alignSelf: 'center',
+  },
+  userInfo: {
+    marginTop: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '60%',
+    justifyContent: 'space-between',
   },
   iconBtn: {alignItems: 'center', width: '30%'},
   level: {
-    backgroundColor: '#07fef8',
-    borderRadius: 15,
-    flexDirection: 'row',
-    padding: 5,
+    backgroundColor: colors.semantic,
+    borderRadius: 25,
+    width: 72,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 10,
   },
   infoHeading: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
+    color: colors.body_text,
+    ...appStyles.bodyRg,
     marginLeft: 5,
   },
   actionBtn: {
@@ -307,27 +354,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   infoText: {
-    color: '#868791',
-    fontSize: 17,
-    fontWeight: '500',
+    ...appStyles.regularTxtRg,
+    color: colors.body_text,
   },
   vipBtn: {
     flexDirection: 'row',
-    width: '30%',
+    width: 108,
+    height: 32,
+    // width: '30%',
     position: 'absolute',
-    top: 20,
+    top: Platform.OS == 'ios' ? 80 : 20,
     left: 10,
     alignItems: 'center',
-    backgroundColor: '#494759',
-    padding: 10,
-    borderRadius: 16,
+    justifyContent: 'center',
+    backgroundColor: colors.lines,
+    borderRadius: 25,
   },
   editBtn: {
     flexDirection: 'row',
     width: '20%',
     position: 'absolute',
-    top: 10,
-    right: -20,
+    top: Platform.OS == 'ios' ? 70 : 20,
+    right: 0,
     alignItems: 'center',
     padding: 10,
     borderRadius: 16,
@@ -345,18 +393,16 @@ const styles = StyleSheet.create({
   },
 
   userText: {
+    ...appStyles.headline,
     marginTop: 10,
     textAlign: 'center',
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
+    color: colors.complimentary,
   },
   userDesc: {
+    ...appStyles.regularTxtRg,
     textAlign: 'center',
-    color: '#fff',
+    color: colors.complimentary,
     marginTop: 5,
-    fontWeight: '500',
-    fontSize: 16,
   },
   followBtn: {
     backgroundColor: '#ef0143',
@@ -366,10 +412,9 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   actionTxr: {
+    ...appStyles.regularTxtRg,
     marginTop: 5,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
+    color: colors.complimentary,
   },
   chatBtn: {
     backgroundColor: '#211f34',

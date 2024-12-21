@@ -4,95 +4,204 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
   Image,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Games from './Navigations/Games';
+import Popular from './Navigations/Popular';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  runOnJS,
+  withTiming,
+} from 'react-native-reanimated';
+import Battle from './Navigations/Battle';
+import {GestureDetector, Gesture} from 'react-native-gesture-handler';
+
+// import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import {colors} from '../../../styles/colors';
+import appStyles from '../../../styles/styles';
 
 export default function Home({navigation}) {
+  const scrollViewRef = useRef<ScrollView>(null);
   const [tab, setTab] = useState(1);
+  const translateX = useSharedValue(0);
 
-  const updateTab = (valTab: number) => {
-    setTab(valTab);
+  const updateTab = (direction: string) => {
+    console.log(direction);
+    let newTab = tab;
+    if (direction === 'right') {
+      if (tab < 5) {
+        newTab = tab + 1;
+      } else {
+        newTab = 1; // Wrap around to the first tab
+      }
+    } else {
+      if (tab > 1) {
+        newTab = tab - 1;
+      } else {
+        newTab = 5; // Wrap around to the last tab
+      }
+    }
+
+    setTab(newTab);
+
+    // Calculate scroll position dynamically
+    const scrollToOffset = (newTab - 1) * 140; // Assuming 140px width per tab
+    scrollViewRef.current?.scrollTo({x: scrollToOffset, animated: true});
   };
+  // Gesture for swiping left
+  const swipeGesture = Gesture.Pan()
+    .onUpdate(event => {
+      translateX.value = event.translationX;
+    })
+    .onEnd(() => {
+      if (translateX.value < -100) {
+        runOnJS(updateTab)('right');
+        // Trigger tab change on significant swipe
+      }
+      if (translateX.value > 100) {
+        runOnJS(updateTab)('left');
+        // Trigger tab change on significant swipe
+      }
+      // Reset swipe animation
+      translateX.value = withTiming(0);
+    });
+
+  // Animated style for swiping
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: translateX.value}],
+  }));
   return (
+    // <ReanimatedSwipeable>
+
     <View style={styles.container}>
       <View
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 20,
+          // justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '99%',
+          marginTop: Platform.OS == 'ios' ? 50 : 20,
         }}>
-        <View style={{width: '20%'}}></View>
+        <View style={{width: '40%'}} />
         <View
           style={{
-            width: '70%',
+            width: '60%',
+            alignSelf: 'center',
             flexDirection: 'row',
+            // justifyContent:"center",
             justifyContent: 'space-between',
           }}>
-          <Text style={styles.heading}>Meow Live</Text>
+          <Text style={styles.heading}>Emo Live</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}>
-            <Icon name="bell-outline" size={30} color="white" />
+            <Icon name="bell-outline" size={24} color={colors.complimentary} />
           </TouchableOpacity>
         </View>
       </View>
-      <View style={{flexDirection: 'row', marginTop: 40}}>
-        <TouchableOpacity
-          onPress={() => updateTab(1)}
-          style={[styles.tab, tab == 1 && {backgroundColor: '#f00044'}]}>
-          <Text style={[styles.tabText, tab == 1 && {color: '#fff'}]}>
-            Popular
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => updateTab(2)}
-          style={[styles.tab, tab == 2 && {backgroundColor: '#f00044'}]}>
-          <Text style={[styles.tabText, tab == 2 && {color: '#fff'}]}>
-            Live
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => updateTab(3)}
-          style={[styles.tab, tab == 3 && {backgroundColor: '#f00044'}]}>
-          <Text style={[styles.tabText, tab == 3 && {color: '#fff'}]}>
-            New Host
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => updateTab(4)}
-          style={[styles.tab, tab == 4 && {backgroundColor: '#f00044'}]}>
-          <Text style={[styles.tabText, tab == 4 && {color: '#fff'}]}>
-            Battle
-          </Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity
-          onPress={() => updateTab(4)}
-          style={[styles.tab, tab == 4 && {backgroundColor: '#f00044'}]}>
-          <Text style={[styles.tabText, tab == 4 && {color: '#fff'}]}>
-            Games
-          </Text>
-        </TouchableOpacity> */}
+      {/* <View> */}
+      <View>
+        <ScrollView
+          ref={scrollViewRef}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            marginTop: 20,
+          }}
+          horizontal={true}>
+          <View
+            style={{
+              flexDirection: 'row',
+              height: 50,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <TouchableOpacity
+              onPress={() => setTab(1)}
+              style={[styles.tab, tab == 1 && {backgroundColor: '#f00044'}]}>
+              <Text style={[styles.tabText, tab == 1 && {color: '#fff'}]}>
+                Popular
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTab(2)}
+              style={[styles.tab, tab == 2 && {backgroundColor: '#f00044'}]}>
+              <Text style={[styles.tabText, tab == 2 && {color: '#fff'}]}>
+                Live
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTab(3)}
+              style={[styles.tab, tab == 3 && {backgroundColor: '#f00044'}]}>
+              <Text style={[styles.tabText, tab == 3 && {color: '#fff'}]}>
+                New Host
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTab(4)}
+              style={[styles.tab, tab == 4 && {backgroundColor: '#f00044'}]}>
+              <Text style={[styles.tabText, tab == 4 && {color: '#fff'}]}>
+                Battle
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTab(5)}
+              style={[styles.tab, tab == 5 && {backgroundColor: '#f00044'}]}>
+              <Text style={[styles.tabText, tab == 5 && {color: '#fff'}]}>
+                Games
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {/* </View> */}
+        </ScrollView>
       </View>
-      <View style={{marginTop: 30}}>
-        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <LiveScreen number={1}></LiveScreen>
-          <LiveScreen number={2}></LiveScreen>
-        </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <LiveScreen number={3}></LiveScreen>
-          <LiveScreen number={4}></LiveScreen>
-        </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <LiveScreen number={5}></LiveScreen>
-          <LiveScreen number={6}></LiveScreen>
-        </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <LiveScreen number={7}></LiveScreen>
-          <LiveScreen number={8}></LiveScreen>
-        </View>
-      </View>
+
+      <GestureDetector gesture={swipeGesture}>
+        <Animated.View
+          style={[animatedStyle, {flex: 1}]}>
+          {tab == 1 ? (
+            <ScrollView contentContainerStyle={{marginTop: 20}}>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                <LiveScreen number={1}></LiveScreen>
+                <LiveScreen number={2}></LiveScreen>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                  marginVertical: 20,
+                }}>
+                <LiveScreen number={3}></LiveScreen>
+                <LiveScreen number={4}></LiveScreen>
+              </View>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                <LiveScreen number={5}></LiveScreen>
+                <LiveScreen number={6}></LiveScreen>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                  marginVertical: 20,
+                }}>
+                <LiveScreen number={7}></LiveScreen>
+                <LiveScreen number={8}></LiveScreen>
+              </View>
+            </ScrollView>
+          ) : tab == 4 ? (
+            <Battle />
+          ) : (
+            <Games />
+          )}
+        </Animated.View>
+      </GestureDetector>
     </View>
+
+    // </ReanimatedSwipeable>
   );
 }
 
@@ -103,9 +212,8 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   heading: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#fff',
+    ...appStyles.headline,
+    color: colors.complimentary,
     textAlign: 'center',
   },
   tab: {
@@ -138,10 +246,6 @@ const LiveScreen = ({number}: LiveScreenProps) => {
   };
   return (
     <View style={{position: 'relative'}}>
-      <Text
-        style={{
-          color: '#fff',
-        }}>{`../../../assets/images/live/girl${number}.jpeg`}</Text>
       <View
         style={{
           width: 160,

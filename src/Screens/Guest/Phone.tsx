@@ -4,15 +4,20 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Platform,
   Dimensions,
   ActivityIndicator,
   TextInput,
   Image,
 } from 'react-native';
-import React, {useState} from 'react';
+import appStyles from '../../styles/styles';
+import {colors} from '../../styles/colors';
+import React, {useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
+import Context from '../../Context/Context';
 export default function Phone() {
+  const {userAuthInfo} = useContext(Context);
+  const {setToken} = userAuthInfo;
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
 
@@ -28,6 +33,7 @@ export default function Phone() {
     setTimeout(() => {
       setCodeSent(false);
       setLoading(true);
+      setToken('imean');
     }, 600);
   };
   const submitAction = () => {
@@ -41,7 +47,7 @@ export default function Phone() {
     <View style={styles.container}>
       <ImageBackground
         style={styles.image}
-        source={require('../../assets/images/girl.jpeg')}>
+        source={require('../../assets/images/parts/phone.png')}>
         {loading ? (
           <ActivityIndicator
             style={{marginTop: 100}}
@@ -66,7 +72,7 @@ export default function Phone() {
                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
               }}>
               <View style={{width: '80%', alignSelf: 'center'}}>
-                <Text style={styles.heading}>Meow Live</Text>
+                <Text style={styles.heading}>Emo Live</Text>
                 <View>
                   <Text style={styles.subText}>
                     {!codeSent
@@ -130,21 +136,23 @@ export default function Phone() {
                 </>
               )}
 
-              <View style={{marginTop: 80}}>
+              <View style={{marginTop: Platform.OS == 'ios' ? 160 : 80}}>
                 <TouchableOpacity
                   onPress={submitAction}
                   style={styles.googleBtn}>
                   <Text style={styles.btnTxt}>Next</Text>
                 </TouchableOpacity>
               </View>
-              <View style={{marginTop: 30}}>
-                <Text style={styles.agreeTxt}>
-                  By creating account or signing in, you agree to,
-                </Text>
-                <Text style={styles.privacyUrl}>
-                  our user agreement and privacy policy
-                </Text>
-              </View>
+              {!codeSent && (
+                <View style={{marginTop: 30}}>
+                  <Text style={styles.agreeTxt}>
+                    By creating account or signing in, you agree to,
+                  </Text>
+                  <Text style={styles.privacyUrl}>
+                    our user agreement and privacy policy
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         )}

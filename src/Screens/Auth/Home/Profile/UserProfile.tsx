@@ -2,12 +2,15 @@ import {
   View,
   Text,
   TextInput,
+  Platform,
   TouchableOpacity,
   StyleSheet,
   Image,
 } from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import appStyles from '../../../../styles/styles';
+import {colors} from '../../../../styles/colors';
 
 export default function Search({navigation}) {
   return (
@@ -50,12 +53,12 @@ export default function Search({navigation}) {
           marginTop: 30,
         }}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('UserProfile')}
+          onPress={() => alert('now following user')}
           style={styles.followBtn}>
           <Text style={styles.userDesc}>Follow</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.navigate('UserProfile')}
+          onPress={() => navigation.navigate('Chat')}
           style={styles.chatBtn}>
           <Text style={styles.userDesc}>Chat</Text>
         </TouchableOpacity>

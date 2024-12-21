@@ -1,16 +1,26 @@
 import {View, Text} from 'react-native';
 import React from 'react';
-import Landing from './src/Screens/Guest/Landing';
 import Routes from './src/Routes/Index';
-import SplashScreen from './src/Screens/Guest/SplashScreen';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import Chat2 from './src/Routes/Test/Chat2';
+import LiveStreaming from './src/Routes/Test/LiveStreaming';
+// import Sw
+
+// import Agora
+import Agora from './src/Routes/Agora';
 
 export default function App() {
   return (
-    <View style={{flex: 1}}>
-      <Routes />
-      {/* <SplashScreen /> */}
-      {/* <Landing /> */}
-      {/* <Text>App</Text> */}
-    </View>
+    <GestureHandlerRootView>
+      <View style={{flex: 1}}>
+        {/* <Agora2 /> */}
+        {/* <SwipeImran/> */}
+        {/* <GestureTest/> */}
+        {/* <MoveFunction/> */}
+        {/* <LiveStreaming /> */}
+        <Chat2 />
+        {/* <Routes /> */}
+      </View>
+    </GestureHandlerRootView>
   );
 }

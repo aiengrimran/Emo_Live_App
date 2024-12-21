@@ -8,20 +8,25 @@ import {
 } from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import appStyles from '../../../../../styles/styles';
+import {colors} from '../../../../../styles/colors';
 
 export default function Inbox({navigation}) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 10,
-        }}>
-        <Icon name="arrow-left-thin" color="#fff" size={35} />
-        <Text style={styles.heading}>Agencies</Text>
-      </TouchableOpacity>
+      <View style={[appStyles.backBtn]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            // padding: 10,
+          }}>
+          <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
+          <Text style={styles.heading}>Agencies</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={{marginTop: 40}}>
         <View style={styles.userSection}>
           <TouchableOpacity

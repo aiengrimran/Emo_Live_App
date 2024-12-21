@@ -5,6 +5,8 @@ import Search from './Tabs/Search';
 import Alerts from './Tabs/Alerts';
 import Profile from './Tabs/Profile';
 import GoLive from './Tabs/GoLive';
+import Notifications from './Notifications';
+import GoLive2 from './Chat/GoLive2';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -53,8 +55,8 @@ export default function HomeB() {
         }}
       />
       <Tab.Screen
-        name="GoLive"
-        component={GoLive}
+        name="GoLive2"
+        component={GoLive2}
         options={{
           tabBarLabel: 'GoLive',
           tabBarActiveTintColor: '#0171A1',
@@ -68,8 +70,9 @@ export default function HomeB() {
         }}
       />
       <Tab.Screen
-        name="Alerts"
-        component={Alerts}
+        // name="Alerts"
+        name="Notifications"
+        component={Notifications}
         options={{
           tabBarLabel: 'Alerts',
           tabBarActiveTintColor: '#0171A1',

@@ -8,22 +8,26 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import appStyles from '../../../../../styles/styles';
+import {colors} from '../../../../../styles/colors';
 
 export default function Ranking({navigation}) {
   const [tab, setTab] = useState(1);
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={{
-          flexDirection: 'row',
-          // width: '30%',
-          alignItems: 'center',
-          padding: 10,
-        }}>
-        <Icon name="arrow-left-thin" color="#fff" size={40} />
-        <Text style={styles.heading}>Global Ranking</Text>
-      </TouchableOpacity>
+      <View style={[appStyles.backBtn]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 10,
+          }}>
+          <Icon name="arrow-left-thin" color="#fff" size={25} />
+          <Text style={styles.heading}>Global Ranking</Text>
+        </TouchableOpacity>
+      </View>
+
       <View
         style={{
           marginTop: 30,
@@ -156,8 +160,8 @@ const styles = StyleSheet.create({
     // justifyContent: 'space-around',
   },
   heading: {
-    fontSize: 22,
-    marginLeft: 20,
+    fontSize: 16,
+    marginLeft: 10,
     fontWeight: '600',
     color: '#fff',
   },

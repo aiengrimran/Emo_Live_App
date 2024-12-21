@@ -1,8 +1,16 @@
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Image,
+} from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-export default function Notifications() {
+import appStyles from '../../../styles/styles';
+import {colors} from '../../../styles/colors';
+export default function Notifications({navigation}) {
   return (
     <View style={styles.container}>
       <View
@@ -10,9 +18,10 @@ export default function Notifications() {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: 20,
+          marginTop: Platform.OS == 'ios' ? 60 : 20,
+          paddingRight: 20,
         }}>
-        <View style={{width: '20%'}}></View>
+        <View style={{width: '30%'}}></View>
         <View
           style={{
             width: '70%',
@@ -20,9 +29,9 @@ export default function Notifications() {
             justifyContent: 'space-between',
             alignItems: 'center',
           }}>
-          <Text style={styles.heading}>Meow Live</Text>
-          <TouchableOpacity onPress={() => alert('clearing....')}>
-            <Text style={{color: '#fff', fontWeight: '500', fontSize: 18}}>
+          <Text style={styles.heading}>Notifications</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={[appStyles.bodyRg, {color: colors.complimentary}]}>
               Clear
             </Text>
           </TouchableOpacity>
@@ -81,9 +90,8 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   heading: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#fff',
+    ...appStyles.headline,
+    color: colors.complimentary,
     textAlign: 'center',
   },
   userSection: {
@@ -95,14 +103,13 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   userText: {
-    color: '#fff',
-    fontWeight: '500',
+    ...appStyles.regularTxtMd,
+    color: colors.complimentary,
     fontSize: 20,
   },
   userDesc: {
-    color: '#fff',
+    color: colors.complimentary,
     marginTop: 5,
-    fontWeight: '500',
-    fontSize: 16,
+    ...appStyles.regularTxtRg,
   },
 });

@@ -13,7 +13,7 @@ export default function SplashScreen() {
       <ImageBackground
         //   blurRadius=
         style={styles.image}
-        source={require('../../assets/images/girl.jpeg')}>
+        source={require('../../assets/images/parts/Splash.png')}>
         <View
           style={{
             flex: 1,
@@ -32,7 +32,7 @@ export default function SplashScreen() {
               backgroundColor: 'rgba(0, 0, 0, 0.7)',
             }}>
             <View style={{width: '60%', alignSelf: 'center'}}>
-              <Text style={styles.heading}>Meow Live</Text>
+              <Text style={styles.heading}>Emo Live</Text>
               <View>
                 <Text style={styles.subText}>
                   Unlimited Live streams and live concerts

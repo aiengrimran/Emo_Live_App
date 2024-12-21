@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -24,19 +25,15 @@ export default function VIP({navigation}) {
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
-        style={{
-          flexDirection: 'row',
-          width: '30%',
-          position: 'absolute',
-          top: 20,
-          left: 10,
-          alignItems: 'center',
-          padding: 10,
-          borderRadius: 16,
-        }}>
-        <Icon name="arrow-left-thin" color="#fff" size={40} />
+        style={styles.backBtn}>
+        <Icon name="arrow-left-thin" color="#fff" size={25} />
       </TouchableOpacity>
-      <View style={{alignSelf: 'center', alignItems: 'center'}}>
+      <View
+        style={{
+          alignSelf: 'center',
+          alignItems: 'center',
+          marginTop: Platform.OS == 'ios' ? 60 : 10,
+        }}>
         <Image
           style={{width: 120, height: 120, borderRadius: 80}}
           source={require('../../../../assets/images/live/girl1.jpg')}
@@ -245,6 +242,16 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     fontWeight: '400',
   },
+  backBtn: {
+    flexDirection: 'row',
+    width: '30%',
+    position: 'absolute',
+    top: Platform.OS == 'ios' ? 60 : 20,
+    left: 10,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 16,
+  },
   cardPrice: {
     color: '#fff',
     fontSize: 18,
@@ -264,7 +271,7 @@ const styles = StyleSheet.create({
     width: '90%',
     padding: 15,
     position: 'absolute',
-    bottom: 20,
+    bottom: Platform.OS == 'ios' ? 30 : 20,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'center',

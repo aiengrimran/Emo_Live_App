@@ -4,27 +4,36 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Platform,
   Image,
 } from 'react-native';
 import React from 'react';
+import appStyles from '../../../../styles/styles';
+import {colors} from '../../../../styles/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function Search({navigation}) {
   return (
     <View style={styles.container}>
-      <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 30}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: Platform.OS == 'ios' ? 60 : 30,
+        }}>
         <TextInput
           style={{
             width: '85%',
             backgroundColor: '#585865',
             borderRadius: 40,
             color: '#fff',
+            padding: 10,
           }}
         />
         <TouchableOpacity
           style={{marginLeft: 20}}
           onPress={() => alert('searching ...')}>
-          <Icon name="magnify" size={35} color="white" />
+          <Icon name="magnify" size={25} color={colors.complimentary} />
         </TouchableOpacity>
       </View>
       <View style={{marginTop: 40}}>
