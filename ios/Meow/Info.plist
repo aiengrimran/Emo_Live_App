@@ -24,6 +24,14 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GIDClientID</key>
 	<string>602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com</string>
+	<key>NSMicrophoneUsageDescription</key>
+  	<string>Emo Live app required to access device microphone to record voice</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+  	<string>Emo Live app required to Device gallery select Image</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+  	<string>Emo Live app required to Device gallery</string>
+	<key>NSCameraUsageDescription</key>
+  	<string>Emo Live app required to access device Camera to capture video and image</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>

@@ -31,7 +31,7 @@ export default function Inbox({navigation}) {
         <View style={styles.userSection}>
           <TouchableOpacity
             style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
+            onPress={() => navigation.navigate('AgencyMembers')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -56,7 +56,7 @@ export default function Inbox({navigation}) {
         <View style={styles.userSection}>
           <TouchableOpacity
             style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
+            onPress={() => navigation.navigate('AgencyMembers')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -81,7 +81,7 @@ export default function Inbox({navigation}) {
         <View style={styles.userSection}>
           <TouchableOpacity
             style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
+            onPress={() => navigation.navigate('AgencyMembers')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>
@@ -106,7 +106,7 @@ export default function Inbox({navigation}) {
         <View style={styles.userSection}>
           <TouchableOpacity
             style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
+            onPress={() => navigation.navigate('AgencyMembers')}>
             <View style={styles.imgOverly}>
               <Text style={{color: '#fff'}}>text</Text>
             </View>

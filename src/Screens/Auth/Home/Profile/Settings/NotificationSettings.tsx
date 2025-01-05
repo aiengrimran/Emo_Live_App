@@ -1,4 +1,11 @@
-import {View, Text, StyleSheet, TouchableOpacity, Switch} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Switch,
+  Platform,
+} from 'react-native';
 import React, {useState} from 'react';
 import {colors} from '../../../../../styles/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -12,7 +19,13 @@ export default function NotificationSettings({navigation}) {
     setBlockNotifications(previousState => !previousState);
   return (
     <View style={styles.container}>
-      <View style={{flexDirection: 'row', alignItems: 'center', padding: 16}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 16,
+          marginTop: Platform.OS == 'ios' ? 60 : 20,
+        }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left-thin" size={25} color={colors.complimentary} />
         </TouchableOpacity>

@@ -13,7 +13,6 @@ import UserProfile from '../Screens/Auth/Home/Profile/UserProfile';
 import Coin from '../Screens/Auth/Home/Profile/Coin';
 import VIP from '../Screens/Auth/Home/Profile/VIP';
 import Ranking from '../Screens/Auth/Home/Profile/ShortCuts/Ranking';
-import Inbox from '../Screens/Auth/Home/Profile/ShortCuts/Inbox';
 import Friends from '../Screens/Auth/Home/Profile/ShortCuts/Friends';
 import Agency from '../Screens/Auth/Home/Profile/ShortCuts/Agency';
 import PurchaseVIP from '../Screens/Auth/Home/Profile/PurchaseVIP';
@@ -23,11 +22,18 @@ import Register from '../Screens/Guest/Register';
 import BlockedUsers from '../Screens/Auth/Home/Profile/Settings/BlockedList';
 import ForgetPassword from '../Screens/Guest/ForgetPassword';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AgencyMembers from '../Screens/Auth/Home/Profile/Agency/AgencyMembers';
 import Chat from '../Screens/Auth/Home/Chat/Chat';
+import TempUI from '../Screens/Auth/Home/Tabs/TempUI';
 import GoLive from '../Screens/Auth/Home/Tabs/GoLive';
 import Settings from '../Screens/Auth/Home/Profile/ShortCuts/Settings';
 import NotificationSettings from '../Screens/Auth/Home/Profile/Settings/NotificationSettings';
+import ConnectionError from '../Screens/General/ConnectionError';
+import NetInfo from '@react-native-community/netinfo';
+import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
+// import Chat2 from ""
+import Chat2 from './Test/Chat2';
 // import Edit
 import Context from '../Context/Context';
 import EditProfile from '../Screens/Auth/Home/Profile/EditProfile';
@@ -39,24 +45,48 @@ const Stack = createNativeStackNavigator();
 
 export default function Index() {
   const [loader, setLoader] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
-  // const [token, setToken] = useState(null<String| null>);
+  const [user, setUser] = useState<string | null>(null);
+  const [connection, setConnection] = useState<boolean | null>(true);
+  // const [connection, setConnection] = useState<boolean | null>(null);
+  const [token, setToken] = useState<String | null>(null);
 
   useEffect(() => {
     checkUser();
     hideLoader();
   }, []);
 
+  // useEffect(() => {
+  //   const unsubscribe = NetInfo.addEventListener(state => {
+  //     console.log('Is connected?', state.isConnected);
+  //     if (state.isConnected) {
+  //       setConnection(true);
+  //     } else {
+  //       setConnection(false);
+  //     }
+  //   });
+
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, []);
+
   const checkUser = async () => {
-    const loggedUser = await AsyncStorage.getItem('loggedUser');
+    const loggedUser = await AsyncStorage.getItem('user');
+    const token = await AsyncStorage.getItem('token');
     if (loggedUser) {
-      // let user = JSON.parse(loggedUser);
+      let user = JSON.parse(loggedUser);
       // dispatchAction(updateUser(user.user));
-      setToken(loggedUser);
+      setUser(user);
+      setToken(token);
     }
   };
   // };
-  const userAuthInfo = useMemo(() => ({token, setToken}), [token]);
+  const userAuthInfo = useMemo(() => ({user, setUser}), [user]);
+  const tokenMemo = useMemo(() => ({token, setToken}), [user]);
+  const netConnection = useMemo(
+    () => ({connection, setConnection}),
+    [connection],
+  );
 
   const hideLoader = () => {
     setTimeout(() => {
@@ -66,65 +96,101 @@ export default function Index() {
 
   const valueToContext = {
     userAuthInfo,
+    tokenMemo,
   };
   return (
     <Context.Provider value={valueToContext}>
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Group screenOptions={{headerShown: false}}>
-            {loader ? (
-              <Stack.Screen name="SplashScreen" component={SplashScreen} />
-            ) : (
-              <>
-                {token == null ? (
-                  <Stack.Group>
-                    <Stack.Screen name="Landing" component={Landing} />
-                    <Stack.Screen name="Phone" component={Phone} />
-                    <Stack.Screen name="Register" component={Register} />
-                    <Stack.Screen
-                      name="ForgetPassword"
-                      component={ForgetPassword}
-                    />
-                  </Stack.Group>
-                ) : (
-                  <>
-                    <Stack.Screen name="HomeB" component={HomeB} />
-                    <Stack.Screen name="VIP" component={VIP} />
+          {connection ? (
+            <Stack.Group screenOptions={{headerShown: false}}>
+              {loader ? (
+                <>
+                  <Stack.Screen name="SplashScreen" component={SplashScreen} />
+                </>
+              ) : (
+                <>
+                  {user == null ? (
                     <Stack.Group>
-                      <Stack.Screen name="Agency" component={Agency} />
-                      <Stack.Screen name="Friends" component={Friends} />
-                      <Stack.Screen name="Inbox" component={Inbox} />
-                      <Stack.Screen name="Ranking" component={Ranking} />
+                      <Stack.Screen name="Landing" component={Landing} />
+                      <Stack.Screen name="Phone" component={Phone} />
+                      <Stack.Screen name="Register" component={Register} />
+                      <Stack.Screen
+                        name="ForgetPassword"
+                        component={ForgetPassword}
+                      />
+                      <Stack.Screen
+                        name="GeneralPermission"
+                        component={GeneralPermission}
+                      />
                     </Stack.Group>
-                    <Stack.Screen name="UserProfile" component={UserProfile} />
-                    <Stack.Screen name="PurchaseVIP" component={PurchaseVIP} />
-                    <Stack.Screen
-                      name="UpdatePassword"
-                      component={UpdatePassword}
-                    />
-                    <Stack.Screen name="GoLive" component={GoLive} />
-                    <Stack.Screen name="Coin" component={Coin} />
-                    <Stack.Screen name="Chat" component={Chat} />
-                    <Stack.Screen name="Settings" component={Settings} />
-                    <Stack.Screen name="JoinAgency" component={JoinAgency} />
-                    <Stack.Screen name="EditProfile" component={EditProfile} />
-                    <Stack.Screen
-                      name="Notifications"
-                      component={Notifications}
-                    />
-                    <Stack.Screen
-                      name="NotificationSettings"
-                      component={NotificationSettings}
-                    />
-                    <Stack.Screen
-                      name="BlockedUsers"
-                      component={BlockedUsers}
-                    />
-                  </>
-                )}
-              </>
-            )}
-          </Stack.Group>
+                  ) : (
+                    <>
+                      <Stack.Screen name="HomeB" component={HomeB} />
+                      <Stack.Screen name="VIP" component={VIP} />
+                      <Stack.Group>
+                        <Stack.Screen name="Agency" component={Agency} />
+                        <Stack.Screen name="Friends" component={Friends} />
+                        <Stack.Screen name="Inbox" component={Inbox} />
+                        <Stack.Screen name="Ranking" component={Ranking} />
+                      </Stack.Group>
+                      <Stack.Screen
+                        name="GeneralPermission"
+                        component={GeneralPermission}
+                      />
+                      <Stack.Screen
+                        name="UserProfile"
+                        component={UserProfile}
+                      />
+
+                      <Stack.Screen name="TempUI" component={TempUI} />
+                      <Stack.Screen
+                        name="PurchaseVIP"
+                        component={PurchaseVIP}
+                      />
+                      <Stack.Screen
+                        name="UpdatePassword"
+                        component={UpdatePassword}
+                      />
+                      <Stack.Screen name="Chat" component={Chat} />
+
+                      <Stack.Screen name="Chat2" component={Chat2} />
+                      <Stack.Screen name="GoLive" component={GoLive} />
+                      <Stack.Screen name="Coin" component={Coin} />
+                      <Stack.Screen
+                        name="AgencyMembers"
+                        component={AgencyMembers}
+                      />
+                      <Stack.Screen name="Settings" component={Settings} />
+                      <Stack.Screen name="JoinAgency" component={JoinAgency} />
+                      <Stack.Screen
+                        name="EditProfile"
+                        component={EditProfile}
+                      />
+                      <Stack.Screen
+                        name="Notifications"
+                        component={Notifications}
+                      />
+                      <Stack.Screen
+                        name="NotificationSettings"
+                        component={NotificationSettings}
+                      />
+                      <Stack.Screen
+                        name="BlockedUsers"
+                        component={BlockedUsers}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </Stack.Group>
+          ) : (
+            <Stack.Screen
+              name="ConnectionError"
+              options={{headerTitle: 'Connection Error'}}
+              component={ConnectionError}
+            />
+          )}
 
           {/* <Stack.Screen  name="Home" component={HomeScreen}/> */}
         </Stack.Navigator>
@@ -132,11 +198,3 @@ export default function Index() {
     </Context.Provider>
   );
 }
-
-const Imran = () => {
-  return (
-    <View>
-      <Text>sss</Text>
-    </View>
-  );
-};

@@ -1,4 +1,4 @@
-import {StyleSheet, Platform} from 'react-native';
+import {StyleSheet, Platform, Dimensions} from 'react-native';
 import {colors} from './colors';
 
 // SemiBold 600
@@ -86,6 +86,17 @@ const appStyles = StyleSheet.create({
     padding: 10,
     alignSelf: 'center',
     alignItems: 'center',
+  },
+  errorText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: 'Kanit',
+    alignSelf: 'center',
+  },
+  indicatorStyle: {
+    alignSelf: 'center',
+    marginTop: Dimensions.get('window').height / 2.5,
   },
 });
 

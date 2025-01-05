@@ -5,14 +5,90 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  FlatList,
+  ActivityIndicator,
   Image,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
+import {useSelector, useDispatch} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axiosInstance from '../../../../Api/axiosConfig';
+import {
+  updateUsers,
+  updateVisitProfile,
+} from '../../../../store/slice/usersSlice';
 
 export default function Search({navigation}) {
+  const dispatch = useDispatch();
+  const users = useSelector((state: any) => state.usersReducer.users);
+  // const valetRating = useSelector((state: any) => state.valetReducer.rating);
+
+  // const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [searchLoader, setSearchLoader] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searchUsers, setSearchUsers] = useState([]);
+
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  const getUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get('/chat/active-users');
+      dispatch(updateUsers(res.data.users));
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+    }
+  };
+  const followUser = async (item: any) => {
+    try {
+      const url = item.is_followed
+        ? '/user/un-follow-user/' + item.id
+        : '/user/follow-user/' + item.id;
+      setLoading(true);
+      const res = await axiosInstance.get(url);
+      setLoading(false);
+      dispatch(updateUsers(res.data.users));
+    } catch (error: any) {
+      console.log(error);
+      clearError();
+      setError(error.message);
+    }
+  };
+
+  const searchAccount = async () => {
+    try {
+      if (query.length < 4) return;
+      setSearchLoader(true);
+      const url = `/user/search-account/${query}`;
+      const res = await axiosInstance.get(url);
+      setSearchLoader(false);
+      if (res.data.users.length < 1) {
+        setError('No User Found');
+        clearError();
+        return;
+      }
+      setSearchUsers(res.data.users);
+      // setupListeners
+    } catch (error: any) {
+      clearError();
+      console.log(error.message);
+    }
+  };
+  const clearError = () => {
+    setLoading(false);
+    setSearchLoader(false);
+    setTimeout(() => {
+      setError('');
+    }, 3000);
+  };
   return (
     <View style={styles.container}>
       <View
@@ -22,93 +98,73 @@ export default function Search({navigation}) {
           marginTop: Platform.OS == 'ios' ? 60 : 30,
         }}>
         <TextInput
-          style={{
-            width: '85%',
-            backgroundColor: '#585865',
-            borderRadius: 40,
-            color: '#fff',
-            padding: 10,
-          }}
+          style={styles.input}
+          placeholder="Enter User name...."
+          autoCapitalize="none"
+          onChangeText={setQuery}
+          // onChangeText={text => searchAccount(text)}
+          placeholderTextColor={colors.dark_gradient}
         />
-        <TouchableOpacity
-          style={{marginLeft: 20}}
-          onPress={() => alert('searching ...')}>
-          <Icon name="magnify" size={25} color={colors.complimentary} />
-        </TouchableOpacity>
+        {searchLoader ? (
+          <ActivityIndicator size={'small'} color={'blue'} />
+        ) : (
+          <TouchableOpacity onPress={searchAccount} style={{marginLeft: 20}}>
+            <Icon name="magnify" size={25} color={colors.complimentary} />
+          </TouchableOpacity>
+        )}
       </View>
-      <View style={{marginTop: 40}}>
-        <View style={styles.userSection}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('UserProfile')}
-            style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl1.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Ava Marie</Text>
-              <Text style={styles.userDesc}>ID: 234</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.followBtn}>
-            <Text style={styles.btnText}>Follow</Text>
-          </TouchableOpacity>
+      {error && (
+        <Text style={[appStyles.errorText, {marginVertical: 10}]}>{error}</Text>
+      )}
+      {loading ? (
+        <ActivityIndicator
+          style={[appStyles.indicatorStyle]}
+          size="large"
+          color={colors.accent}
+        />
+      ) : (
+        <View style={{marginTop: 40}}>
+          <FlatList
+            data={searchUsers.length ? searchUsers : users}
+            keyExtractor={item => item.id?.toString()}
+            renderItem={({item}: any) => (
+              <View style={styles.userSection}>
+                <TouchableOpacity
+                  onPress={() => {
+                    dispatch(updateVisitProfile(item));
+                    navigation.navigate('UserProfile');
+                  }}
+                  style={styles.profile}>
+                  <Image
+                    style={{width: 50, height: 50, borderRadius: 25}}
+                    source={
+                      item.avatar
+                        ? {uri: item.avatar}
+                        : require('../../../../assets/images/place.jpg')
+                    }
+                  />
+                  <View style={{marginLeft: 20}}>
+                    <Text style={styles.userText}>
+                      {item.first_name + ' ' + item.last_name}
+                    </Text>
+                    <Text style={styles.userDesc}>ID: {item.id}</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => followUser(item)}
+                  style={[
+                    styles.followBtn,
+                    item.is_followed && {backgroundColor: '#494759'},
+                  ]}>
+                  <Text style={styles.btnText}>
+                    {item.is_followed ? 'Following' : 'Follow'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
         </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('UserProfile')}
-            style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl2.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Ava Marie</Text>
-              <Text style={styles.userDesc}>ID: 235</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.followBtn, {backgroundColor: '#494759'}]}>
-            <Text style={styles.btnText}>Following</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('UserProfile')}
-            style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl3.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Ava Marie</Text>
-              <Text style={styles.userDesc}>ID: 236</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.followBtn}>
-            <Text style={styles.btnText}>Follow</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('UserProfile')}
-            style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl6.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Ava Marie</Text>
-              <Text style={styles.userDesc}>ID: 237</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.followBtn, {backgroundColor: '#494759'}]}>
-            <Text style={styles.btnText}>Following</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -138,6 +194,13 @@ const styles = StyleSheet.create({
   profile: {
     flexDirection: 'row',
   },
+  input: {
+    width: '85%',
+    backgroundColor: '#585865',
+    borderRadius: 40,
+    color: '#fff',
+    padding: 10,
+  },
 
   userText: {
     color: '#fff',
@@ -151,7 +214,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   followBtn: {
-    backgroundColor: '#ef0143',
+    backgroundColor: colors.accent,
     // paddingHorizontal: 10,
     height: 40,
     width: 90,

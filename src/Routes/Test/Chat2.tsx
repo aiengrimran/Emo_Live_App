@@ -1,5 +1,5 @@
 // Imports dependencies.
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -15,16 +15,19 @@ import {
   ChatMessageChatType,
   ChatMessage,
 } from 'react-native-agora-chat';
+import Context from '../../Context/Context';
 // Defines the App object.
 let tokens = [
-  '007eJxTYFgUJro3cNGkp7fVFr3+szLCbMfv760V50sO7Zk2MzmeL6lHgSE5ydDcwsLUMi3NwNDEwCDFwiAl2cQgJdXQ3DwtNSUpecrJ1PSGQEYGO+/5jIwMrAyMQAjiqzBYmCWmpRmZGegmpaQk6RoapqbpJiWnmOmamhtZGCUbmaemmRsDAMcYKtQ=',
-  '007eJxTYBD61KTJlHoyUuaFys/Z3lONj756+k++L3L5yUNM1ybueZSnwJCcZGhuYWFqmZZmYGhiYJBiYZCSbGKQkmpobp6WmpKUvPVkanpDICODTY4NIyMDKwMjEIL4KgwWqRZJaRYWBrpJKSlJuoaGqWm6lkYmFrrmlgappkbmlsapSYYAKhkpLQ==',
+  '007eJxTYFjioyL6de2k5/kcJxjcnRRvXL7zdrWQv/uXi6vXPfixIMVNgSE5ydDcwsLUMi3NwNDEwCDFwiAl2cQgJdXQ3DwtNSUp2fd3Xvpfifx0Bc04FkYGVgZGIATxVRgszUxMLYDadJNNjEx1DQ1T03QtLVOSdNOMTSyM00yMjYyNkgBqVSp/',
+  '007eJxTYHgUdmvbmQDTXes+rNnvJraP/+W3usU1YakS6n+0ZWJ+iNxRYEhOMjS3sDC1TEszMDQxMEixMEhJNjFISTU0N09LTUlKTv2Tl94QyMhQWhbLwsjAysAIhCC+CoNFqkVSmoWFgW5SSkqSrqFhapqupZGJha65pUGqqZG5pXFqkiEASn0pPA==',
 ];
-
-const App = () => {
+import env from '../../config/envVar';
+const AGORA_KEY = env.AGORA_KEY;
+const Chat2 = ({navigation}) => {
+  const {userAuthInfo} = useContext(Context);
+  const {user} = userAuthInfo;
   // Defines the variable.
   const title = 'AgoraChatQuickstart';
-  // Replaces <your appKey> with your app key.
   // const appKey = '007eJxTYCjn4BblO/rO9DTjNQvH+YIrY3tcHSQzmloFNRmsn6fJ/FRgSE4yNLewMLVMSzMwNDEwSLEwSEk2MUhJNTQ3T0tNSUq+cTI1vSGQkaGIwYCVkYGVgZGBiQHEZ2AAAHAFGfc=';
   const appKey = '611258830#1451592';
   // Replaces <your userId> with your user ID.
@@ -126,7 +129,7 @@ const App = () => {
         });
     };
     init();
-  }, [chatClient, chatManager, appKey]);
+  }, [chatClient, chatManager, AGORA_KEY]);
 
   const selectToken = () => {
     if (token < 1) {
@@ -145,13 +148,25 @@ const App = () => {
     }
     rollLog('start login ...');
     chatClient
-      .login(username, chatToken, false)
+      .login(user.id, user.agora_chat_token, false)
       .then(() => {
         rollLog('login operation success.');
       })
       .catch(reason => {
         rollLog('login fail: ' + JSON.stringify(reason));
       });
+  };
+  const renewToken = () => {
+    try {
+      chatClient
+        .renewToken(chatToken)
+        .then(() => {
+          rollLog('renew token success.');
+        })
+        .catch((reason: any) => {
+          rollLog('renew token fail: ' + JSON.stringify(reason));
+        });
+    } catch (error) {}
   };
   // Logs out from server.
   const logout = () => {
@@ -167,6 +182,16 @@ const App = () => {
       })
       .catch(reason => {
         rollLog('logout fail:' + JSON.stringify(reason));
+      });
+  };
+  const getLoggedToken = () => {
+    chatClient
+      .getAccessToken()
+      .then(token => {
+        console.log('token:', token);
+      })
+      .catch(error => {
+        console.log('error:', error);
       });
   };
   // Sends a text message to somebody.
@@ -205,7 +230,9 @@ const App = () => {
   return (
     <SafeAreaView>
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title} onPress={() => navigation.goBack()}>
+          {title}
+        </Text>
       </View>
       <ScrollView>
         <View style={styles.inputCon}>
@@ -258,6 +285,7 @@ const App = () => {
           </Text>
         </View>
         <Button title="select token" onPress={selectToken} />
+        <Button title="get Token" onPress={getLoggedToken} />
 
         <View>
           <Text style={styles.logText} multiline={true}>
@@ -339,4 +367,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-export default App;
+export default Chat2;

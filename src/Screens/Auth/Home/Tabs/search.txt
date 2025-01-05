@@ -4,27 +4,53 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Platform,
   Image,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import appStyles from '../../../../styles/styles';
+import {colors} from '../../../../styles/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axiosInstance from '../../../../Api/axiosConfig';
 
-export default function Inbox({navigation}) {
+export default function Search({navigation}) {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    // getUser();
+  }, []);
+
+  const getUser = async () => {
+    try {
+      // const res = await axiosInstance.get('');
+      const res = await axiosInstance.get('/chat/active-users');
+      console.log(res.data);
+      setUsers(res.data.users);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <View style={styles.container}>
-      <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 30}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: Platform.OS == 'ios' ? 60 : 30,
+        }}>
         <TextInput
           style={{
             width: '85%',
             backgroundColor: '#585865',
             borderRadius: 40,
             color: '#fff',
+            padding: 10,
           }}
         />
         <TouchableOpacity
           style={{marginLeft: 20}}
           onPress={() => alert('searching ...')}>
-          <Icon name="magnify" size={35} color="white" />
+          <Icon name="magnify" size={25} color={colors.complimentary} />
         </TouchableOpacity>
       </View>
       <View style={{marginTop: 40}}>
@@ -34,14 +60,14 @@ export default function Inbox({navigation}) {
             style={styles.profile}>
             <Image
               style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../assets/images/live/girl1.jpg')}
+              source={require('../../../../assets/images/live/girl1.jpg')}
             />
             <View style={{marginLeft: 20}}>
               <Text style={styles.userText}>Ava Marie</Text>
               <Text style={styles.userDesc}>ID: 234</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.followBtn}>
+          <TouchableOpacity onPress={getUser} style={styles.followBtn}>
             <Text style={styles.btnText}>Follow</Text>
           </TouchableOpacity>
         </View>
@@ -51,7 +77,7 @@ export default function Inbox({navigation}) {
             style={styles.profile}>
             <Image
               style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../assets/images/live/girl2.jpg')}
+              source={require('../../../../assets/images/live/girl2.jpg')}
             />
             <View style={{marginLeft: 20}}>
               <Text style={styles.userText}>Ava Marie</Text>
@@ -69,7 +95,7 @@ export default function Inbox({navigation}) {
             style={styles.profile}>
             <Image
               style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../assets/images/live/girl3.jpg')}
+              source={require('../../../../assets/images/live/girl3.jpg')}
             />
             <View style={{marginLeft: 20}}>
               <Text style={styles.userText}>Ava Marie</Text>
@@ -87,7 +113,7 @@ export default function Inbox({navigation}) {
             style={styles.profile}>
             <Image
               style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../assets/images/live/girl6.jpg')}
+              source={require('../../../../assets/images/live/girl6.jpg')}
             />
             <View style={{marginLeft: 20}}>
               <Text style={styles.userText}>Ava Marie</Text>

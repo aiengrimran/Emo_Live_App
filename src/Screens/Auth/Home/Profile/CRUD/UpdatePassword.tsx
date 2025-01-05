@@ -5,39 +5,54 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Image,
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../../styles/styles';
-import { colors } from '../../../../../styles/colors';
+import {colors} from '../../../../../styles/colors';
+import axiosInstance from '../../../../../Api/axiosConfig';
 export default function JoinAgency({navigation}) {
+  const [error, setError] = useState<any>('');
+  const [loading, setLoading] = useState<any>(false);
+  const [form, setForm] = useState({
+    password: '',
+    new_password: '',
+    new_password_confirmation: '',
+  });
 
-  const [tab, setTab] = useState(1);
-  const [gender, setGender] = useState('female');
-
-  const updateGender = (valTab: string) => {
-    setGender(valTab);
-  };
-  const updateTab = (valTab: number) => {
-    setTab(valTab);
-  };
-
-  const sendRequest = () => {
+  const updatePassword = async () => {
     try {
-      alert('please wait ...');
-    } catch (error) {}
+      setLoading(true);
+      const url = '/auth/update-password';
+      const res = await axiosInstance.post(url, JSON.stringify(form));
+      setLoading(false);
+      setError(res.data.message);
+      console.log(res.data);
+    } catch (error: any) {
+      console.log(error);
+      setError(error.response.data.message);
+      clearError();
+    }
   };
+
+  const clearError = () => {
+    setLoading(false);
+    setTimeout(() => {
+      setError(false);
+    }, 3000);
+  };
+
   return (
     <View style={styles.container}>
       <View style={[appStyles.backBtn]}>
-
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backBtn}>
-        <Icon name="arrow-left-thin" color="#fff" size={25} />
-      </TouchableOpacity>
-      <Text style={[appStyles.headline, {color:colors.complimentary}]}>Password</Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}>
+          <Icon name="arrow-left-thin" color="#fff" size={25} />
+        </TouchableOpacity>
+        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+          Password
+        </Text>
       </View>
 
       <View style={{marginTop: 30}}>
@@ -51,13 +66,9 @@ export default function JoinAgency({navigation}) {
           <TextInput
             secureTextEntry={true}
             placeholder="*******"
-            style={{
-              borderBottomColor: 'grey',
-              borderBottomWidth: 1,
-              paddingBottom: 10,
-              marginTop: 10,
-              color: '#fff',
-            }}
+            style={styles.input}
+            value={form.password}
+            onChangeText={text => setForm({...form, password: text})}
             placeholderTextColor="#737380"
           />
         </View>
@@ -71,13 +82,9 @@ export default function JoinAgency({navigation}) {
           <TextInput
             secureTextEntry={true}
             placeholder="*******"
-            style={{
-              borderBottomColor: 'grey',
-              borderBottomWidth: 1,
-              paddingBottom: 10,
-              marginTop: 10,
-              color: '#fff',
-            }}
+            style={styles.input}
+            value={form.new_password}
+            onChangeText={text => setForm({...form, new_password: text})}
             placeholderTextColor="#737380"
           />
         </View>
@@ -91,21 +98,21 @@ export default function JoinAgency({navigation}) {
           <TextInput
             secureTextEntry={true}
             placeholder="*******"
-            style={{
-              borderBottomColor: 'grey',
-              borderBottomWidth: 1,
-              paddingBottom: 10,
-              marginTop: 10,
-              color: '#fff',
-            }}
+            style={styles.input}
+            value={form.new_password}
+            onChangeText={text =>
+              setForm({...form, new_password_confirmation: text})
+            }
             placeholderTextColor="#737380"
           />
         </View>
       </View>
-      <TouchableOpacity style={[appStyles.bottomBtn]} onPress={sendRequest}>
-      {/* <TouchableOpacity style={styles.btn} onPress={sendRequest}> */}
+      {error && (
+        <Text style={[appStyles.errorText, {marginTop: 10}]}>{error}</Text>
+      )}
+      <TouchableOpacity style={[appStyles.bottomBtn]} onPress={updatePassword}>
         <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
-          Forget Password
+          Update Password
         </Text>
       </TouchableOpacity>
     </View>
@@ -136,6 +143,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 16,
   },
+  input: {
+    borderBottomColor: 'grey',
+    borderBottomWidth: 1,
+    paddingBottom: 10,
+    marginTop: 10,
+    color: colors.complimentary,
+  },
   genderBtn: {
     borderColor: 'grey',
     // borderWidth: 1,
@@ -154,11 +168,6 @@ const styles = StyleSheet.create({
     // padding: 10,
     fontWeight: '600',
   },
-  image: {
-    flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
-  },
   btn: {
     marginTop: 40,
     backgroundColor: '#ef0143',
@@ -174,27 +183,9 @@ const styles = StyleSheet.create({
   info: {
     width: '25%',
   },
-  infoHeading: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
-    marginLeft: 5,
-  },
-  infoText: {
-    color: '#868791',
-    fontSize: 17,
-    fontWeight: '500',
-  },
   text: {
     marginTop: 10,
     color: '#fff',
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  userText: {
-    marginTop: 10,
-    // textAlign: 'center',
-    color: '#666673',
     fontWeight: '500',
     fontSize: 16,
   },

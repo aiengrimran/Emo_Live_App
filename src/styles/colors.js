@@ -17,5 +17,7 @@ export const colors = {
   bright_shade: '#FFFFFF',
   alpha_dark: '#1D1F31',
   unknown: '#FFFBFB',
+  offwhite: '#FEFEFE',
   tool_btn: '#565764',
+  unknown2: '#C5C5C5',
 };

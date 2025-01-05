@@ -4,250 +4,326 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
   ScrollView,
   Image,
   Platform,
 } from 'react-native';
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
 import appStyles from '../../../../styles/styles';
+import scripts from '../../../../scripts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import axiosInstance from '../../../../Api/axiosConfig';
+import envVar from '../../../../config/envVar';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
-  const {userAuthInfo} = useContext(Context);
-  const {setToken} = userAuthInfo;
-  const LogoutUser = async () => {
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {user} = userAuthInfo;
+  const {token} = tokenMemo;
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const createAgoraChatToken = async () => {
     try {
-      // await AsyncStorage.removeItem("loggedUser")
-      setToken(null);
-      // alert('logout');
-    } catch (error) {}
+      setLoading(true);
+      const res = await axiosInstance.get('/agora/user/create-token');
+      console.log(res.data);
+      let user = res.data.user;
+      // setUser(user);
+      // await AsyncStorage.setItem('user', JSON.stringify(user));
+      scripts.clearError(setError, setLoading);
+    } catch (error: any) {
+      scripts.clearError(setError, setLoading);
+      setError(error.message);
+      console.log(error);
+    }
+  };
+  const logout = async () => {
+    try {
+      const res = await axiosInstance.get('/logout');
+      console.log(res.data);
+
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys);
+      await AsyncStorage.removeItem('user');
+      userAuthInfo.setUser(null);
+      console.log('All keys removed from AsyncStorage');
+    } catch (error) {
+      console.log(error);
+      console.error('Error removing keys from AsyncStorage:', error);
+    }
   };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.navigate('VIP')}
-        style={styles.vipBtn}>
-        <Icon name="crown" color={colors.yellow} size={25} />
-        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-          Check VIP
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => navigation.navigate('EditProfile')}
-        style={styles.editBtn}>
-        <Icon name="account-edit" color={colors.complimentary} size={25} />
-      </TouchableOpacity>
-
-      <View
-        style={{
-          alignSelf: 'center',
-          alignItems: 'center',
-          marginTop: Platform.OS == 'ios' ? 50 : 10,
-        }}>
-        <Image
-          style={appStyles.userAvatar}
-          source={require('../../../../assets/images/live/girl1.jpg')}
+      {loading ? (
+        <ActivityIndicator
+          style={appStyles.indicatorStyle}
+          size="large"
+          color={colors.complimentary}
         />
-        <Text style={styles.userText}>Emma Smith</Text>
-        <View style={styles.userInfo}>
-          <Text style={styles.userDesc}>ID:388</Text>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon
-              style={{marginTop: 5}}
-              name="google-maps"
-              color={colors.complimentary}
-              size={25}
-            />
-            <Text style={[styles.userDesc, {marginLeft: 2}]}>Chicago, USA</Text>
-          </View>
-        </View>
+      ) : (
+        <>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('VIP')}
+            style={styles.vipBtn}>
+            <Icon name="crown" color={colors.yellow} size={25} />
+            <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
+              Check VIP
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditProfile')}
+            style={styles.editBtn}>
+            <Icon name="account-edit" color={colors.complimentary} size={25} />
+          </TouchableOpacity>
 
-        <View style={styles.accountInfo}>
-          <View style={styles.gender}>
-            <Icon name="gender-male" color={colors.complimentary} size={20} />
-            <Text style={styles.genderTxt}>Female</Text>
-          </View>
-          <View style={styles.level}>
-            <Text style={styles.levelTxt}>Lv:17</Text>
-          </View>
           <View
-            style={[
-              styles.gender,
-              {
-                backgroundColor: colors.LG,
-                borderColor: colors.lines,
-                borderWidth: 1,
-                borderRadius: 25,
-              },
-            ]}>
-            {/* <Icon name="security" color="#fff" size={20} /> */}
-            <Text style={styles.infoHeading}>Top-up Agent</Text>
-          </View>
-        </View>
-      </View>
-      <ScrollView>
-        {/* account */}
-        <View>
-          <View style={styles.account}>
-            <View style={styles.info}>
-              <Text style={styles.accountStatus}>23m</Text>
-              <Text style={styles.infoText}>Fans</Text>
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.accountStatus}>154</Text>
-              <Text style={styles.infoText}>Following</Text>
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.accountStatus}>42</Text>
-              <Text style={styles.infoText}>Friends</Text>
-            </View>
-          </View>
-          <View style={styles.secondRow}>
-            <View style={styles.info}>
-              <Text style={styles.accountStatus}>1435</Text>
-              <Text style={styles.infoText}>Diamond</Text>
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.accountStatus}>247.4k</Text>
-              <Text style={styles.infoText}>Beans</Text>
-            </View>
-          </View>
-        </View>
-        {/* info end */}
+            style={{
+              alignSelf: 'center',
+              alignItems: 'center',
+              marginTop: Platform.OS == 'ios' ? 50 : 10,
+            }}>
+            <Image
+              style={appStyles.userAvatar}
+              source={
+                user.avatar
+                  ? {
+                      uri: envVar.API_URL + 'display-avatar',
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  : require('../../../../assets/images/place.jpg')
+              }
+              // source={require('../../../../assets/images/place.jpg')}
+            />
+            <Text style={styles.userText}>
+              {user.first_name + ' ' + user.last_name}{' '}
+            </Text>
+            <View style={styles.userInfo}>
+              <Text style={styles.userDesc}>ID:{user.id}</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Icon
+                  style={{marginTop: 5}}
+                  name="google-maps"
+                  color={colors.complimentary}
+                  size={25}
+                />
 
-        <View style={{marginTop: 20}}>
-          <View style={styles.actionBtn}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Inbox')}
-              style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="message-processing-outline"
-                  size={33}
-                  color={colors.complimentary}
-                />
+                <Text style={[styles.userDesc, {marginLeft: 2}]}>
+                  {user.address ? user.address : 'Please Provide'}
+                </Text>
               </View>
-              <Text style={styles.actionTxr}>Messages</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Agency')}
-              style={styles.iconBtn}>
-              <View style={styles.icon}>
+            </View>
+
+            <View style={styles.accountInfo}>
+              <View style={styles.gender}>
                 <Icon
-                  name="account-group"
-                  size={33}
+                  name={
+                    ['male,female'].includes(user.gender)
+                      ? 'gender-' + user.gender
+                      : 'gender-male-female'
+                  }
                   color={colors.complimentary}
+                  size={20}
                 />
+                <Text style={styles.genderTxt}>{user.gender}</Text>
               </View>
-              <Text style={styles.actionTxr}>Agencies</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="weight-lifter"
-                  size={33}
-                  color={colors.complimentary}
-                />
+              <View style={styles.level}>
+                <Text style={styles.levelTxt}>Lv:17</Text>
               </View>
-              <Text style={styles.actionTxr}>Create Family</Text>
-            </TouchableOpacity>
+              <View
+                style={[
+                  styles.gender,
+                  {
+                    backgroundColor: colors.LG,
+                    borderColor: colors.lines,
+                    borderWidth: 1,
+                    borderRadius: 25,
+                  },
+                ]}>
+                {/* <Icon name="security" color="#fff" size={20} /> */}
+                <Text style={styles.infoHeading}>Top-up Agent</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.iconsRow}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon name="wallet" size={33} color={colors.complimentary} />
+          <ScrollView>
+            {/* account */}
+            <View>
+              <View style={styles.account}>
+                <View style={styles.info}>
+                  <Text style={styles.accountStatus}>23m</Text>
+                  <Text style={styles.infoText}>Fans</Text>
+                </View>
+                <View style={styles.info}>
+                  <Text style={styles.accountStatus}>154</Text>
+                  <Text style={styles.infoText}>Following</Text>
+                </View>
+                <View style={styles.info}>
+                  <Text style={styles.accountStatus}>42</Text>
+                  <Text style={styles.infoText}>Friends</Text>
+                </View>
               </View>
-              <Text style={styles.actionTxr}>Wallet</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => navigation.navigate('JoinAgency')}>
-              <View style={styles.icon}>
-                <IconF
-                  name="handshake-simple"
-                  size={33}
-                  color={colors.complimentary}
-                />
+              <View style={styles.secondRow}>
+                <View style={styles.info}>
+                  <Text style={styles.accountStatus}>1435</Text>
+                  <Text style={styles.infoText}>Diamond</Text>
+                </View>
+                <View style={styles.info}>
+                  <Text style={styles.accountStatus}>247.4k</Text>
+                  <Text style={styles.infoText}>Beans</Text>
+                </View>
               </View>
-              <Text style={styles.actionTxr}>Join Agency</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon name="star" size={33} color={colors.complimentary} />
+            </View>
+            {/* info end */}
+
+            <View style={{marginTop: 20}}>
+              <View style={styles.actionBtn}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Inbox')}
+                  style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="message-processing-outline"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Messages</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Agency')}
+                  style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="account-group"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Agencies</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="weight-lifter"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Create Family</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.actionTxr}>Level</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.iconsRow}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Ranking')}
-              style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="message-processing-outline"
-                  size={33}
-                  color={colors.complimentary}
-                />
+              <View style={styles.iconsRow}>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="wallet"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Wallet</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigation.navigate('JoinAgency')}>
+                  <View style={styles.icon}>
+                    <IconF
+                      name="handshake-simple"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Join Agency</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon name="star" size={33} color={colors.complimentary} />
+                  </View>
+                  <Text style={styles.actionTxr}>Level</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.actionTxr}>Ranking</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="book-open-page-variant-outline"
-                  size={33}
-                  color={colors.complimentary}
-                />
+              <View style={styles.iconsRow}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Ranking')}
+                  style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="message-processing-outline"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Ranking</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={createAgoraChatToken}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="book-open-page-variant-outline"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Terms</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="bag-checked"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Baggage</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.actionTxr}>Terms</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="bag-checked"
-                  size={33}
-                  color={colors.complimentary}
-                />
+              <View style={styles.iconsRow}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigation.navigate('Settings')}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="message-processing-outline"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="book-open-page-variant-outline"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Terms</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={logout} style={styles.iconBtn}>
+                  <View style={styles.icon}>
+                    <Icon
+                      name="logout"
+                      size={33}
+                      color={colors.complimentary}
+                    />
+                  </View>
+                  <Text style={styles.actionTxr}>Logout</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.actionTxr}>Baggage</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.iconsRow}>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => navigation.navigate('Settings')}>
-              <View style={styles.icon}>
-                <Icon
-                  name="message-processing-outline"
-                  size={33}
-                  color={colors.complimentary}
-                />
-              </View>
-              <Text style={styles.actionTxr}>Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon
-                  name="book-open-page-variant-outline"
-                  size={33}
-                  color={colors.complimentary}
-                />
-              </View>
-              <Text style={styles.actionTxr}>Terms</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={LogoutUser} style={styles.iconBtn}>
-              <View style={styles.icon}>
-                <Icon name="logout" size={33} color={colors.complimentary} />
-              </View>
-              <Text style={styles.actionTxr}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
+            </View>
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 }
@@ -307,10 +383,11 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
   },
   genderTxt: {
-    marginLeft: 5,
+    marginLeft: 3,
     marginTop: 2,
     ...appStyles.bodyRg,
     color: colors.complimentary,
+    textTransform: 'capitalize',
   },
   account: {
     flexDirection: 'row',

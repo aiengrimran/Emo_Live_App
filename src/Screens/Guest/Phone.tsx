@@ -17,7 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Context from '../../Context/Context';
 export default function Phone() {
   const {userAuthInfo} = useContext(Context);
-  const {setToken} = userAuthInfo;
+  const {setUser} = userAuthInfo;
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
 
@@ -33,7 +33,7 @@ export default function Phone() {
     setTimeout(() => {
       setCodeSent(false);
       setLoading(true);
-      setToken('imean');
+      setUser('imean');
     }, 600);
   };
   const submitAction = () => {

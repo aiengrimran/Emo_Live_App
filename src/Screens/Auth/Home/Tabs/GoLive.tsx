@@ -6,18 +6,30 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  FlatList,
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
-import React, {useRef, useCallback, useState} from 'react';
+import React, {useRef, useContext, useCallback, useState} from 'react';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
+import Context from '../../../../Context/Context';
+import {useSelector, useDispatch} from 'react-redux';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import axiosInstance from '../../../../Api/axiosConfig';
+import {updateUsers} from '../../../../store/slice/usersSlice';
 
-export default function GoLive({navigation}) {
+export default function GoLive({navigation}: any) {
+  const dispatch = useDispatch();
+  const users = useSelector((state: any) => state.usersReducer.users);
+
+  const {userAuthInfo} = useContext(Context);
+  const {user} = userAuthInfo;
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [sheet, setSheet] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  // const [users, setUsers] = useState<Array<any>>([]);
   const [sheetType, setSheetType] = useState<string | null>('tools');
 
   // callbacks
@@ -44,54 +56,26 @@ export default function GoLive({navigation}) {
     bottomSheetRef.current?.close();
   }, []);
 
+  const getActiveUsers = async () => {
+    try {
+      const res = await axiosInstance.get('/chat/active-users');
+      console.log(res.data);
+      dispatch(updateUsers(res.data.users));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
         style={styles.image}
         source={require('../../../../assets/images/LiveBg.png')}>
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <Image
-              source={require('../../../../assets/images/live/girl1.jpg')}
-              style={{width: 28, height: 28, borderRadius: 15}}
-            />
-            <Text
-              style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-              Olivia
-            </Text>
-            <View
-              style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
-              <Text style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
-                LV:1
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={{
-                padding: 2,
-                backgroundColor: '#F00044',
-                borderRadius: 20,
-              }}>
-              <Icon name="plus" color="#fff" size={20} />
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              width: '30%',
-            }}>
-            <TouchableOpacity>
-              <IconM name="warning" size={25} color="#F0DF00" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Icon name="eye" size={25} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('HomeB')}>
-              <Icon name="close" size={25} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
+        <Header
+          user={user}
+          getActiveUsers={getActiveUsers}
+          navigation={navigation}
+        />
         <View
           style={{
             flexDirection: 'row',
@@ -153,17 +137,51 @@ export default function GoLive({navigation}) {
             </TouchableOpacity>
           </View>
         </View>
+        <View>{/* <Text>{JSON.stringify(users)}</Text> */}</View>
+        <View>
+          <FlatList
+            data={users}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({item}: any) => (
+              <View style={styles.usersList}>
+                <TouchableOpacity
+                  style={{
+                    alignItems: 'center',
+                  }}
+                  onPress={() => {
+                    setSelectedUser(item);
+                    handleOpenSheet2();
+                  }}>
+                  <Image
+                    source={
+                      user.avatar
+                        ? {uri: user.avatar}
+                        : require('../../../../assets/images/place.jpg')
+                    }
+                    style={styles.chatAvatar}
+                  />
+
+                  <Text
+                    style={[
+                      appStyles.paragraph1,
+                      {color: colors.complimentary},
+                    ]}>
+                    {item.first_name + ' ' + item.last_name}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </View>
 
         <View
           style={{
             flexDirection: 'row',
             width: '60%',
-            // alignItems: 'center',
-            // ju
             alignSelf: 'center',
             justifyContent: 'space-around',
           }}>
-          <TouchableOpacity onPress={handleOpenSheet2}>
+          <TouchableOpacity>
             <Image
               source={require('../../../../assets/images/male/james.jpeg')}
               style={{width: 60, height: 60, borderRadius: 35}}
@@ -187,7 +205,7 @@ export default function GoLive({navigation}) {
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleOpenSheet2}>
+          <TouchableOpacity>
             <Image
               source={require('../../../../assets/images/live/girl5.jpg')}
               style={{width: 60, height: 60, borderRadius: 35}}
@@ -212,29 +230,8 @@ export default function GoLive({navigation}) {
             </View>
           </TouchableOpacity>
         </View>
-        <View style={{marginVertical: 20}}>
-          <Users handleOpenSheet2={handleOpenSheet2}></Users>
-        </View>
-        <View>
-          <View style={{flexDirection: 'row', width: '80%'}}>
-            <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-              EMo Live :{' '}
-            </Text>
-            <Text
-              style={[
-                appStyles.bodyRg,
-                {color: colors.complimentary, textAlign: 'left'},
-              ]}>
-              {' '}
-              Great to see you here. Please don’t use abusive language, enjoy
-              the stream, Have fun😊
-            </Text>
-          </View>
-        </View>
-
+        <View style={{marginVertical: 20}}></View>
         <BottomSheet
-          // index={-1}
-          // index={1}
           index={-1}
           enablePanDownToClose={true}
           snapPoints={['60%']}
@@ -250,13 +247,16 @@ export default function GoLive({navigation}) {
             {sheetType == 'gifts' ? (
               <Gifts />
             ) : sheetType == 'avatar' ? (
-              <AvatarSheet navigation={navigation} />
+              <AvatarSheet
+                selectedUser={selectedUser}
+                navigation={navigation}
+              />
             ) : (
               <Tools />
             )}
           </BottomSheetView>
         </BottomSheet>
-        {!sheet && <BottomInput handleOpenSheet={handleOpenSheet} />}
+        {!sheet && <BottomSection handleOpenSheet={handleOpenSheet} />}
       </ImageBackground>
     </View>
   );
@@ -282,6 +282,23 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
   },
+  reportBtn: {
+    borderRadius: 25,
+    paddingHorizontal: 10,
+    borderColor: colors.body_text,
+    borderWidth: 1,
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    top: 30,
+    left: 30,
+    paddingVertical: 5,
+  },
+  users: {
+    flexDirection: 'row',
+    width: '99%',
+    justifyContent: 'space-around',
+  },
   userInfo: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -289,16 +306,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btn1: {
-    position: 'absolute',
+    position: 'relative',
     flexDirection: 'row',
     width: '99%',
+    marginTop: 20,
     // padding: 15,
-    bottom: Platform.OS == 'ios' ? 40 : 15,
+    // bottom: Platform.OS == 'ios' ? 40 : 15,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  usersList: {
+    flexDirection: 'row',
+    width: '99%',
+    justifyContent: 'space-around',
+  },
+  chatAvatar: {width: 60, height: 60, borderRadius: 35},
   sofa: {
     width: 60,
     height: 60,
@@ -341,6 +365,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  sheetAvatar: {
+    height: 80,
+    width: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: colors.lines,
+  },
+  addBtn: {
+    padding: 2,
+    backgroundColor: '#F00044',
+    borderRadius: 20,
+  },
+  sheetUser: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '60%',
+    marginVertical: 20,
+  },
+  followBtn: {
+    width: '45%',
+    borderRadius: 25,
+    padding: 20,
+    borderColor: colors.complimentary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetStatus: {
+    flexDirection: 'row',
+    width: '70%',
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  sheetAction: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+    width: '90%',
+    alignSelf: 'center',
+  },
   giftTxt: {
     ...appStyles.smallTxt,
     color: colors.complimentary,
@@ -362,276 +427,119 @@ const styles = StyleSheet.create({
     // backgroundColor: colors.tool_btn,
   },
 });
+interface HeaderProps {
+  user: any;
+  getActiveUsers: any;
+  navigation: any;
+  // getActiveUsers
+}
 
-const Users = ({handleOpenSheet2}) => {
+const Header = ({user, getActiveUsers, navigation}: HeaderProps) => {
   return (
-    <View>
-      <View
-        style={{
-          flexDirection: 'row',
-          width: '99%',
-          justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 35,
-              backgroundColor: '#fff',
-            }}
-          />
-          {/* <Image
-
-            source={require('../../../../assets/images/live/girl1.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Vera An
+    <View style={styles.header}>
+      <View style={styles.userInfo}>
+        <Image
+          source={
+            user.avatar
+              ? {uri: user.avatar} // Load the user's avatar from a URL
+              : require('../../../../assets/images/place.jpg') // Load the placeholder image
+          }
+          // source={require('../../../../assets/images/live/girl1.jpg')}
+          style={{width: 28, height: 28, borderRadius: 15}}
+        />
+        <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
+          {user.last_name}
+        </Text>
+        <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
+          <Text style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
+            LV:1
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/live/girl2.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Daniel
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/male/james.jpeg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            James
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/live/girl8.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Vera An
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Martin
-          </Text>
+        </View>
+        <TouchableOpacity onPress={getActiveUsers} style={styles.addBtn}>
+          <Icon name="plus" color="#fff" size={20} />
         </TouchableOpacity>
       </View>
       <View
         style={{
           flexDirection: 'row',
-          width: '99%',
-          marginTop: 40,
           justifyContent: 'space-around',
+          width: '30%',
         }}>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/live/girl1.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Vera An
-          </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('TempUI')}>
+          <IconM name="warning" size={25} color="#F0DF00" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          {/* <Image
-            source={require('../../../../assets/images/live/girl2.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 35,
-              backgroundColor: '#fff',
-            }}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Vera An
-          </Text>
+        <TouchableOpacity>
+          <Icon name="eye" size={25} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/male/james.jpeg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Amelia
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <Image
-            source={require('../../../../assets/images/live/girl8.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          />
-          <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-            Harper
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleOpenSheet2}
-          style={{justifyContent: 'center', alignItems: 'center'}}>
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 35,
-              backgroundColor: '#874975',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Image
-              source={require('../../../../assets/images/icons/sofa.png')}
-              style={{width: 25, height: 25, borderRadius: 25}}
-            />
-          </View>
-          {/* <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <Text
-            style={[
-              appStyles.paragraph1,
-              {color: colors.complimentary, textAlign: 'center'},
-            ]}>
-            10
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          width: '99%',
-          marginTop: 20,
-          // justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity onPress={handleOpenSheet2}>
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 35,
-              backgroundColor: '#874975',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Image
-              source={require('../../../../assets/images/icons/sofa.png')}
-              style={{width: 25, height: 25, borderRadius: 25}}
-            />
-          </View>
-          {/* <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <Text
-            style={[
-              appStyles.paragraph1,
-              {color: colors.complimentary, textAlign: 'center'},
-            ]}>
-            11
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleOpenSheet2}
-          style={{
-            marginLeft: 22,
-          }}>
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 35,
-              backgroundColor: '#874975',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Image
-              source={require('../../../../assets/images/icons/sofa.png')}
-              style={{width: 25, height: 25, borderRadius: 25}}
-            />
-          </View>
-          {/* <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <Text
-            style={[
-              appStyles.paragraph1,
-              {color: colors.complimentary, textAlign: 'center'},
-            ]}>
-            12
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleOpenSheet2}
-          style={{
-            marginLeft: 20,
-          }}>
-          <View style={styles.sofa}>
-            <Image
-              source={require('../../../../assets/images/icons/sofa.png')}
-              style={{width: 25, height: 25, borderRadius: 25}}
-            />
-          </View>
-          {/* <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{width: 60, height: 60, borderRadius: 35}}
-          /> */}
-          <Text
-            style={[
-              appStyles.paragraph1,
-              {color: colors.complimentary, textAlign: 'center'},
-            ]}>
-            13
-          </Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          {/* <TouchableOpacity onPress={() => navigation.navigate('HomeB')}> */}
+          <Icon name="close" size={25} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-interface BottomInputProps {
+
+interface BottomSectionProps {
   handleOpenSheet: any;
 }
 
-const BottomInput = ({handleOpenSheet}: BottomInputProps) => {
+const BottomSection = ({handleOpenSheet}: BottomSectionProps) => {
   return (
-    <View style={styles.btn1}>
-      <TextInput
-        style={styles.inputBox}
-        placeholder="Say hello ...."
-        placeholderTextColor={'#fff'}
-      />
-      <View style={styles.action}>
-        <TouchableOpacity>
-          <Icon name="dots-horizontal" color={colors.complimentary} size={24} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="microphone-off" color={colors.complimentary} size={24} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleOpenSheet('tools')}>
-          <IconM name="emoji-emotions" color={colors.complimentary} size={24} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleOpenSheet('gifts')}>
-          <Image
-            source={require('../../../../assets/images/bag.png')}
-            style={{height: 30, width: 30}}
-          />
-        </TouchableOpacity>
+    <View style={{position: 'absolute', bottom: '5%'}}>
+      <View style={{flexDirection: 'row', width: '80%'}}>
+        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
+          EMo Live :{' '}
+        </Text>
+        <Text
+          style={[
+            appStyles.bodyRg,
+            {color: colors.complimentary, textAlign: 'left'},
+          ]}>
+          {' '}
+          Great to see you here. Please don’t use abusive language, enjoy the
+          stream, Have fun😊
+        </Text>
       </View>
+      <View style={styles.btn1}>
+        <TextInput
+          style={styles.inputBox}
+          placeholder="Say hello ...."
+          placeholderTextColor={'#fff'}
+        />
+        <View style={styles.action}>
+          <TouchableOpacity>
+            <Icon
+              name="dots-horizontal"
+              color={colors.complimentary}
+              size={24}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Icon
+              name="microphone-off"
+              color={colors.complimentary}
+              size={24}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenSheet('tools')}>
+            <IconM
+              name="emoji-emotions"
+              color={colors.complimentary}
+              size={24}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenSheet('gifts')}>
+            <Image
+              source={require('../../../../assets/images/bag.png')}
+              style={{height: 30, width: 30}}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* <Icon name="dots-horizontal" color={colors.complimentary} size={24} /> */}
-      <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}></Text>
+        {/* <Icon name="dots-horizontal" color={colors.complimentary} size={24} /> */}
+        <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}></Text>
+      </View>
     </View>
   );
 };
@@ -888,23 +796,12 @@ const Gifts = () => {
 
 interface AvatarSheetProps {
   navigation: any;
+  selectedUser: any;
 }
-const AvatarSheet = ({navigation}: AvatarSheetProps) => {
+const AvatarSheet = ({navigation, selectedUser}: AvatarSheetProps) => {
   return (
     <View style={{position: 'relative', paddingTop: 30}}>
-      <TouchableOpacity
-        style={{
-          borderRadius: 25,
-          paddingHorizontal: 10,
-          borderColor: colors.body_text,
-          borderWidth: 1,
-          position: 'absolute',
-          flexDirection: 'row',
-          alignItems: 'center',
-          top: 30,
-          left: 30,
-          paddingVertical: 5,
-        }}>
+      <TouchableOpacity style={styles.reportBtn}>
         <IconM name="warning" size={25} color={colors.body_text} />
         <Text style={[appStyles.bodyMd, {color: colors.body_text}]}>
           Report
@@ -912,43 +809,34 @@ const AvatarSheet = ({navigation}: AvatarSheetProps) => {
       </TouchableOpacity>
       <View style={{width: '99%', alignItems: 'center'}}>
         <Image
-          style={{
-            height: 80,
-            width: 80,
-            borderRadius: 40,
-            borderWidth: 1,
-            borderColor: colors.lines,
-          }}
-          source={require('../../../../assets/images/live/girl3.jpg')}
+          style={styles.sheetAvatar}
+          source={
+            selectedUser.avatar
+              ? {uri: selectedUser.avatar}
+              : require('../../../../assets/images/place.jpg')
+          }
         />
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '60%',
-            marginVertical: 30,
-          }}>
+        <Text
+          style={[
+            appStyles.paragraph1,
+            {color: colors.complimentary, marginTop: 10},
+          ]}>
+          {selectedUser.first_name + ' ' + selectedUser.last_name}
+        </Text>
+        <View style={styles.sheetUser}>
           <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-            ID:388
+            ID:{selectedUser.id}
           </Text>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="google-maps" size={25} color={colors.semantic} />
+            <Icon name="google-maps" size={23} color={colors.semantic} />
             <Text
               style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-              Chicago, USA
+              {selectedUser.address ? selectedUser.address : 'Please Provide '}
             </Text>
           </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '70%',
-            alignSelf: 'center',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-          }}>
+        <View style={styles.sheetStatus}>
           <View>
             <Text style={[appStyles.headline2, {color: colors.complimentary}]}>
               1.54k
@@ -987,38 +875,18 @@ const AvatarSheet = ({navigation}: AvatarSheetProps) => {
           </View>
         </View>
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 30,
-          width: '90%',
-          alignSelf: 'center',
-        }}>
+      <View style={styles.sheetAction}>
         <TouchableOpacity
-          style={{
-            width: '45%',
-            backgroundColor: colors.accent,
-            borderRadius: 25,
-            padding: 20,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
+          style={[styles.followBtn, {backgroundColor: colors.accent}]}>
           <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
             Follow
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{
-            width: '45%',
-            borderRadius: 25,
-            borderColor: colors.complimentary,
-            borderWidth: 1,
-            padding: 20,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          onPress={() => navigation.navigate('Chat')}>
+          style={[styles.followBtn, {borderWidth: 1}]}
+          onPress={() =>
+            navigation.navigate('Chat', {receiverUser: selectedUser})
+          }>
           <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
             Chat
           </Text>

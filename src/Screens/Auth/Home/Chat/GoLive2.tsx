@@ -7,7 +7,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import {colors} from '../../../../styles/colors';
 import appStyles from '../../../../styles/styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -15,36 +15,54 @@ import Room6On from '../../../../assets/svgs/room6.svg';
 import Room6 from '../../../../assets/svgs/room6Off.svg';
 import Room9 from '../../../../assets/svgs/room9Off.svg';
 import Room9On from '../../../../assets/svgs/room9.svg';
+import axiosInstance from '../../../../Api/axiosConfig';
+import Context from '../../../../Context/Context';
 
 export default function GoLive2({navigation}) {
+  const createChannelToken = async () => {
+    try {
+      const res = await axiosInstance.get('/agora/create-channel-token');
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const {userAuthInfo} = useContext(Context);
+  const {user} = userAuthInfo;
   const [room, setRoom] = useState(null);
   const [btnColor, setBtnColor] = useState(colors.body_text);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-          <View
-            style={{flexDirection: 'row', alignItems: 'center', width: '40%'}}>
-            <Image
-              style={[appStyles.userAvatar, {height: 40, width: 40}]}
-              source={require('../../../../assets/images/live/girl1.jpg')}
-            />
-            <Text
-              style={[
-                appStyles.headline2,
-                {color: colors.complimentary, marginLeft: 10},
-              ]}>
-              Emma Maratha
-            </Text>
-          </View>
-          <View
-            style={{
-              width: '10%',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-            }}>
-            <Icon name="close" color={colors.complimentary} size={25} />
-          </View>
+        <View
+          style={{flexDirection: 'row', alignItems: 'center', width: '40%'}}>
+          <Image
+            style={[appStyles.userAvatar, {height: 40, width: 40}]}
+            source={
+              user.avatar
+                ? {uri: user.avatar}
+                : require('../../../../assets/images/place.jpg')
+            }
+            // source={require('../../../../assets/images/live/girl1.jpg')}
+          />
+          <Text
+            style={[
+              appStyles.headline2,
+              {color: colors.complimentary, marginLeft: 10},
+            ]}>
+            {user.first_name + ' ' + user.last_name}
+          </Text>
         </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('HomeB')}
+          style={{
+            width: '10%',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+          }}>
+          <Icon name="close" color={colors.complimentary} size={25} />
+        </TouchableOpacity>
+      </View>
       <View style={{marginTop: 40, width: '100%', overflow: 'scroll'}}>
         <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
           Add Tags
@@ -217,7 +235,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop:Platform.OS == 'ios' ? 40: 5,
+    marginTop: Platform.OS == 'ios' ? 40 : 5,
     justifyContent: 'space-between',
   },
   row: {

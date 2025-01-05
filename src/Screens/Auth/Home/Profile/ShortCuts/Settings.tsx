@@ -9,26 +9,37 @@ import {
 } from 'react-native';
 import appStyles from '../../../../../styles/styles';
 import {colors} from '../../../../../styles/colors';
-import React,{useContext} from 'react';
+import React, {useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Context from '../../../../../Context/Context';
+import axiosInstance from '../../../../../Api/axiosConfig';
 
 export default function Settings({navigation}) {
   const {userAuthInfo} = useContext(Context);
-  console.log(userAuthInfo)
-
 
   const logout = async () => {
     try {
-      // const keys = await AsyncStorage.getAllKeys();
-      // await AsyncStorage.multiRemove(keys);
-      // await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('loggedUser');
-      userAuthInfo.setToken(null);
+      const res = await axiosInstance.get('/logout');
+      console.log(res.data);
+
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys);
+      await AsyncStorage.removeItem('user');
+      userAuthInfo.setUser(null);
       console.log('All keys removed from AsyncStorage');
     } catch (error) {
+      console.log(error);
       console.error('Error removing keys from AsyncStorage:', error);
+    }
+  };
+  const testApi = async () => {
+    try {
+      console.log('you het me');
+      const res = await axiosInstance.get('test-app');
+      console.log(res);
+    } catch (error) {
+      console.log(error);
     }
   };
   return (
@@ -65,7 +76,7 @@ export default function Settings({navigation}) {
 
             <Icon name="chevron-right" size={25} color={colors.lines} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
+          <TouchableOpacity style={styles.tab} onPress={testApi}>
             <View style={styles.icon}>
               <Icon name="history" size={25} color={colors.complimentary} />
               <Text style={styles.tabText}>Privacy Policy</Text>

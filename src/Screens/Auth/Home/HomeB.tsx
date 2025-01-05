@@ -103,18 +103,3 @@ export default function HomeB() {
     </Tab.Navigator>
   );
 }
-
-const HomeScreen = () => {
-  return (
-    <View>
-      <Text>Home</Text>
-    </View>
-  );
-};
-const ProfileScreen = () => {
-  return (
-    <View>
-      <Text>ProfileScreen</Text>
-    </View>
-  );
-};

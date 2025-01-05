@@ -5,31 +5,64 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
   Image,
   Platform,
+  Alert,
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 //   import appStyles from '../../../../../styles/styles';
 import appStyles from '../../styles/styles';
 import {colors} from '../../styles/colors';
+import axiosInstance from '../../Api/axiosConfig';
 //   import { colors } from '../../../../../styles/colors';
 export default function ForgetPassword({navigation}) {
-  const [tab, setTab] = useState(1);
-  const [gender, setGender] = useState('female');
   const [emailSent, setEmailSent] = useState(false);
+  const [form, setFrom] = useState({
+    token: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const updateGender = (valTab: string) => {
-    setGender(valTab);
-  };
-  const updateTab = (valTab: number) => {
-    setTab(valTab);
-  };
-
-  const sendRequest = () => {
+  const sendEmail = async () => {
     try {
-      alert('please wait ...');
-    } catch (error) {}
+      if (form.email.length < 5 || !form.email) {
+        Alert.alert('Please Provide Email');
+        return;
+      }
+      setLoading(true);
+      const res = await axiosInstance.post('send-reset-password-mail', {
+        email: email,
+      });
+      setEmailSent(true);
+      console.log(res.data);
+      setLoading(false);
+    } catch (error: any) {
+      console.log(error);
+      clearError();
+      setError(error.message);
+    }
+  };
+  const clearError = () => {
+    setLoading(false);
+    setTimeout(() => {
+      setFrom({...form, email: ''});
+      setError(false);
+    }, 4000);
+  };
+  const UpdatePassword = async () => {
+    try {
+      const res = await axiosInstance.post('reset-password', form);
+      console.log(res.data);
+      Alert.alert('Password successfully updated');
+    } catch (error: any) {
+      clearError();
+      setError(error.message);
+    }
   };
   return (
     <View style={styles.container}>
@@ -53,79 +86,90 @@ export default function ForgetPassword({navigation}) {
           Forget Password
         </Text>
       </View>
-
-      <View style={{marginTop: 30}}>
-        {!emailSent ? (
-          <View>
-            <Text
-              style={{
-                color: '#737380',
-              }}>
-              Enter Email Address
-            </Text>
-            <TextInput
-              placeholder="jhon@gmail.com"
-              style={{
-                borderBottomColor: 'grey',
-                borderBottomWidth: 1,
-                paddingBottom: 10,
-                marginTop: 15,
-                color: '#fff',
-              }}
-              placeholderTextColor="#737380"
-            />
+      {loading ? (
+        <ActivityIndicator
+          animating={loading}
+          size={'large'}
+          style={[appStyles.indicatorStyle]}
+        />
+      ) : (
+        <>
+          <View style={{marginTop: 30, width: '90%', alignSelf: 'center'}}>
+            {!emailSent ? (
+              <View>
+                <Text
+                  style={{
+                    color: '#737380',
+                  }}>
+                  Enter Email Address
+                </Text>
+                <TextInput
+                  placeholder="jhon@gmail.com"
+                  style={styles.input}
+                  placeholderTextColor="#737380"
+                  onChangeText={text => setFrom({...form, email: text})}
+                  value={form.email}
+                  autoCapitalize="none"
+                />
+              </View>
+            ) : (
+              <>
+                <View style={{marginVertical: 30}}>
+                  <Text style={styles.label}>Token</Text>
+                  <TextInput
+                    secureTextEntry={true}
+                    placeholder="*******"
+                    keyboardType="decimal-pad"
+                    value={form.token}
+                    onChangeText={text => setFrom({...form, token: text})}
+                    style={styles.input}
+                    placeholderTextColor="#737380"
+                  />
+                </View>
+                <View style={{marginVertical: 30}}>
+                  <Text style={styles.label}>Enter New Password</Text>
+                  <TextInput
+                    secureTextEntry={true}
+                    placeholder="*******"
+                    autoCapitalize="none"
+                    value={form.password}
+                    onChangeText={text => setFrom({...form, password: text})}
+                    style={styles.input}
+                    placeholderTextColor="#737380"
+                  />
+                </View>
+                <View>
+                  <Text style={styles.label}>Confirm New Password</Text>
+                  <TextInput
+                    secureTextEntry={true}
+                    placeholder="*******"
+                    style={styles.input}
+                    autoCapitalize="none"
+                    value={form.password_confirmation}
+                    onChangeText={text =>
+                      setFrom({...form, password_confirmation: text})
+                    }
+                    placeholderTextColor="#737380"
+                  />
+                </View>
+              </>
+            )}
           </View>
-        ) : (
-          <>
-            <View style={{marginVertical: 30}}>
-              <Text
-                style={{
-                  color: '#737380',
-                }}>
-                Enter New Password
-              </Text>
-              <TextInput
-                secureTextEntry={true}
-                placeholder="*******"
-                style={{
-                  borderBottomColor: 'grey',
-                  borderBottomWidth: 1,
-                  paddingBottom: 10,
-                  marginTop: 10,
-                  color: '#fff',
-                }}
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View>
-              <Text
-                style={{
-                  color: '#737380',
-                }}>
-                Confirm New Password
-              </Text>
-              <TextInput
-                secureTextEntry={true}
-                placeholder="*******"
-                style={{
-                  borderBottomColor: 'grey',
-                  borderBottomWidth: 1,
-                  paddingBottom: 10,
-                  marginTop: 10,
-                  color: '#fff',
-                }}
-                placeholderTextColor="#737380"
-              />
-            </View>
-          </>
-        )}
-      </View>
-      <TouchableOpacity style={[appStyles.bottomBtn]} onPress={sendRequest}>
-        {/* <TouchableOpacity style={styles.btn} onPress={sendRequest}> */}
-        <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
-          Send Email
-        </Text>
-      </TouchableOpacity>
+          {error && (
+            <Text style={[appStyles.errorText, {marginTop: 40}]}>{error}</Text>
+          )}
+          <TouchableOpacity
+            style={[
+              appStyles.bottomBtn,
+              {bottom: Platform.OS == 'ios' ? 90 : 50},
+            ]}
+            onPress={sendEmail}>
+            <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
+              Send Email
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -136,46 +180,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#1d1f31',
     padding: 10,
   },
-  tab: {
-    flexDirection: 'row',
-    width: '50%',
+  input: {
+    borderBottomColor: 'grey',
+    borderBottomWidth: 1,
     paddingBottom: 10,
-    borderBottomColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 15,
+    color: colors.complimentary,
   },
   backBtn: {
     flexDirection: 'row',
-    // width: '30%',
-    // position: 'absolute',
-    // top: 20,
     left: 10,
     alignItems: 'center',
     padding: 10,
     borderRadius: 16,
   },
-  genderBtn: {
-    borderColor: 'grey',
-    // borderWidth: 1,
-    justifyContent: 'center',
-    padding: 15,
-    // borderRadius: 10,
-    width: '35%',
-  },
-  genderTxt: {
-    color: '#fff',
-    textAlign: 'center',
-  },
-  tabText: {
-    color: '#868791',
-    fontSize: 18,
-    // padding: 10,
-    fontWeight: '600',
+  label: {
+    ...appStyles.bodyRg,
+    color: colors.body_text,
   },
   image: {
     flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
   },
   btn: {
     marginTop: 40,
@@ -189,30 +213,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  info: {
-    width: '25%',
-  },
-  infoHeading: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
-    marginLeft: 5,
-  },
-  infoText: {
-    color: '#868791',
-    fontSize: 17,
-    fontWeight: '500',
-  },
   text: {
     marginTop: 10,
     color: '#fff',
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  userText: {
-    marginTop: 10,
-    // textAlign: 'center',
-    color: '#666673',
     fontWeight: '500',
     fontSize: 16,
   },

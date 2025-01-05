@@ -31,9 +31,7 @@ export default function JoinAgency({navigation}) {
   return (
     <View style={styles.container}>
       <View style={[appStyles.backBtn]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
         </TouchableOpacity>
         <Text style={styles.heading}>Join Agency</Text>

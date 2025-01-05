@@ -1,13 +1,80 @@
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {colors} from '../../../../../styles/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../../styles/styles';
+import axiosInstance from '../../../../../Api/axiosConfig';
 
 export default function BlockedUsers({navigation}) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    getBlockUsers();
+  }, []);
+
+  const getUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get('/chat/active-users');
+      // dispatch(updateUsers(res.data.users));
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+    }
+  };
+  const getBlockUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get('/user/blocked-users');
+      setUsers(res.data.users);
+      if (res.data.users.length < 1) {
+        setError('No User In Blocked List');
+        clearError();
+      }
+      setLoading(false);
+    } catch (error: any) {
+      setError(error.message);
+      clearError();
+    }
+  };
+  const unBlockUser = async (userItem: any) => {
+    try {
+      const url = '/user/un-block/' + userItem.id;
+      // const url = userItem.is_followed
+      //   ? '/user/un-block-user/' + userItem.id
+      //   : '/user/bloc-user/' + userItem.id;
+      setLoading(true);
+      const res = await axiosInstance.get(url);
+      setLoading(false);
+      setUsers(res.data.users);
+      if (res.data.users.length < 1) {
+        setError('No User In Blocked List');
+      }
+    } catch (error: any) {
+      clearError();
+      setError(error.message);
+    }
+  };
+  const clearError = () => {
+    setLoading(false);
+    setTimeout(() => {
+      setError('');
+    }, 3000);
+  };
   return (
     <View style={styles.container}>
-      <View style={{flexDirection: 'row', alignItems: 'center', padding: 16}}>
+      <View style={[appStyles.backBtn]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left-thin" size={25} color={colors.complimentary} />
         </TouchableOpacity>
@@ -19,79 +86,54 @@ export default function BlockedUsers({navigation}) {
           Blocked List
         </Text>
       </View>
-      <View>
-        <View style={{marginTop: 30}}>
-          <View style={styles.userSection}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('UserProfile')}
-              style={styles.profile}>
-              <Image
-                style={{width: 50, height: 50, borderRadius: 25}}
-                source={require('../../../../../assets/images/live/girl1.jpg')}
-              />
-              <View style={{marginLeft: 20}}>
-                <Text style={styles.userText}>Ava Marie</Text>
-                <Text style={styles.userDesc}>ID: 234</Text>
+      {error && (
+        <Text style={[appStyles.errorText, {marginVertical: 10}]}>{error}</Text>
+      )}
+      {loading ? (
+        <ActivityIndicator
+          style={[appStyles.indicatorStyle]}
+          size="large"
+          color={colors.accent}
+        />
+      ) : (
+        <View>
+          <Text onPress={getBlockUsers}>T</Text>
+          <FlatList
+            data={users}
+            keyExtractor={item => item.id?.toString()}
+            renderItem={({item}: any) => (
+              <View style={styles.userSection}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // dispatch(updateVisitProfile(item));
+                    // navigation.navigate('UserProfile');
+                  }}
+                  style={styles.profile}>
+                  <Image
+                    style={{width: 49, height: 49, borderRadius: 25}}
+                    source={
+                      item.avatar
+                        ? {uri: item.avatar}
+                        : require('../../../../../assets/images/place.jpg')
+                    }
+                  />
+                  <View style={{marginLeft: 20}}>
+                    <Text style={styles.userText}>
+                      {item.first_name + ' ' + item.last_name}
+                    </Text>
+                    <Text style={styles.userDesc}>ID: {item.id}</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => unBlockUser(item)}>
+                  <Text style={styles.btnText}>Unblock</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.followBtn}>
-              <Text style={styles.btnText}>Unblock</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.userSection}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('UserProfile')}
-              style={styles.profile}>
-              <Image
-                style={{width: 50, height: 50, borderRadius: 25}}
-                source={require('../../../../../assets/images/live/girl2.jpg')}
-              />
-              <View style={{marginLeft: 20}}>
-                <Text style={styles.userText}>Ava Marie</Text>
-                <Text style={styles.userDesc}>ID: 235</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.followBtn}>
-              <Text style={styles.btnText}>Unblock</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.userSection}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('UserProfile')}
-              style={styles.profile}>
-              <Image
-                style={{width: 50, height: 50, borderRadius: 25}}
-                source={require('../../../../../assets/images/live/girl3.jpg')}
-              />
-              <View style={{marginLeft: 20}}>
-                <Text style={styles.userText}>Ava Marie</Text>
-                <Text style={styles.userDesc}>ID: 236</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.followBtn}>
-              <Text style={styles.btnText}>Unblock</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.userSection}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('UserProfile')}
-              style={styles.profile}>
-              <Image
-                style={{width: 50, height: 50, borderRadius: 25}}
-                source={require('../../../../../assets/images/live/girl6.jpg')}
-              />
-              <View style={{marginLeft: 20}}>
-                <Text style={styles.userText}>Ava Marie</Text>
-                <Text style={styles.userDesc}>ID: 237</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.followBtn}>
-              <Text style={styles.btnText}>Unblock</Text>
-            </TouchableOpacity>
-          </View>
+            )}
+          />
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -122,14 +164,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   userText: {
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
-  },
-  tabText: {
-    ...appStyles.paragraph1,
     color: colors.complimentary,
-    marginLeft: 10,
+    ...appStyles.regularTxtMd,
   },
   userSection: {
     marginTop: 20,
@@ -143,25 +179,23 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   userDesc: {
-    color: '#fff',
+    color: colors.complimentary,
+    ...appStyles.regularTxtRg,
     marginTop: 5,
-    fontWeight: '500',
-    fontSize: 16,
   },
-  followBtn: {
+  btn: {
     marginRight: 10,
-    backgroundColor: '#494759',
+    backgroundColor: colors.lines,
     height: 40,
     width: 90,
     alignItems: 'center',
     justifyContent: 'center',
     // paddingVertical: 5,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   btnText: {
     textAlign: 'center',
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    color: colors.complimentary,
+    ...appStyles.bodyMd,
   },
 });

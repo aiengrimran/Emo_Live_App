@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React, {useState, useContext, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import axiosInstance from '../../Api/axiosConfig';
 import Context from '../../Context/Context';
 import appStyles from '../../styles/styles';
 import {
@@ -23,36 +23,35 @@ import {
 import {colors} from '../../styles/colors';
 
 export default function Landing({navigation}) {
-  const {userAuthInfo} = useContext(Context);
-  const {token, setToken} = userAuthInfo;
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {setUser} = userAuthInfo;
+  const {setToken} = tokenMemo;
+  console.log(userAuthInfo);
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState<any>(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const loginUser = async () => {
-    try {
-      await AsyncStorage.setItem('loggedUser', 'imran');
-      setToken('imran');
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // useEffect(() => {
+  //   // Initialize Google Sign-In
+  //   GoogleSignin.configure({
+  //     webClientId:
+  //       '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com', // Replace with your Web client ID from Google Console
+  //     offlineAccess: true,
+  //     iosClientId:
+  //       '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
+  //   });
+  // }, []);
 
-  useEffect(() => {
-    // Initialize Google Sign-In
-    GoogleSignin.configure({
-      webClientId:
-        '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com', // Replace with your Web client ID from Google Console
-      offlineAccess: true,
-      iosClientId:
-        '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
-    });
-  }, []);
-
-  const signIn = async () => {
+  const signInWithGoogle = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      AsyncStorage.setItem('loggedUser', JSON.stringify(userInfo));
+      apiCallForGoogle(userInfo);
+      // AsyncStorage.setItem('loggedUser', JSON.stringify(userInfo));
       console.log('User Info:', userInfo);
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -67,14 +66,67 @@ export default function Landing({navigation}) {
       }
     }
   };
+  const apiCallForGoogle = async (data: any) => {
+    try {
+      let formData = {
+        email: data.email,
+        first_name: data.givenName,
+        last_name: data.familyName,
+        avatar: data.photo,
+      };
+      const url = '';
+      const res = await axiosInstance.post(url, JSON.stringify(formData));
+      console.log(res.data);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
+  };
+
+  const loginWithApp = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.post('/login', JSON.stringify(form));
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+      await AsyncStorage.setItem('token', res.data.access_token);
+      setUser(res.data.user);
+      setToken(res.data.access_token);
+      setLoading(false);
+    } catch (error: any) {
+      setError(error.message);
+      clearError();
+    }
+  };
+
+  const clearStorage = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys);
+      await AsyncStorage.removeItem('user');
+      userAuthInfo.setUser(null);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const clearError = () => {
+    setLoading(false);
+    setTimeout(() => {
+      setError(false);
+    }, 3000);
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
-        //   blurRadius=
         style={styles.image}
         source={require('../../assets/images/parts/landing.png')}>
         {loading ? (
-          <ActivityIndicator size={'large'} color="red" />
+          <ActivityIndicator
+            style={[appStyles.indicatorStyle]}
+            size={'large'}
+            color="blue"
+          />
         ) : (
           <View
             style={{
@@ -84,12 +136,12 @@ export default function Landing({navigation}) {
             }}>
             <View
               style={{
-                height: '35%',
+                height: '30%',
                 backgroundColor: 'rgba(0, 0, 0, 0.4)',
               }}></View>
             <View
               style={{
-                height: '65%',
+                height: '70%',
                 backgroundColor: 'rgba(0, 0, 0, 0.7)',
               }}>
               <View style={{width: '80%', alignSelf: 'center'}}>
@@ -114,7 +166,10 @@ export default function Landing({navigation}) {
                   <Text style={styles.subText}>Email:</Text>
                   <TextInput
                     style={styles.emailInput}
+                    value={form.email}
+                    onChangeText={(e: any) => setForm({...form, email: e})}
                     keyboardType="email-address"
+                    autoCapitalize="none"
                     placeholder="jhon@gmail.com"
                     placeholderTextColor={colors.body_text}
                   />
@@ -125,6 +180,10 @@ export default function Landing({navigation}) {
                   <TextInput
                     style={styles.passwordInput}
                     secureTextEntry={true}
+                    onChangeText={(text: any) =>
+                      setForm({...form, password: text})
+                    }
+                    value={form.password}
                     placeholder="**********"
                     placeholderTextColor={colors.body_text}
                   />
@@ -159,7 +218,15 @@ export default function Landing({navigation}) {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.signInBtn} onPress={loginUser}>
+                {error && (
+                  <Text style={[appStyles.errorText, {marginVertical: 10}]}>
+                    {error}
+                  </Text>
+                )}
+
+                <TouchableOpacity
+                  style={styles.signInBtn}
+                  onPress={loginWithApp}>
                   <Text
                     style={[
                       appStyles.headline2,
@@ -189,7 +256,9 @@ export default function Landing({navigation}) {
                   alignSelf: 'center',
                   marginTop: 20,
                 }}>
-                <TouchableOpacity style={styles.googleBtn} onPress={loginUser}>
+                <TouchableOpacity
+                  style={styles.googleBtn}
+                  onPress={clearStorage}>
                   <Icon
                     name="facebook"
                     size={25}
@@ -197,7 +266,7 @@ export default function Landing({navigation}) {
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={signIn}
+                  onPress={signInWithGoogle}
                   style={[
                     styles.googleBtn,
                     {
@@ -257,9 +326,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   emailInput: {
     marginTop: 5,
-    borderColor: '#fff',
+    borderColor: colors.complimentary,
+    color: colors.complimentary,
     borderWidth: 1,
     padding: 12,
     borderRadius: 4,
@@ -283,7 +354,8 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     marginTop: 5,
-    borderColor: '#fff',
+    borderColor: colors.complimentary,
+    color: colors.complimentary,
     borderWidth: 1,
     padding: 12,
     borderRadius: 4,
