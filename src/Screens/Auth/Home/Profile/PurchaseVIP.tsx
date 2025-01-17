@@ -4,15 +4,48 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
+  ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useRef, useCallback} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import IconF from 'react-native-vector-icons/FontAwesome6';
+import appStyles from '../../../../styles/styles';
+import {colors} from '../../../../styles/colors';
+import Easypaisa from '../../../../assets/svg/easy.svg';
+import TradeMark from '../../../../assets/svg/trademark.svg';
+import axiosInstance from '../../../../Api/axiosConfig';
+
 export default function PurchaseVIP({navigation}) {
   const [tab, setTab] = useState(1);
   const [card, setCard] = useState(2);
+  const [form, setForm] = useState({
+    loading: false,
+    phone: '',
+    error: '',
+  });
+
+  const makePayment = async () => {
+    try {
+      setForm({...form, loading: false});
+
+      const url = '';
+      const res = await axiosInstance.post('/');
+      console.log(res.data);
+      setForm({...form, loading: true});
+    } catch (error: any) {
+      setForm({...form, error: error.message});
+    }
+  };
+
+  const clearError = () => {
+    setForm({...form, loading: false});
+    setTimeout(() => {
+      setForm({...form, error: false});
+    }, 3000);
+  };
+
+  // Function to handle open Bottom Sheet
 
   const updateCard = (valTab: number) => {
     setCard(valTab);
@@ -22,47 +55,51 @@ export default function PurchaseVIP({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backBtn}>
-        <Icon name="arrow-left-thin" color="#fff" size={40} />
-      </TouchableOpacity>
-      <View style={{alignSelf: 'center', alignItems: 'center', marginTop: 40}}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Image
-            style={{width: 100, height: 100, borderRadius: 80}}
-            source={require('../../../../assets/images/easy.png')}
-          />
-          <Image
-            style={{width: 100, height: 100, borderRadius: 80}}
-            source={require('../../../../assets/images/vip.png')}
-          />
-        </View>
-      </View>
-      <View style={{marginTop: 40}}>
-        <Text
-          style={{
-            color: '#737380',
-          }}>
-          Enter your Easypaisa Mobile Account Number
+      <View style={appStyles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}>
+          <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
+        </TouchableOpacity>
+        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+          Purchase VIP
         </Text>
-        <TextInput
-          placeholder="e.g 034435434567"
-          style={{
-            borderBottomColor: 'grey',
-            borderBottomWidth: 1,
-            paddingBottom: 10,
-          }}
-          placeholderTextColor="#737380"
+      </View>
+      {form.loading ? (
+        <ActivityIndicator
+          style={appStyles.indicatorStyle}
+          animating={form.loading}
+          size="large"
+          color={colors.accent}
         />
-      </View>
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={() => navigation.navigate('Coin')}>
-        <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
-          Pay Upto 150000
-        </Text>
-      </TouchableOpacity>
+      ) : (
+        <>
+          <View
+            style={{alignSelf: 'center', alignItems: 'center', marginTop: 40}}>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Easypaisa height={60} width={58} />
+              <TradeMark style={{marginLeft: 30}} height={60} width={58} />
+            </View>
+          </View>
+          <View style={{marginTop: 40, padding: 6}}>
+            <Text style={styles.label}>
+              Enter your Easypaisa Mobile Account Number
+            </Text>
+            <TextInput
+              placeholder="e.g 034435434567"
+              style={styles.input}
+              placeholderTextColor="#737380"
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => navigation.navigate('Coin')}>
+            <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
+              Pay Upto 150000
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -73,113 +110,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#1d1f31',
     padding: 10,
   },
-  tab: {
-    flexDirection: 'row',
-    width: '50%',
-    paddingBottom: 10,
-    borderBottomColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   backBtn: {
     flexDirection: 'row',
     width: '30%',
-    position: 'absolute',
-    top: 20,
-    left: 10,
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 16,
   },
-  tabText: {
-    color: '#868791',
-    fontSize: 18,
-    fontWeight: '600',
+
+  label: {
+    ...appStyles.bodyRg,
+    color: colors.body_text,
   },
-  image: {
-    flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
-  },
-  cardCategory: {
-    color: '#fff',
-    marginVertical: 5,
-    fontWeight: '500',
-  },
-  cardPeriod: {
-    color: '#fff',
-    marginLeft: 5,
-    fontSize: 16,
-    marginVertical: 10,
-    fontWeight: '500',
-  },
-  cardPrice: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  card: {
-    paddingTop: 10,
-    width: '30%',
-    height: 150,
-    backgroundColor: '#302847',
-    borderWidth: 1,
-    borderColor: '#403f51',
-    alignItems: 'center',
-    borderRadius: 8,
+  input: {
+    marginTop: 20,
+    borderBottomColor: colors.body_text,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
+    color: colors.complimentary,
   },
   btn: {
     backgroundColor: '#ef0143',
     width: '90%',
     padding: 15,
     position: 'absolute',
-    bottom: 20,
+    bottom: Platform.OS == 'ios' ? 60 : 40,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  activeCard: {
-    borderColor: '#a30733',
-    backgroundColor: '#291118',
-  },
-  vipText: {
-    color: '#868791',
-    marginVertical: 10,
-    textAlign: 'center',
-    alignSelf: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-  },
   tabBtn: {
     borderBottomColor: 'white',
     paddingBottom: 10,
-  },
-  info: {
-    width: '25%',
-  },
-  infoHeading: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
-    marginLeft: 5,
-  },
-  infoText: {
-    color: '#868791',
-    fontSize: 17,
-    fontWeight: '500',
-  },
-  cardAmount: {
-    backgroundColor: '#ed005c',
-    borderRadius: 9,
-    padding: 5,
-    marginTop: -5,
-  },
-  userText: {
-    marginTop: 10,
-    textAlign: 'center',
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
   },
 });

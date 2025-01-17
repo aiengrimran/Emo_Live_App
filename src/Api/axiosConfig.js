@@ -30,9 +30,10 @@ axiosInstance.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      console.log('Error Response:', error.response.data);
+      // console.log('Error Response:', error.response.data);
       return Promise.reject(error.response.data);
     } else if (error.request) {
+      console.log('server not responding at the moment');
       return Promise.reject(error.request);
       //   console.log('No Response:', error.request);
     } else {

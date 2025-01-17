@@ -18,6 +18,8 @@ export default function JoinAgency({navigation}) {
     password: '',
     new_password: '',
     new_password_confirmation: '',
+    securePass: true,
+    secure_password_confirm: true,
   });
 
   const updatePassword = async () => {
@@ -80,13 +82,31 @@ export default function JoinAgency({navigation}) {
             Enter New Password
           </Text>
           <TextInput
-            secureTextEntry={true}
+            secureTextEntry={form.securePass}
             placeholder="*******"
             style={styles.input}
             value={form.new_password}
             onChangeText={text => setForm({...form, new_password: text})}
             placeholderTextColor="#737380"
           />
+          <TouchableOpacity
+            onPress={() =>
+              setForm({
+                ...form,
+                secure_password_confirm: !form.securePass,
+              })
+            }
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: 43,
+            }}>
+            <Icon
+              name={form.securePass ? 'eye-outline' : 'eye-off-outline'}
+              size={25}
+              color={colors.complimentary}
+            />
+          </TouchableOpacity>
         </View>
         <View>
           <Text
@@ -96,7 +116,7 @@ export default function JoinAgency({navigation}) {
             Confirm New Password
           </Text>
           <TextInput
-            secureTextEntry={true}
+            secureTextEntry={form.secure_password_confirm}
             placeholder="*******"
             style={styles.input}
             value={form.new_password}
@@ -105,6 +125,26 @@ export default function JoinAgency({navigation}) {
             }
             placeholderTextColor="#737380"
           />
+          <TouchableOpacity
+            onPress={() =>
+              setForm({
+                ...form,
+                secure_password_confirm: !form.secure_password_confirm,
+              })
+            }
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: 43,
+            }}>
+            <Icon
+              name={
+                form.secure_password_confirm ? 'eye-outline' : 'eye-off-outline'
+              }
+              size={25}
+              color={colors.complimentary}
+            />
+          </TouchableOpacity>
         </View>
       </View>
       {error && (

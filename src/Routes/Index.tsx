@@ -26,9 +26,13 @@ import AgencyMembers from '../Screens/Auth/Home/Profile/Agency/AgencyMembers';
 import Chat from '../Screens/Auth/Home/Chat/Chat';
 import TempUI from '../Screens/Auth/Home/Tabs/TempUI';
 import GoLive from '../Screens/Auth/Home/Tabs/GoLive';
+import PlayCenter from '../Screens/Auth/Games/PlayCenter';
+import ScoreCard from '../Screens/Auth/Games/ScoreCard';
+import StrangerMessages from '../Screens/Auth/Home/Chat/StrangerMessages';
 import Settings from '../Screens/Auth/Home/Profile/ShortCuts/Settings';
 import NotificationSettings from '../Screens/Auth/Home/Profile/Settings/NotificationSettings';
 import ConnectionError from '../Screens/General/ConnectionError';
+
 import NetInfo from '@react-native-community/netinfo';
 import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
@@ -45,6 +49,8 @@ const Stack = createNativeStackNavigator();
 
 export default function Index() {
   const [loader, setLoader] = useState(true);
+  const [chatClientInstance, setChatClientInstance] = useState(null);
+  const [chatManager, setChatManager] = useState(null);
   const [user, setUser] = useState<string | null>(null);
   const [connection, setConnection] = useState<boolean | null>(true);
   // const [connection, setConnection] = useState<boolean | null>(null);
@@ -70,6 +76,22 @@ export default function Index() {
   //   };
   // }, []);
 
+  // const initializeChat = async () => {
+  //   const client = new ChatClient();
+  //   const options = new ChatOptions({
+  //     autoLogin: true,
+  //     appKey: AGORA_CHAT_KEY,
+  //   });
+
+  //   try {
+  //     await client.init(options);
+  //     setChatClient(client);
+  //     setChatManager(client.chatManager);
+  //   } catch (error) {
+  //     console.error('Failed to initialize chat SDK:', error);
+  //   }
+  // };
+
   const checkUser = async () => {
     const loggedUser = await AsyncStorage.getItem('user');
     const token = await AsyncStorage.getItem('token');
@@ -83,6 +105,11 @@ export default function Index() {
   // };
   const userAuthInfo = useMemo(() => ({user, setUser}), [user]);
   const tokenMemo = useMemo(() => ({token, setToken}), [user]);
+  const chatClientMemo = useMemo(
+    () => ({chatClientInstance, setChatClientInstance}),
+    [chatClientInstance],
+  );
+
   const netConnection = useMemo(
     () => ({connection, setConnection}),
     [connection],
@@ -97,6 +124,7 @@ export default function Index() {
   const valueToContext = {
     userAuthInfo,
     tokenMemo,
+    chatClientMemo,
   };
   return (
     <Context.Provider value={valueToContext}>
@@ -127,6 +155,7 @@ export default function Index() {
                   ) : (
                     <>
                       <Stack.Screen name="HomeB" component={HomeB} />
+                      <Stack.Screen name="ScoreCard" component={ScoreCard} />
                       <Stack.Screen name="VIP" component={VIP} />
                       <Stack.Group>
                         <Stack.Screen name="Agency" component={Agency} />
@@ -153,8 +182,13 @@ export default function Index() {
                         component={UpdatePassword}
                       />
                       <Stack.Screen name="Chat" component={Chat} />
+                      <Stack.Screen name="PlayCenter" component={PlayCenter} />
 
                       <Stack.Screen name="Chat2" component={Chat2} />
+                      <Stack.Screen
+                        name="StrangerMessages"
+                        component={StrangerMessages}
+                      />
                       <Stack.Screen name="GoLive" component={GoLive} />
                       <Stack.Screen name="Coin" component={Coin} />
                       <Stack.Screen

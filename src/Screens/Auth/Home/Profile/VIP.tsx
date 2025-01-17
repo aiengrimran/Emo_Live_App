@@ -8,10 +8,28 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
+import {colors} from '../../../../styles/colors';
+import appStyles from '../../../../styles/styles';
+import Group from '../../../../assets/svg/Group.svg';
+import Bubble from '../../../../assets/svg/bubble.svg';
+import Card from '../../../../assets/svg/card.svg';
+import Effect from '../../../../assets/svg/effect.svg';
+import Medal from '../../../../assets/svg/medal.svg';
+import Diamond from '../../../../assets/svg/diamond.svg';
+import Speed from '../../../../assets/svg/speed.svg';
+import Doctor from '../../../../assets/svg/doctor.svg';
+import Ic from '../../../../assets/svg/Ic.svg';
+import Context from '../../../../Context/Context';
+import envVar from '../../../../config/envVar';
+
+// import Group from '../../../../assets/svg/Group.svg';
 export default function VIP({navigation}) {
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {user} = userAuthInfo;
+  const {token} = tokenMemo;
   const [tab, setTab] = useState(1);
   const [card, setCard] = useState(2);
 
@@ -35,28 +53,24 @@ export default function VIP({navigation}) {
           marginTop: Platform.OS == 'ios' ? 60 : 10,
         }}>
         <Image
-          style={{width: 120, height: 120, borderRadius: 80}}
-          source={require('../../../../assets/images/live/girl1.jpg')}
+          style={appStyles.userAvatar}
+          source={
+            user.avatar
+              ? {
+                  uri: envVar.API_URL + 'display-avatar/' + user.id,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              : require('../../../../assets/images/place.jpg')
+          }
         />
-        <Text style={styles.userText}>Emma Smith</Text>
-        <View
-          style={{
-            marginTop: 5,
-            flexDirection: 'row',
-            alignItems: 'center',
-            width: '60%',
-            justifyContent: 'space-between',
-          }}>
-          <Text style={styles.userDesc}>ID:388</Text>
-        </View>
+        <Text style={styles.userText}>
+          {user.first_name + ' ' + user.last_name}
+        </Text>
+        <Text style={styles.userDesc}>ID:{user.id}</Text>
       </View>
-      <View
-        style={{
-          marginTop: 10,
-          flexDirection: 'row',
-          width: '90%',
-          justifyContent: 'space-around',
-        }}>
+      <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tabBtn, tab == 1 && {borderBottomWidth: 1}]}
           onPress={() => updateTab(1)}>
@@ -112,88 +126,81 @@ export default function VIP({navigation}) {
         </TouchableOpacity>
       </View>
       <Text style={styles.vipText}>VIP license agreement </Text>
-      <ScrollView style={{marginTop: 10}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="message-processing-outline" size={35} color="#fff" />
+
+      <View style={{height: '50%'}}>
+        <ScrollView contentContainerStyle={{marginTop: 10}}>
+          <View style={{marginBottom: 40, paddingBottom: 80}}>
+            <View style={styles.row}>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Effect width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>Entrance Effect</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Group width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>PrivFunc</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Bubble width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>Chat Bubbles</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.actionTxr}>Entrance Effect</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="account-group" size={35} color="#fff" />
+            <View style={[styles.row, {marginVertical: 10}]}>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Doctor width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>Profile Decor</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Medal width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>VIP Medal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Ic width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>VIP SLing</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.actionTxr}>PrivFunc</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="weight-lifter" size={35} color="#fff" />
+            <View style={[styles.row, {marginBottom: 30}]}>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Diamond width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>VIP Diamond</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{alignItems: 'center'}}>
+                <View style={styles.icon}>
+                  <Card width={33} height={33} />
+                </View>
+                <Text style={styles.actionTxr}>Profile Card</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  width: '22%',
+                }}>
+                {/* <TouchableOpacity style={{alignItems: 'center'}}> */}
+                <View style={styles.icon}>
+                  <Speed width={33} height={33} />
+                </View>
+                {/* <Text style={styles.actionTxr}>Speed up</Text> */}
+                <Text style={[styles.actionTxr, {width: '80%'}]}>
+                  Speed up Upgrading
+                </Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.actionTxr}>Chat Bubbles</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginVertical: 10,
-            width: '95%',
-            justifyContent: 'space-around',
-          }}>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="wallet" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Profile Decor</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <IconF name="handshake-simple" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>VIP Medal</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="star" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>VIP SLing</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '95%',
-            justifyContent: 'space-around',
-          }}>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="message-processing-outline" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>VIP Diamond</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon
-                name="book-open-page-variant-outline"
-                size={35}
-                color="#fff"
-              />
-            </View>
-            <Text style={styles.actionTxr}>Profile Card</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{alignItems: 'center'}}>
-            <View style={styles.icon}>
-              <Icon name="bag-checked" size={35} color="#fff" />
-            </View>
-            <Text style={styles.actionTxr}>Speed up Upgrading</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </View>
       <TouchableOpacity
         style={styles.btn}
         onPress={() => navigation.navigate('Coin')}>
@@ -211,15 +218,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#1d1f31',
     padding: 10,
   },
+  tabs: {
+    marginTop: 10,
+    flexDirection: 'row',
+    width: '90%',
+    justifyContent: 'space-around',
+  },
+  row: {
+    flexDirection: 'row',
+    width: '95%',
+    justifyContent: 'space-between',
+  },
   tab: {
-    fontWeight: '500',
-    fontSize: 18,
-    color: '#83848e',
+    ...appStyles.regularTxtMd,
+    color: colors.body_text,
   },
   image: {
     flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
   },
   userSection: {
     marginTop: 20,
@@ -232,15 +247,13 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   cardCategory: {
-    color: '#fff',
-    marginVertical: 5,
-    fontWeight: '500',
+    color: colors.light_blue,
+    ...appStyles.bodyMd,
   },
   cardPeriod: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.light_blue,
+    ...appStyles.bodyRg,
     marginVertical: 10,
-    fontWeight: '400',
   },
   backBtn: {
     flexDirection: 'row',
@@ -253,9 +266,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   cardPrice: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    ...appStyles.headline2,
+    color: colors.complimentary,
   },
   card: {
     paddingTop: 10,
@@ -271,6 +283,7 @@ const styles = StyleSheet.create({
     width: '90%',
     padding: 15,
     position: 'absolute',
+    // position: 'relative',
     bottom: Platform.OS == 'ios' ? 30 : 20,
     alignSelf: 'center',
     borderRadius: 15,
@@ -285,15 +298,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   vipText: {
-    color: '#868791',
+    ...appStyles.regularTxtMd,
+    color: colors.body_text,
     marginVertical: 10,
     textAlign: 'center',
     alignSelf: 'center',
-    fontSize: 18,
-    fontWeight: '600',
   },
   tabBtn: {
-    borderBottomColor: 'white',
+    borderBottomColor: colors.complimentary,
     paddingBottom: 10,
   },
   info: {
@@ -305,23 +317,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     flexDirection: 'row',
     padding: 5,
-  },
-  level: {
-    backgroundColor: '#07fef8',
-    borderRadius: 15,
-    flexDirection: 'row',
-    padding: 5,
-  },
-  infoHeading: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
-    marginLeft: 5,
-  },
-  infoText: {
-    color: '#868791',
-    fontSize: 17,
-    fontWeight: '500',
   },
   icon: {
     borderWidth: 1,
@@ -336,58 +331,21 @@ const styles = StyleSheet.create({
   },
 
   userText: {
+    ...appStyles.headline,
     marginTop: 10,
     textAlign: 'center',
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
+    color: colors.complimentary,
   },
   userDesc: {
     textAlign: 'center',
-    color: '#fff',
+    ...appStyles.regularTxtMd,
+    color: colors.complimentary,
     marginTop: 5,
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  followBtn: {
-    backgroundColor: '#ef0143',
-    width: '45%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
   },
   actionTxr: {
+    ...appStyles.bodyRg,
     marginTop: 5,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  chatBtn: {
-    backgroundColor: '#211f34',
-    height: 60,
-    borderColor: '#494759',
-    borderWidth: 1,
-    width: '45%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-  },
-  collabBtn: {
-    marginTop: 20,
-    borderRadius: 8,
-    flexDirection: 'row',
-    width: '99%',
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#494759',
-    // justifyContent: 'flex-start',
-  },
-  btnText: {
+    color: colors.complimentary,
     textAlign: 'center',
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
   },
 });

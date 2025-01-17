@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import React, {useState, useLayoutEffect} from 'react';
+import React, {useState, useLayoutEffect, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
@@ -18,9 +18,14 @@ import {
   updateUsers,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
+import Context from '../../../../Context/Context';
+import envVar from '../../../../config/envVar';
 
 export default function UserProfile({navigation}) {
   const dispatch = useDispatch();
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {user} = userAuthInfo;
+  const {token} = tokenMemo;
   const [error, setError] = useState('');
   const visitProfile = useSelector(
     (state: any) => state.usersReducer.visitProfile,
@@ -70,13 +75,19 @@ export default function UserProfile({navigation}) {
           marginTop: Platform.OS === 'ios' ? 50 : 10,
         }}>
         <Image
-          style={{width: 150, height: 150, borderRadius: 85}}
+          style={appStyles.userAvatar}
           source={
             visitProfile.avatar
-              ? {uri: visitProfile.avatar}
+              ? {
+                  uri: envVar.API_URL + 'display-avatar/' + visitProfile.id,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
               : require('../../../../assets/images/place.jpg')
           }
         />
+
         <Text style={styles.userText}>
           {visitProfile.first_name + ' ' + visitProfile.last_name}
         </Text>
@@ -126,16 +137,18 @@ export default function UserProfile({navigation}) {
               onPress={followUser}
               style={[
                 styles.followBtn,
-                visitProfile.is_followed && {backgroundColor: '#494759'},
+                visitProfile.is_followed && {backgroundColor: colors.lines},
               ]}>
-              <Text style={styles.userDesc}>
+              <Text style={styles.btnTxt}>
                 {visitProfile.is_followed ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Chat')}
+              onPress={() =>
+                navigation.navigate('Chat', {receiverUser: visitProfile})
+              }
               style={styles.chatBtn}>
-              <Text style={styles.userDesc}>Chat</Text>
+              <Text style={styles.btnTxt}>Chat</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.collabBtn}>
@@ -147,12 +160,13 @@ export default function UserProfile({navigation}) {
               }}>
               <Icon name="account-group" color="#fff" size={30} />
               <Text
-                style={{
-                  color: '#fff',
-                  fontSize: 18,
-                  marginLeft: 10,
-                  fontWeight: '600',
-                }}>
+                style={[
+                  appStyles.paragraph1,
+                  {
+                    color: colors.complimentary,
+                    marginLeft: 10,
+                  },
+                ]}>
                 Collaborates
               </Text>
             </View>
@@ -167,15 +181,8 @@ export default function UserProfile({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d1f31',
+    backgroundColor: colors.LG,
     padding: 10,
-    // paddingTop: 0,
-  },
-
-  image: {
-    flex: 1,
-    // display: 'flex',
-    // justifyContent: 'space-around',
   },
   userSection: {
     marginTop: 20,
@@ -206,33 +213,34 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  btnTxt: {
+    ...appStyles.paragraph1,
+    color: colors.complimentary,
+  },
   userText: {
     marginTop: 10,
+    ...appStyles.headline,
     textAlign: 'center',
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
+    color: colors.complimentary,
   },
   userDesc: {
+    ...appStyles.regularTxtRg,
     textAlign: 'center',
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 16,
+    marginTop: 8,
+    color: colors.complimentary,
   },
   followBtn: {
-    backgroundColor: '#ef0143',
+    backgroundColor: colors.accent,
     width: '45%',
     height: 50,
     alignItems: 'center',
-    // paddingHorizontal: 40,
     justifyContent: 'center',
     borderRadius: 9,
   },
   chatBtn: {
-    backgroundColor: '#211f34',
-    // paddingHorizontal: 20,
-    height: 50,
-    borderColor: '#494759',
+    backgroundColor: colors.LG,
+    // height: 40,
+    borderColor: colors.lines,
     borderWidth: 1,
     width: '45%',
     alignItems: 'center',
@@ -240,21 +248,14 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   collabBtn: {
-    marginTop: 20,
-    borderRadius: 8,
+    marginTop: 40,
+    borderRadius: 12,
     flexDirection: 'row',
     width: '99%',
     padding: 20,
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#494759',
-    // justifyContent: 'flex-start',
-  },
-  btnText: {
-    textAlign: 'center',
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    borderColor: colors.lines,
   },
 });

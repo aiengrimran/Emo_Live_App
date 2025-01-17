@@ -11,12 +11,13 @@ import React, {useState, useContext} from 'react';
 import {colors} from '../../../../styles/colors';
 import appStyles from '../../../../styles/styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Room6On from '../../../../assets/svgs/room6.svg';
-import Room6 from '../../../../assets/svgs/room6Off.svg';
-import Room9 from '../../../../assets/svgs/room9Off.svg';
-import Room9On from '../../../../assets/svgs/room9.svg';
+import Room6On from '../../../../assets/svg/room6.svg';
+import Room6 from '../../../../assets/svg/room6Off.svg';
+import Room9 from '../../../../assets/svg/room9Off.svg';
+import Room9On from '../../../../assets/svg/room9.svg';
 import axiosInstance from '../../../../Api/axiosConfig';
 import Context from '../../../../Context/Context';
+import envVar from '../../../../config/envVar';
 
 export default function GoLive2({navigation}) {
   const createChannelToken = async () => {
@@ -27,8 +28,9 @@ export default function GoLive2({navigation}) {
       console.log(error);
     }
   };
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user} = userAuthInfo;
+  const {token} = tokenMemo;
   const [room, setRoom] = useState(null);
   const [btnColor, setBtnColor] = useState(colors.body_text);
   return (
@@ -40,10 +42,14 @@ export default function GoLive2({navigation}) {
             style={[appStyles.userAvatar, {height: 40, width: 40}]}
             source={
               user.avatar
-                ? {uri: user.avatar}
+                ? {
+                    uri: envVar.API_URL + 'display-avatar/' + user.id,
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
                 : require('../../../../assets/images/place.jpg')
             }
-            // source={require('../../../../assets/images/live/girl1.jpg')}
           />
           <Text
             style={[

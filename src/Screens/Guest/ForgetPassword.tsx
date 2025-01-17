@@ -19,10 +19,12 @@ import axiosInstance from '../../Api/axiosConfig';
 //   import { colors } from '../../../../../styles/colors';
 export default function ForgetPassword({navigation}) {
   const [emailSent, setEmailSent] = useState(false);
-  const [form, setFrom] = useState({
+  const [form, setForm] = useState({
     token: '',
     email: '',
     password: '',
+    securePass: true,
+    secure_password_confirm: true,
     password_confirmation: '',
   });
   const [error, setError] = useState('');
@@ -30,13 +32,17 @@ export default function ForgetPassword({navigation}) {
 
   const sendEmail = async () => {
     try {
+      if (emailSent) {
+        updatePassword();
+        return;
+      }
       if (form.email.length < 5 || !form.email) {
         Alert.alert('Please Provide Email');
         return;
       }
       setLoading(true);
       const res = await axiosInstance.post('send-reset-password-mail', {
-        email: email,
+        email: form.email,
       });
       setEmailSent(true);
       console.log(res.data);
@@ -50,15 +56,19 @@ export default function ForgetPassword({navigation}) {
   const clearError = () => {
     setLoading(false);
     setTimeout(() => {
-      setFrom({...form, email: ''});
+      setForm({...form, email: ''});
       setError(false);
     }, 4000);
   };
-  const UpdatePassword = async () => {
+  const updatePassword = async () => {
     try {
+      console.log('yoi called me');
+      setLoading(true);
       const res = await axiosInstance.post('reset-password', form);
+      setLoading(false);
       console.log(res.data);
       Alert.alert('Password successfully updated');
+      navigation.goBack();
     } catch (error: any) {
       clearError();
       setError(error.message);
@@ -107,7 +117,7 @@ export default function ForgetPassword({navigation}) {
                   placeholder="jhon@gmail.com"
                   style={styles.input}
                   placeholderTextColor="#737380"
-                  onChangeText={text => setFrom({...form, email: text})}
+                  onChangeText={text => setForm({...form, email: text})}
                   value={form.email}
                   autoCapitalize="none"
                 />
@@ -117,11 +127,10 @@ export default function ForgetPassword({navigation}) {
                 <View style={{marginVertical: 30}}>
                   <Text style={styles.label}>Token</Text>
                   <TextInput
-                    secureTextEntry={true}
-                    placeholder="*******"
+                    placeholder="Enter Code"
                     keyboardType="decimal-pad"
                     value={form.token}
-                    onChangeText={text => setFrom({...form, token: text})}
+                    onChangeText={text => setForm({...form, token: text})}
                     style={styles.input}
                     placeholderTextColor="#737380"
                   />
@@ -129,28 +138,65 @@ export default function ForgetPassword({navigation}) {
                 <View style={{marginVertical: 30}}>
                   <Text style={styles.label}>Enter New Password</Text>
                   <TextInput
-                    secureTextEntry={true}
+                    secureTextEntry={form.securePass}
                     placeholder="*******"
                     autoCapitalize="none"
                     value={form.password}
-                    onChangeText={text => setFrom({...form, password: text})}
+                    onChangeText={text => setForm({...form, password: text})}
                     style={styles.input}
                     placeholderTextColor="#737380"
                   />
+                  <TouchableOpacity
+                    onPress={() =>
+                      setForm({...form, securePass: !form.securePass})
+                    }
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: 23,
+                    }}>
+                    <Icon
+                      name={form.securePass ? 'eye-outline' : 'eye-off-outline'}
+                      size={25}
+                      color={colors.complimentary}
+                    />
+                  </TouchableOpacity>
                 </View>
                 <View>
                   <Text style={styles.label}>Confirm New Password</Text>
                   <TextInput
-                    secureTextEntry={true}
+                    secureTextEntry={form.secure_password_confirm}
                     placeholder="*******"
                     style={styles.input}
                     autoCapitalize="none"
                     value={form.password_confirmation}
                     onChangeText={text =>
-                      setFrom({...form, password_confirmation: text})
+                      setForm({...form, password_confirmation: text})
                     }
                     placeholderTextColor="#737380"
                   />
+                  <TouchableOpacity
+                    onPress={() =>
+                      setForm({
+                        ...form,
+                        secure_password_confirm: !form.secure_password_confirm,
+                      })
+                    }
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: 23,
+                    }}>
+                    <Icon
+                      name={
+                        form.secure_password_confirm
+                          ? 'eye-outline'
+                          : 'eye-off-outline'
+                      }
+                      size={25}
+                      color={colors.complimentary}
+                    />
+                  </TouchableOpacity>
                 </View>
               </>
             )}

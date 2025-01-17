@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 import {useSelector, useDispatch} from 'react-redux';
@@ -19,8 +19,12 @@ import {
   updateUsers,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
+import Context from '../../../../Context/Context';
+import envVar from '../../../../config/envVar';
 
 export default function Search({navigation}) {
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {token} = tokenMemo;
   const dispatch = useDispatch();
   const users = useSelector((state: any) => state.usersReducer.users);
   // const valetRating = useSelector((state: any) => state.valetReducer.rating);
@@ -40,6 +44,7 @@ export default function Search({navigation}) {
     try {
       setLoading(true);
       const res = await axiosInstance.get('/chat/active-users');
+      // console.log(res.data);
       dispatch(updateUsers(res.data.users));
       setLoading(false);
     } catch (error) {
@@ -79,7 +84,7 @@ export default function Search({navigation}) {
       // setupListeners
     } catch (error: any) {
       clearError();
-      console.log(error.message);
+      console.log(error);
     }
   };
   const clearError = () => {
@@ -108,7 +113,8 @@ export default function Search({navigation}) {
         {searchLoader ? (
           <ActivityIndicator size={'small'} color={'blue'} />
         ) : (
-          <TouchableOpacity onPress={searchAccount} style={{marginLeft: 20}}>
+          <TouchableOpacity onPress={getUsers} style={{marginLeft: 20}}>
+            {/* <TouchableOpacity onPress={searchAccount} style={{marginLeft: 20}}> */}
             <Icon name="magnify" size={25} color={colors.complimentary} />
           </TouchableOpacity>
         )}
@@ -139,8 +145,14 @@ export default function Search({navigation}) {
                     style={{width: 50, height: 50, borderRadius: 25}}
                     source={
                       item.avatar
-                        ? {uri: item.avatar}
-                        : require('../../../../assets/images/place.jpg')
+                        ? {
+                            uri: envVar.API_URL + 'display-avatar/' + item.id,
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
+                        : // ? {uri:  item.avatar}
+                          require('../../../../assets/images/place.jpg')
                     }
                   />
                   <View style={{marginLeft: 20}}>

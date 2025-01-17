@@ -32,6 +32,8 @@ export default function Register({navigation}) {
     address: '',
     email: '',
     password: '',
+    securePass: true,
+    secure_password_confirm: true,
     dob: '',
     password_confirmation: '',
   });
@@ -120,7 +122,7 @@ export default function Register({navigation}) {
                       <TextInput
                         style={styles.inputBox}
                         onChangeText={(e: any) =>
-                          setForm({...form, first_name: e})
+                          setForm(prevState => ({...prevState, first_name: e}))
                         }
                         value={form.first_name}
                         placeholder="First Name"
@@ -132,7 +134,7 @@ export default function Register({navigation}) {
                       <TextInput
                         style={styles.inputBox}
                         onChangeText={(e: any) =>
-                          setForm({...form, last_name: e})
+                          setForm(prevState => ({...prevState, last_name: e}))
                         }
                         value={form.last_name}
                         placeholder="Last Name"
@@ -144,7 +146,7 @@ export default function Register({navigation}) {
                       <TextInput
                         style={styles.inputBox}
                         onChangeText={(e: any) =>
-                          setForm({...form, address: e})
+                          setForm(prevState => ({...prevState, address: e}))
                         }
                         autoCapitalize="none"
                         value={form.address}
@@ -160,7 +162,9 @@ export default function Register({navigation}) {
                         value={form.bio}
                         autoCapitalize="none"
                         keyboardType="default"
-                        onChangeText={(e: any) => setForm({...form, bio: e})}
+                        onChangeText={(e: any) =>
+                          setForm(prevState => ({...prevState, bio: e}))
+                        }
                         placeholder="bio ...."
                         placeholderTextColor={colors.body_text}
                       />
@@ -169,7 +173,9 @@ export default function Register({navigation}) {
                       <Text style={styles.label}>DOB:</Text>
                       <TextInput
                         style={styles.inputBox}
-                        onChangeText={(e: any) => setForm({...form, dob: e})}
+                        onChangeText={(e: any) =>
+                          setForm(prevState => ({...prevState, dob: e}))
+                        }
                         placeholder="yyyy-mm-dd"
                         placeholderTextColor={colors.body_text}
                       />
@@ -178,7 +184,9 @@ export default function Register({navigation}) {
                       <Text style={styles.label}>Email:</Text>
                       <TextInput
                         style={styles.inputBox}
-                        onChangeText={(e: any) => setForm({...form, email: e})}
+                        onChangeText={(e: any) =>
+                          setForm(prevState => ({...prevState, email: e}))
+                        }
                         value={form.email}
                         autoCapitalize="none"
                         keyboardType="email-address"
@@ -191,27 +199,73 @@ export default function Register({navigation}) {
                       <Text style={styles.label}>Password:</Text>
                       <TextInput
                         style={styles.inputBox}
-                        secureTextEntry={true}
+                        secureTextEntry={form.securePass}
                         onChangeText={(e: any) =>
-                          setForm({...form, password: e})
+                          setForm(prevState => ({...prevState, password: e}))
                         }
                         value={form.password}
                         placeholder="**********"
                         placeholderTextColor={colors.body_text}
                       />
+                      <TouchableOpacity
+                        onPress={() =>
+                          setForm(prevState => ({
+                            ...prevState,
+                            securePass: !prevState.securePass,
+                          }))
+                        }
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: 43,
+                        }}>
+                        <Icon
+                          name={
+                            form.securePass ? 'eye-outline' : 'eye-off-outline'
+                          }
+                          size={25}
+                          color={colors.complimentary}
+                        />
+                      </TouchableOpacity>
                     </View>
                     <View style={{marginTop: 10}}>
                       <Text style={styles.label}>Confirm Password:</Text>
                       <TextInput
                         style={styles.inputBox}
                         onChangeText={(e: any) =>
-                          setForm({...form, password_confirmation: e})
+                          setForm(prevState => ({
+                            ...prevState,
+                            password_confirmation: e,
+                          }))
                         }
                         value={form.password_confirmation}
-                        secureTextEntry={true}
+                        secureTextEntry={form.secure_password_confirm}
                         placeholder="**********"
                         placeholderTextColor={colors.body_text}
                       />
+                      <TouchableOpacity
+                        onPress={() =>
+                          setForm(prevState => ({
+                            ...prevState,
+                            secure_password_confirm:
+                              !prevState.secure_password_confirm,
+                          }))
+                        }
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: 43,
+                        }}>
+                        <Icon
+                          name={
+                            form.secure_password_confirm
+                              ? 'eye-outline'
+                              : 'eye-off-outline'
+                          }
+                          size={25}
+                          color={colors.complimentary}
+                        />
+                      </TouchableOpacity>
                     </View>
                     <View style={{marginTop: 10}}>
                       <Text style={styles.label}>Gender:</Text>
@@ -224,7 +278,12 @@ export default function Register({navigation}) {
                           alignItems: 'center',
                         }}>
                         <TouchableOpacity
-                          onPress={() => setForm({...form, gender: 'female'})}
+                          onPress={() =>
+                            setForm(prevState => ({
+                              ...prevState,
+                              gender: 'female',
+                            }))
+                          }
                           style={[
                             styles.genderBtn,
                             form.gender == 'female' && {
@@ -239,7 +298,12 @@ export default function Register({navigation}) {
                           <Text style={styles.genderTxt}>Female</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => setForm({...form, gender: 'male'})}
+                          onPress={() =>
+                            setForm(prevState => ({
+                              ...prevState,
+                              gender: 'male',
+                            }))
+                          }
                           style={[
                             styles.genderBtn,
                             form.gender == 'male' && {
@@ -251,7 +315,12 @@ export default function Register({navigation}) {
                           <Text style={styles.genderTxt}>Male</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => setForm({...form, gender: 'other'})}
+                          onPress={() =>
+                            setForm(prevState => ({
+                              ...prevState,
+                              gender: 'other',
+                            }))
+                          }
                           style={[
                             styles.genderBtn,
                             form.gender == 'other' && {

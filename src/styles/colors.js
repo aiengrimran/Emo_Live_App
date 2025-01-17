@@ -9,6 +9,7 @@ export const colors = {
   semantic: '#08FEF8',
   yellow: '#F0DF00',
   dark_gradient: '#371D40',
+
   primary_gradient: '#F00044',
   LR: '#291118',
   alpha_gradient: '#1D1F31',
@@ -20,4 +21,11 @@ export const colors = {
   offwhite: '#FEFEFE',
   tool_btn: '#565764',
   unknown2: '#C5C5C5',
+  light_blue: '#F7F9FF',
+
+  // gradient
+  golden: '#FFA933',
+
+  // games
+  store: '#868791',
 };

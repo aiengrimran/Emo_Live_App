@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
+import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import scripts from '../../../../scripts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,10 +24,13 @@ import envVar from '../../../../config/envVar';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo, chatClientMemo} = useContext(Context);
+  const {chatClientInstance} = chatClientMemo;
   const {user} = userAuthInfo;
+  const chatClient = ChatClient.getInstance();
   const {token} = tokenMemo;
   const [error, setError] = useState(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const createAgoraChatToken = async () => {
@@ -41,6 +45,15 @@ export default function Search({navigation}) {
     } catch (error: any) {
       scripts.clearError(setError, setLoading);
       setError(error.message);
+      console.log(error);
+    }
+  };
+  const getUnreadMessages = async () => {
+    try {
+      const count = await chatClientInstance.chatManager.getUnreadCount();
+      setUnreadMessageCount(count);
+      console.log(count);
+    } catch (error) {
       console.log(error);
     }
   };
@@ -94,16 +107,15 @@ export default function Search({navigation}) {
               source={
                 user.avatar
                   ? {
-                      uri: envVar.API_URL + 'display-avatar',
+                      uri: envVar.API_URL + 'display-avatar/' + user.id,
                       headers: {
                         Authorization: `Bearer ${token}`,
                       },
                     }
                   : require('../../../../assets/images/place.jpg')
               }
-              // source={require('../../../../assets/images/place.jpg')}
             />
-            <Text style={styles.userText}>
+            <Text style={styles.userText} onPress={getUnreadMessages}>
               {user.first_name + ' ' + user.last_name}{' '}
             </Text>
             <View style={styles.userInfo}>
@@ -196,6 +208,17 @@ export default function Search({navigation}) {
                     />
                   </View>
                   <Text style={styles.actionTxr}>Messages</Text>
+                  {unreadMessageCount > 0 && (
+                    <View style={styles.unreadMessages}>
+                      <Text
+                        style={[
+                          appStyles.regularTxtMd,
+                          {color: colors.complimentary},
+                        ]}>
+                        {unreadMessageCount}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Agency')}
@@ -370,6 +393,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
     justifyContent: 'space-evenly',
     alignItems: 'center',
+  },
+  unreadMessages: {
+    position: 'absolute',
+    right: 0,
+    top: -10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 50,
+    backgroundColor: colors.accent,
   },
   gender: {
     backgroundColor: 'grey',

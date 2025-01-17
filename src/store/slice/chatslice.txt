@@ -1,0 +1,104 @@
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import {ChatClient, ChatOptions} from 'react-native-agora-chat';
+import envVar from '../../config/envVar';
+const AGORA_CHAT_KEY = envVar.AGORA_CHAT_KEY;
+// const chatManager = chatClient.chatManager;
+
+// Async thunk for initializing the chat SDK
+export const initializeChatSDK = createAsyncThunk(
+  'chat/initializeChatSDK',
+  // async thunkAPI => {
+  async (_, {getState, rejectWithValue}) => {
+    const {chat} = getState();
+
+    if (chat.initialized) {
+      console.log('Chat SDK already initialized');
+      return;
+    }
+    // const chatClient = new ChatClient();
+
+    try {
+      const options = new ChatOptions({
+        autoLogin: true,
+        appKey: AGORA_CHAT_KEY,
+      });
+
+      // await chatClient.init(options);
+
+      return {
+        initialized: true,
+        // chatClient,
+        // chatManager: chatClient.chatManager,
+      };
+    } catch (error) {
+      console.error('Failed to initialize chat SDK:', error);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+// Async thunk for adding connection listeners
+export const setupConnectionListeners = createAsyncThunk(
+  'chat/setupConnectionListeners',
+  async (_, {dispatch, rejectWithValue}) => {
+    try {
+      const connectionListener = {
+        onConnected: () => {
+          console.log('Connected to chat server');
+          dispatch(setConnectionStatus(true));
+        },
+        onDisconnected: errorCode => {
+          console.log('Disconnected from chat server:', errorCode);
+          dispatch(setConnectionStatus(false));
+        },
+        onTokenWillExpire: () => {
+          console.log('Token will expire soon.');
+        },
+        onTokenDidExpire: () => {
+          console.log('Token has expired.');
+        },
+      };
+
+      chatClient.addConnectionListener(connectionListener);
+    } catch (error) {
+      console.error('Failed to set up connection listeners:', error);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+const chatSlice = createSlice({
+  name: 'chat',
+  initialState: {
+    initialized: false,
+    connected: false,
+    error: null,
+    // chatManager: null, // Store the chatManager in Redux
+    // chatClient: null, // Store the chatClient instance
+  },
+  reducers: {
+    setConnectionStatus(state, action) {
+      state.connected = action.payload;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(initializeChatSDK.fulfilled, (state, action) => {
+        // console.log(action.payload);
+        state.initialized = true;
+        // state.chatClient = action.payload.chatClient;
+        // state.chatManager = action.payload.chatManager; // Add chatManager to the state
+      })
+      .addCase(initializeChatSDK.rejected, (state, action) => {
+        // console.log('error', action.error);
+        state.error = action.payload;
+      })
+      .addCase(setupConnectionListeners.rejected, (state, action) => {
+        state.error = action.payload;
+      });
+  },
+});
+
+export const {setConnectionStatus} = chatSlice.actions;
+
+export default chatSlice.reducer;

@@ -163,7 +163,7 @@ export default function EditProfile({navigation}) {
               source={
                 user.avatar
                   ? {
-                      uri: envVar.API_URL + 'display-avatar',
+                      uri: envVar.API_URL + 'display-avatar/' + user.id,
                       headers: {
                         Authorization: `Bearer ${token}`,
                       },

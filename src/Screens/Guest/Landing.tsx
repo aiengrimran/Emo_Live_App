@@ -26,10 +26,10 @@ export default function Landing({navigation}) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {setUser} = userAuthInfo;
   const {setToken} = tokenMemo;
-  console.log(userAuthInfo);
   const [form, setForm] = useState({
     email: '',
     password: '',
+    secure: true,
   });
   const [error, setError] = useState<any>(false);
   const [loading, setLoading] = useState(false);
@@ -179,7 +179,7 @@ export default function Landing({navigation}) {
                   <Text style={styles.subText}>Password:</Text>
                   <TextInput
                     style={styles.passwordInput}
-                    secureTextEntry={true}
+                    secureTextEntry={form.secure}
                     onChangeText={(text: any) =>
                       setForm({...form, password: text})
                     }
@@ -187,6 +187,19 @@ export default function Landing({navigation}) {
                     placeholder="**********"
                     placeholderTextColor={colors.body_text}
                   />
+                  <TouchableOpacity
+                    onPress={() => setForm({...form, secure: !form.secure})}
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: 34,
+                    }}>
+                    <Icon
+                      name={form.secure ? 'eye-outline' : 'eye-off-outline'}
+                      size={25}
+                      color={colors.complimentary}
+                    />
+                  </TouchableOpacity>
                 </View>
                 <View
                   style={{

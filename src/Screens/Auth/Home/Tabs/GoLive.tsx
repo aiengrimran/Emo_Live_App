@@ -19,22 +19,25 @@ import {useSelector, useDispatch} from 'react-redux';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {updateUsers} from '../../../../store/slice/usersSlice';
+import envVar from '../../../../config/envVar';
+import Users from './Podcast/Users';
 
 export default function GoLive({navigation}: any) {
   const dispatch = useDispatch();
   const users = useSelector((state: any) => state.usersReducer.users);
 
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user} = userAuthInfo;
+  const {token} = tokenMemo;
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [sheet, setSheet] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   // const [users, setUsers] = useState<Array<any>>([]);
-  const [sheetType, setSheetType] = useState<string | null>('tools');
+  const [sheetType, setSheetType] = useState<string | null>('');
 
   // callbacks
   const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
+    // console.log('handleSheetChanges', index);
     if (index < 0) setSheet(false);
   }, []);
 
@@ -48,12 +51,6 @@ export default function GoLive({navigation}: any) {
     setSheet(true);
     setSheetType('avatar');
     bottomSheetRef.current?.expand();
-  }, []);
-
-  // Function to handle close Bottom Sheet
-  const handleCloseSheet = useCallback(() => {
-    setSheet(true);
-    bottomSheetRef.current?.close();
   }, []);
 
   const getActiveUsers = async () => {
@@ -75,6 +72,8 @@ export default function GoLive({navigation}: any) {
           user={user}
           getActiveUsers={getActiveUsers}
           navigation={navigation}
+          token={token}
+          envVar={envVar}
         />
         <View
           style={{
@@ -154,13 +153,17 @@ export default function GoLive({navigation}: any) {
                   }}>
                   <Image
                     source={
-                      user.avatar
-                        ? {uri: user.avatar}
+                      item.avatar
+                        ? {
+                            uri: envVar.API_URL + 'display-avatar/' + item.id,
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
                         : require('../../../../assets/images/place.jpg')
                     }
                     style={styles.chatAvatar}
                   />
-
                   <Text
                     style={[
                       appStyles.paragraph1,
@@ -181,7 +184,10 @@ export default function GoLive({navigation}: any) {
             alignSelf: 'center',
             justifyContent: 'space-around',
           }}>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              handleOpenSheet('users');
+            }}>
             <Image
               source={require('../../../../assets/images/male/james.jpeg')}
               style={{width: 60, height: 60, borderRadius: 35}}
@@ -189,16 +195,7 @@ export default function GoLive({navigation}: any) {
             <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
               James
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: colors.semantic,
-                borderRadius: 25,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 60,
-                height: 30,
-              }}>
+            <View style={styles.points}>
               <Icon name="star-four-points" size={20} color={colors.dominant} />
               <Text style={[appStyles.small, {color: colors.dominant}]}>
                 12.5K
@@ -213,16 +210,7 @@ export default function GoLive({navigation}: any) {
             <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
               Olivia An
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: colors.semantic,
-                borderRadius: 25,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 60,
-                height: 30,
-              }}>
+            <View style={styles.points}>
               <Icon name="star-four-points" size={20} color={colors.dominant} />
               <Text style={[appStyles.small, {color: colors.dominant}]}>
                 3754
@@ -230,10 +218,10 @@ export default function GoLive({navigation}: any) {
             </View>
           </TouchableOpacity>
         </View>
-        <View style={{marginVertical: 20}}></View>
         <BottomSheet
           index={-1}
           enablePanDownToClose={true}
+          // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
           snapPoints={['60%']}
           ref={bottomSheetRef}
           handleStyle={{
@@ -250,7 +238,12 @@ export default function GoLive({navigation}: any) {
               <AvatarSheet
                 selectedUser={selectedUser}
                 navigation={navigation}
+                token={token}
+                envVar={envVar}
+                dispatch={dispatch}
               />
+            ) : sheetType == 'users' ? (
+              <Users />
             ) : (
               <Tools />
             )}
@@ -349,9 +342,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: colors.LG,
-    // padding: 16,
-    // padding: 36,
-    // alignItems: 'center',
   },
   sheetBtn: {
     paddingBottom: 10,
@@ -399,6 +389,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
   },
+  points: {
+    flexDirection: 'row',
+    backgroundColor: colors.semantic,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 60,
+    height: 30,
+  },
   sheetAction: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -431,18 +430,31 @@ interface HeaderProps {
   user: any;
   getActiveUsers: any;
   navigation: any;
+  token: string;
+  envVar: any;
   // getActiveUsers
 }
 
-const Header = ({user, getActiveUsers, navigation}: HeaderProps) => {
+const Header = ({
+  user,
+  getActiveUsers,
+  navigation,
+  token,
+  envVar,
+}: HeaderProps) => {
   return (
     <View style={styles.header}>
       <View style={styles.userInfo}>
         <Image
           source={
             user.avatar
-              ? {uri: user.avatar} // Load the user's avatar from a URL
-              : require('../../../../assets/images/place.jpg') // Load the placeholder image
+              ? {
+                  uri: envVar.API_URL + 'display-avatar/' + user.id,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              : require('../../../../assets/images/place.jpg')
           }
           // source={require('../../../../assets/images/live/girl1.jpg')}
           style={{width: 28, height: 28, borderRadius: 15}}
@@ -797,8 +809,33 @@ const Gifts = () => {
 interface AvatarSheetProps {
   navigation: any;
   selectedUser: any;
+  token: string;
+  envVar: any;
+  dispatch: any;
 }
-const AvatarSheet = ({navigation, selectedUser}: AvatarSheetProps) => {
+const AvatarSheet = ({
+  navigation,
+  selectedUser,
+  token,
+  envVar,
+  dispatch,
+}: AvatarSheetProps) => {
+  useDispatch;
+  const followUser = async (item: any) => {
+    try {
+      const url = item.is_followed
+        ? '/user/un-follow-user/' + item.id
+        : '/user/follow-user/' + item.id;
+      // setLoading(true);
+      const res = await axiosInstance.get(url);
+      // setLoading(false);
+      dispatch(updateUsers(res.data.users));
+    } catch (error: any) {
+      console.log(error);
+      // clearError();
+      // setError(error.message);
+    }
+  };
   return (
     <View style={{position: 'relative', paddingTop: 30}}>
       <TouchableOpacity style={styles.reportBtn}>
@@ -812,7 +849,12 @@ const AvatarSheet = ({navigation, selectedUser}: AvatarSheetProps) => {
           style={styles.sheetAvatar}
           source={
             selectedUser.avatar
-              ? {uri: selectedUser.avatar}
+              ? {
+                  uri: envVar.API_URL + 'display-avatar/' + selectedUser.id,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
               : require('../../../../assets/images/place.jpg')
           }
         />
@@ -898,12 +940,7 @@ const AvatarSheet = ({navigation, selectedUser}: AvatarSheetProps) => {
 
 const Tools = () => {
   return (
-    <View
-      style={
-        {
-          // paddingBottom: 30,
-        }
-      }>
+    <View>
       <Text
         style={[
           appStyles.headline,

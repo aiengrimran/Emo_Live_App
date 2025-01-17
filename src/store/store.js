@@ -1,15 +1,16 @@
 import {configureStore} from '@reduxjs/toolkit';
 import usersReducer from './slice/usersSlice';
-// import valetReducer from './valetSlice';
+import chatReducer from './slice/chatSlice';
 
 export const store = configureStore({
   reducer: {
     usersReducer,
-    // valetReducer,
+    chat: chatReducer,
   },
 });
+export default store;
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>;
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = typeof store.dispatch;
+// // Infer the `RootState` and `AppDispatch` types from the store itself
+// export type RootState = ReturnType<typeof store.getState>;
+// // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
+// export type AppDispatch = typeof store.dispatch;

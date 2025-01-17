@@ -36,7 +36,7 @@ import {
 // Define basic information
 const appId = 'cb178859ff01400d80dc40de177fedbc';
 const token =
-  'x007eJxTYBB9FOkdLDDH8s/GKq+U8n5t7ZX+pSffe/vfb32/JGH14X4FhuQkQ3MLC1PLtDQDQxMDgxQLg5RkE4OUVENz87TUlKTkDbNL0xsCGRlEp2WxMDIwMrAAMQgwgUlmMMkCJUtSi0sYGbQAjJAfiA==';
+  '007eJxTYFib5rpg1kXnNofnfubnArK9lnU8CtRyE9z7Km1qg/jBquUKDMlJhuYWFqaWaWkGhiYGBikWBinJJgYpqYbm5mmpKUnJIacb0hsCGRnmJ+5hYWSAQBCfhaEktbiEgQEAYoMgOg==';
 const channelName = 'test';
 // const uid = 0; // Local user Uid, no need to modify
 
@@ -98,7 +98,7 @@ const App = () => {
       });
       // Enable local video
       // agoraEngine.enableVideo();
-      agoraEngine.enableLocalAudio(true);
+      // agoraEngine.enableLocalAudio(true);
       //   agoraEngine.enableLocalAudio(true);
     } catch (e) {
       console.log(e);

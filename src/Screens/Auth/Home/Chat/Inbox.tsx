@@ -5,64 +5,123 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Platform,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-// import appStyles from '../../../../../../styles/styles';
 import appStyles from '../../../../styles/styles';
+import {ChatClient} from 'react-native-agora-chat';
 import {colors} from '../../../../styles/colors';
-
+import Stranger from '../../../../assets/svg/stranger.svg';
+import {UseSelector, useDispatch, useSelector} from 'react-redux';
+import {setConnected, setInitialized} from '../../../../store/slice/chatSlice';
 // import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 export default function Inbox({navigation}) {
+  const {connected} = useSelector((state: any) => state.chat);
+  console.log(connected);
+  const chatClient = ChatClient.getInstance();
+  const [inboxMessages, setInboxMessages] = useState<any>([]);
+  const getAllConversation = async () => {
+    try {
+      let key = await chatClient.isConnected();
+
+      const conversation =
+        await chatClient.chatManager.fetchConversationsFromServerWithCursor();
+      console.log(conversation);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <View style={styles.container}>
-      <View style={[appStyles.backBtn]}>
+      <View style={[styles.header]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            // padding: 10,
           }}>
           <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
           <Text style={styles.heading}>Inbox</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="close" color={colors.complimentary} size={25} />
-        </TouchableOpacity>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('StrangerMessages')}>
+            <Stranger width={25} height={25} />
+            {/* <Icon name="panda" color={colors.complimentary} size={25} /> */}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{marginLeft: 10}}
+            onPress={getAllConversation}>
+            <Icon name="check-all" color={colors.complimentary} size={25} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={{marginTop: 40}}>
         <View style={styles.userSection}>
-          <TouchableOpacity
-            style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
-            <View style={styles.imgOverly}>
-              <Text style={{color: '#fff'}}>Support Chat</Text>
+          <TouchableOpacity style={styles.profile}>
+            <View style={styles.support}>
+              <Icon name="headset" color={colors.complimentary} size={25} />
             </View>
-            {/* <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../../../assets/images/live/girl1.jpg')}
-            /> */}
             <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>ID: 234</Text>
+              <Text style={styles.userText}>Support Chat</Text>
+              <Text style={styles.msgText}>Chat with customer support</Text>
             </View>
           </TouchableOpacity>
         </View>
         <View style={styles.userSection}>
-          <TouchableOpacity
-            style={styles.profile}
-            onPress={() => navigation.navigate('JoinAgency')}>
-            <View style={styles.imgOverly}>
-              <Text style={{color: '#fff'}}>text</Text>
-            </View>
-            {/* <Image
+          <TouchableOpacity style={styles.profile}>
+            <Image
               style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../../../assets/images/live/girl2.jpg')}
-            /> */}
+              source={require('../../../../assets/images/live/girl1.jpg')}
+            />
             <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>ID: 235</Text>
+              <Text style={styles.userText}>Layla Grace</Text>
+              <Text style={styles.msgText}>I want to meet you</Text>
+              <Text style={styles.msgTime}>07:59 | 18 -04-2024</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.userSection}>
+          <TouchableOpacity style={styles.profile}>
+            <Image
+              style={{width: 50, height: 50, borderRadius: 25}}
+              source={require('../../../../assets/images/live/girl2.jpg')}
+            />
+            <View style={{marginLeft: 20}}>
+              <Text style={styles.userText}>Layla Grace</Text>
+              <Text style={styles.msgText}>I Love you ❤️</Text>
+              <Text style={styles.msgTime}>03:39 | 18 -12-2023</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.userSection}>
+          <TouchableOpacity style={styles.profile}>
+            <Image
+              style={{width: 50, height: 50, borderRadius: 25}}
+              source={require('../../../../assets/images/live/girl4.jpg')}
+            />
+            <View style={{marginLeft: 20}}>
+              <Text style={styles.userText}>Lily Evelyn</Text>
+              <Text style={styles.msgText}>Lets Collab😈</Text>
+              <Text style={styles.msgTime}>
+                12:59 | 11 -04-2022 07:59 | 18 -04-2024
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.userSection}>
+          <TouchableOpacity style={styles.profile}>
+            <Image
+              style={{width: 50, height: 50, borderRadius: 25}}
+              source={require('../../../../assets/images/live/girl8.jpg')}
+            />
+            <View style={{marginLeft: 20}}>
+              <Text style={styles.userText}>Layla Grace</Text>
+              <Text style={styles.msgText}>I want to meet you</Text>
+              <Text style={styles.msgTime}>07:59 | 18 -04-2024</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -78,25 +137,26 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   heading: {
-    fontSize: 22,
+    ...appStyles.headline,
     marginLeft: 20,
-    fontWeight: '600',
-    color: '#fff',
+    color: colors.complimentary,
   },
   image: {
     flex: 1,
     // display: 'flex',
     // justifyContent: 'space-around',
   },
-  imgOverly: {
-    backgroundColor: '#07fef8',
-    position: 'absolute',
-    zIndex: 2,
-    width: 30,
-    borderRadius: 10,
-    left: 5,
-    top: -6,
-    height: 10,
+  header: {
+    flexDirection: 'row',
+    marginTop: Platform.OS == 'ios' ? 60 : 40,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  support: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -113,11 +173,18 @@ const styles = StyleSheet.create({
   profile: {
     flexDirection: 'row',
   },
-
+  msgTime: {
+    ...appStyles.smallTxt,
+    color: colors.body_text,
+  },
   userText: {
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 20,
+    color: colors.complimentary,
+    ...appStyles.regularTxtMd,
+  },
+  msgText: {
+    color: colors.body_text,
+    marginVertical: 5,
+    ...appStyles.regularTxtRg,
   },
   userDesc: {
     color: '#82838d',

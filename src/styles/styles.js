@@ -54,14 +54,19 @@ const appStyles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: 'Kanit',
   },
+  smallM: {
+    fontSize: 8,
+    fontWeight: '500',
+    fontFamily: 'Kanit',
+  },
   small: {
     fontSize: 6,
     fontWeight: '500',
     fontFamily: 'Kanit',
   },
   userAvatar: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 80,
     borderColor: colors.lines,
     borderWidth: 1,

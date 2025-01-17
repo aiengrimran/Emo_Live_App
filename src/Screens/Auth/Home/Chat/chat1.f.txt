@@ -1,0 +1,1197 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  TouchableWithoutFeedback,
+  Keyboard,
+  FlatList,
+  TextInput,
+  Modal,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Button,
+  Alert,
+} from 'react-native';
+import React, {useState, useEffect, useRef, useContext} from 'react';
+import stylesC from '../../../../styles/styles';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import Svg, {Polyline} from 'react-native-svg';
+const deviceHeight = Dimensions.get('window').height;
+import RNFS from 'react-native-fs';
+
+import {
+  ChatClient,
+  ChatOptions,
+  ChatMessageChatType,
+  ChatSearchDirection,
+  ChatMessage,
+} from 'react-native-agora-chat';
+// import {RTc}
+import Context from '../../../../Context/Context';
+// import netIn
+import {colors} from '../../../../styles/colors';
+import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
+import ENV from '../../../../config/envVar';
+import Input from './Components/Input';
+
+import axiosInstance from '../../../../Api/axiosConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import {msg} from './tempData/messag  .e';
+import {tempMessages} from './tempData/message';
+// import {tempMessages} from './tempData/message';
+import envVar from '../../../../config/envVar';
+import {useSelector, useDispatch} from 'react-redux';
+import appStyles from '../../../../styles/styles';
+
+interface ChatProps {
+  navigation: any;
+  route: any;
+}
+export default function Chat({navigation, route}: ChatProps) {
+  const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
+  const {initialized, connected, error} = useSelector(state => state.chat);
+
+  const {isConnected, type} = useNetInfo();
+
+  const visitProfile = useSelector(
+    (state: any) => state.usersReducer.visitProfile,
+  );
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {user, setUser} = userAuthInfo;
+  const {token} = tokenMemo;
+
+  const receiverUser = route.params.receiverUser;
+  const [tempUsers, setTempUsers] = useState([
+    {
+      account_verified: 0,
+      address: 'Buner kpk',
+      agora_chat_token:
+        '007eJxTYPjyYIZ6qIX8UsFWG61996cHWZ24ErjjP2ee6Yo/Fwx2/9VTYEhOMjS3sDC1TEszMDQxMEixMEhJNjFISTU0N09LTUlKvnChLr3hXV36p29JTIwMrAyMQAjiMzIYAgA1ZSOL',
+      agora_chat_uid: null,
+      avatar: 'users/avatars/1736019229.jpg',
+      bio: 'Save earth live',
+      created_at: '2024-12-28T19:27:39.000000Z',
+      dob: '2021-02-20',
+      email: 'imrankhan@gmail.com',
+      first_name: 'Imran',
+      gender: 'male',
+      id: 1,
+      last_name: 'Khan',
+      phone: null,
+      provider: null,
+      provider_id: null,
+      updated_at: '2025-01-08T19:24:00.000000Z',
+      user_name: null,
+    },
+    {
+      account_verified: 0,
+      address: 'buner kpk',
+      agora_chat_token:
+        '007eJxTYOApXp5s7lJfz2LrZ12aqrnKWiX4z7Rld/5fvsTE+1P6aKsCQ3KSobmFhallWpqBoYmBQYqFQUqyiUFKqqG5eVpqSlLypot16Unv69K1GBhZGBlYGRiBEMRnZDACAE77Hu4=',
+      agora_chat_uid: null,
+      avatar: 'users/avatars/1736177116.jpg',
+      bio: 'something should happen special',
+      created_at: '2024-12-28T19:50:57.000000Z',
+      dob: '1997-03-15',
+      email: 'zalkip@gmail.com',
+      first_name: 'zalkip',
+      gender: 'male',
+      id: 2,
+      last_name: 'khan',
+      phone: null,
+      provider: null,
+      provider_id: null,
+      updated_at: '2025-01-08T19:27:46.000000Z',
+      user_name: null,
+    },
+  ]);
+  // const[user,setUser] =
+  const [status, setStatus] = useState({
+    connected: false,
+    error: '',
+  });
+  const [initialized, setInitialized] = useState(false);
+  const [path, setPath] = useState(
+    '/Users/macbookpro/Library/Developer/CoreSimulator/Devices/9B56342A-16A9-4EBC-A996-9B76BD6DC2FA/data/Containers/Data/Application/86D569AB-9F1A-445F-9A83-6A4574C5A555/Library/Application Support/HyphenateSDK/appdata/2/1/c8bc8d40-d1e9-11ef-84ec-e9246b235a67.m4a',
+  );
+  const chatClient = ChatClient.getInstance();
+  const chatManager = chatClient.chatManager;
+  const [receiverId, setReceiverId] = useState(1);
+
+  const [modalInfo, setModalInfo] = useState({
+    modal: false,
+    type: '',
+  });
+  const [message, setMessage] = useState({
+    type: 'initial',
+    uri: '',
+    content: '',
+    icon: 'microphone',
+  });
+  const [voicePlay, setVoicePlay] = useState<any>({
+    audioData: [],
+    playTime: '12:22',
+    id: '',
+    played: false,
+  });
+  const [modal, setShowModal] = useState(true);
+  const [messages, setMessages] = useState<any>([]);
+  const [list, setList] = useState([]);
+  const [renewToken, setRenewToken] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to network state updates
+    const unsubscribe = NetInfo.addEventListener(state => {
+      // setIsConnected(state.isConnected);
+      // console.log(state.isConnected ? 'yah it is connected ' : 'not connected');
+      setStatus(prevState => ({
+        ...prevState,
+        connected: Boolean(state.isConnected),
+      }));
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new AudioRecorderPlayer();
+    }
+    return () => {
+      // Clean up the audio player instance on component unmount
+      audioPlayerRef.current?.stopPlayer();
+      audioPlayerRef.current = null;
+    };
+  }, []);
+
+  // useEffect(() => {
+  //   if (!isConnected) {
+  //     setStatus(prevState => ({...prevState, connected: false}));
+  //     Alert.alert(
+  //       'No Internet',
+  //       'You are currently offline. Please check your internet connection.',
+  //     );
+  //   }
+  // }, [isConnected]);
+  // useEffect(() => {
+  //   return () => {
+  //     audioPlayer.removePlayBackListener();
+  //     audioPlayer.removeRecordBackListener();
+  //   };
+  // }, []);
+
+  const checkIfUserLogged = async () => {
+    try {
+      const isLogged = await chatClient.isLoginBefore();
+      if (isLogged) {
+        setStatus({...status, connected: true});
+      }
+    } catch (error) {}
+  };
+
+  // Logs in with an account ID and a token.
+  const login = async () => {
+    const isLoggedIn = await ChatClient.getInstance().isLoginBefore();
+    if (isLoggedIn) {
+      setStatus({...status, connected: true});
+      console.log('User is already logged in.');
+      return; // Prevent duplicate login
+    }
+
+    if (!initialized) console.log('Perform initialization first.');
+    console.log('start login ...');
+    try {
+      await chatClient.loginWithToken(
+        String(user.id),
+        // String(tempUsers[0].id),
+        user.agora_chat_token,
+        // user.agora_chat_token,
+      );
+      // await chatClient.loginWithToken(String(user.id), user.agora_chat_token);
+      console.log('login operation success.');
+    } catch (error: any) {
+      if (error.code == 2) {
+        setStatus({...status, error: error.description});
+        return;
+      }
+      if (error.code == 111 || error.code == 202) {
+        callApiForRenewToken();
+      }
+      console.log(error);
+    }
+  };
+  // Logs out from server.
+  const logout = async () => {
+    if (!initialized) console.log('Perform initialization first.');
+    console.log('start logout ...');
+    try {
+      await chatClient.logout();
+      console.log('logout success.');
+      setStatus({...status, connected: false});
+    } catch (error) {
+      console.log('logout fail:' + JSON.stringify(error));
+    }
+  };
+  // Sends a text message to somebody.
+  const sendMsg = async () => {
+    try {
+      if (!initialized) console.log('Perform initialization first.');
+      let msg;
+      if (message.type == 'text') {
+        msg = ChatMessage.createTextMessage(
+          String(receiverUser.id),
+          message.content,
+          ChatMessageChatType.PeerChat,
+        );
+      }
+      if (message.type == 'voice') {
+        let messageInfo = {
+          displayName: 'voice',
+        };
+        let fileUri = message.uri.replace('file:///', '/');
+        msg = ChatMessage.createVoiceMessage(
+          String(receiverUser.id),
+          fileUri,
+          // message.uri,
+          // messageInfo,
+        );
+      }
+      const callback = new (class {
+        onProgress(locaMsgId, progress) {
+          console.log(`send message process: ${locaMsgId}, ${progress}`);
+        }
+        onError(locaMsgId, error) {
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          console.log(
+            `send message fail: ${locaMsgId}, ${JSON.stringify(error)}`,
+          );
+        }
+        onSuccess(message) {
+          Alert.alert('Test', 'message sent');
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          const updatedMessages = [...messages, message];
+          setMessages(updatedMessages);
+          // console.log('send message success: ' + message.localMsgId);
+        }
+      })();
+      await chatClient.chatManager.sendMessage(msg, callback);
+      // Push the new message to the messages array and update the state
+    } catch (error) {
+      console.error('Unexpected error occurred:', error);
+    }
+  };
+
+  const getPrevConversation = () => {
+    chatManager
+      .getAllConversations()
+      .then(conversations => {
+        console.log('conversations: ' + JSON.stringify(conversations));
+      })
+      .catch(reason => {
+        console.log('get conversations fail: ' + JSON.stringify(reason));
+      });
+    console.log('ss');
+  };
+
+  // const getFromLocalStorage = () => {
+  //   try {
+  //     // const res = chatManager.getAllConversations()
+  //     // const res = chatManager.loadMess
+  //     const conversation = chatManager.getConversation('2', 0);
+  //     console.log(conversation);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  const getPreviousMessages = async () => {
+    try {
+      const params = {
+        convId: String(receiverId), // The conversation ID
+        // convId: String('2/ios_dbf4dde4-ad4c-ad45-e8bc-29c2666d8dea'), // The conversation ID
+        // convId: String(receiverUser.id), // The conversation ID
+        convType: 0, // 0 for single chat
+        // convType: ChatMessageChatType.PeerChat, // 0 for single chat
+        startMsgId: '', // Leave empty to fetch the most recent messages
+        pageSize: 20, // Number of messages to fetch
+      };
+
+      // Fetch messages
+      const messages = await chatManager.getMsgs(params);
+      console.log('Fetched messages:', messages);
+      setMessages(messages);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+    }
+  };
+  const processAudioData = position => {
+    const maxHeight = 18;
+    const maxAmplitude = 100;
+
+    return Array.from({length: 50}, () => {
+      const randomValue = Math.random() * maxAmplitude; // Simulate amplitude
+      return (randomValue / maxAmplitude) * maxHeight; // Normalize to maxHeight
+    });
+  };
+  const getPlayableFilePath = async (originalPath: any) => {
+    const newPath = originalPath.endsWith('.m4a')
+      ? originalPath
+      : `${originalPath}.m4a`;
+    console.log(newPath, 'sssss');
+    return;
+
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      try {
+        // Check if the file exists
+        const fileExists = await RNFS.exists(originalPath);
+        if (fileExists) {
+          // Rename the file with the new extension
+          await RNFS.moveFile(originalPath, newPath);
+        }
+      } catch (error) {
+        console.error('Error adding .m4a extension:', error);
+      }
+    }
+
+    return newPath;
+  };
+  const playVoiceN = async (item: any) => {
+    try {
+      const filePath = item.body.localPath;
+      // console.log(filePath, item);
+      // return;
+      // const playablePath = await getPlayableFilePath(filePath);
+      // console.log(playablePath);
+      // return;
+
+      // console.log(playablePath, 'ss');
+      // console.log('file://' + filePath);
+      // return;
+      // Start the audio player
+      await audioPlayer.startPlayer('file://' + filePath);
+      // await audioPlayer.startPlayer(uri);
+      console.log('Playing audio:');
+      setVoicePlay(prevState => ({...prevState, id: item.msgId, played: true}));
+
+      // Add playback listener
+      audioPlayer.addPlayBackListener(e => {
+        console.log('Playback progress:');
+
+        // Process waveform data if needed
+        const waveform = processAudioData(e.currentPosition); // Simulated function for visualization
+        setVoicePlay(prevState => ({...prevState, audioData: waveform}));
+
+        const positionInSeconds = e.currentPosition / 1000;
+        const playTime = audioPlayer.mmss(Math.floor(positionInSeconds));
+        setVoicePlay(prevState => ({...prevState, playtime: playTime}));
+
+        // Stop playback when the audio finishes
+        if (e.currentPosition >= e.duration) {
+          stopPlay();
+        }
+      });
+    } catch (error) {
+      // Log any error during playback
+      console.error('Error starting playback:', error);
+    }
+  };
+  const playVoice = async (item: any) => {
+    try {
+      console.log(item);
+      return;
+      if (voicePlay.played) {
+        stopPlay();
+        return;
+      }
+      let uri;
+      // Construct the file URI
+      if (item.from == user.id) {
+        console.log('my message');
+        // uri = `${item.body.remotePath}`;
+        uri = `file://${item.body.localPath}`;
+      } else {
+        console.log('other guy');
+        uri = `file://${item.body.localPath}`;
+
+        // uri = item.body.remotePath;
+
+        // uri = item.body.remotePath;
+      }
+      let urii =
+        'file:///Users/macbookpro/Desktop/meao/Meow/src/assets/sample/i.' +
+        'm4a';
+      // 'file:///Users/macbookpro/Desktop/meao/Meow/src/assets/sample/i.m4a';
+
+      console.log('File URI:', uri);
+
+      // Start the audio player
+      await audioPlayer.startPlayer(urii);
+      // await audioPlayer.startPlayer(uri);
+      console.log('Playing audio:');
+      setVoicePlay(prevState => ({...prevState, id: item.msgId, played: true}));
+
+      // Add playback listener
+      audioPlayer.addPlayBackListener(e => {
+        console.log('Playback progress:');
+
+        // Process waveform data if needed
+        const waveform = processAudioData(e.currentPosition); // Simulated function for visualization
+        setVoicePlay(prevState => ({...prevState, audioData: waveform}));
+
+        const positionInSeconds = e.currentPosition / 1000;
+        const playTime = audioPlayer.mmss(Math.floor(positionInSeconds));
+        setVoicePlay(prevState => ({...prevState, playtime: playTime}));
+
+        // Stop playback when the audio finishes
+        if (e.currentPosition >= e.duration) {
+          stopPlay();
+        }
+      });
+    } catch (error) {
+      // Log any error during playback
+      console.error('Error starting playback:', error);
+    }
+  };
+
+  const stopPlay = async () => {
+    try {
+      const res = await audioPlayerRef.current?.stopPlayer();
+      // setVoicePlay(prevState => ({...prevState, played: false, id: ''}));
+      audioPlayerRef.current?.removePlayBackListener();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fromServer = async () => {
+    try {
+      // Parameters for fetching history messages
+
+      const params = {
+        pageSize: 20, // Number of messages to fetch
+        startMsgId: '', // Start with the most recent messages
+        direction: ChatSearchDirection.UP, // Fetch older messages ('backward') or newer ('forward')
+      };
+
+      // Fetch messages from the local database or server
+      const result = await chatManager.fetchHistoryMessages('2', 0, params);
+
+      console.log('Messages fetched:', result);
+    } catch (error) {
+      console.log('Error fetching messages:', error);
+    }
+  };
+
+  const serverMessage = async () => {
+    try {
+      const res = await chatManager.fetchConversationsFromServerWithCursor();
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+    // chatManager
+    //   .fetchConversationsFromServerWithCursor()
+    //   .then(res => {
+    //     console.log('get conversions success', res);
+    //   })
+    //   .catch(reason => {
+    //     console.log('get conversions fail.', reason);
+    //   });
+  };
+  const clearMessages = async () => {
+    try {
+      await chatManager.deleteAllMessageAndConversation(true);
+      console.log('conversation cleared');
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const importMessages = async () => {
+    try {
+      // const chatManager = ChatClient.getInstance().chatManager;
+
+      // Define the conversation ID and parameters
+      const conversationId = String(receiverUser.id); // Replace '2' with the actual conversation ID
+      const params = {
+        pageSize: 20, // Number of messages to fetch
+        startMsgId: '', // Start with the most recent messages
+        direction: ChatSearchDirection.UP, // Fetch older messages ('backward') or newer ('forward')
+      };
+
+      // Fetch history messages from the server
+      const messagesResponse = await chatManager.fetchHistoryMessages(
+        conversationId,
+        0,
+        params,
+      );
+      console.log(messagesResponse.list);
+      // setList(messagesResponse.list);
+      // console.log('Fetched messages:', messagesResponse);
+
+      // Process the messages as needed
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  const formatTime = timestamp => {
+    const date = new Date(timestamp);
+
+    // Get the time components
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    // Convert to 12-hour format
+    hours = hours % 12 || 12;
+
+    // Format the date components
+    const day = date.getDate();
+    const month = date.toLocaleString('default', {month: 'short'}); // Short month name
+    const year = date.getFullYear();
+
+    // Create the formatted string
+    const formattedTime = `${hours}:${minutes
+      .toString()
+      .padStart(2, '0')} ${ampm} ${day} ${month} ${year}`;
+    return formattedTime;
+  };
+  const callApiForRenewToken = async () => {
+    try {
+      const res = await axiosInstance.get('/renew-agora-token');
+      console.log(res.data.user);
+      setRenewToken(true);
+      setUser(res.data.user);
+      // await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const refreshNetwork = () => {};
+
+  const playVoice2 = async () => {
+    let path =
+      '/Users/macbookpro/Library/Developer/CoreSimulator/Devices/9B56342A-16A9-4EBC-A996-9B76BD6DC2FA/data/Containers/Data/Application/86D569AB-9F1A-445F-9A83-6A4574C5A555/Library/Application Support/HyphenateSDK/appdata/2/1/c8bc8d40-d1e9-11ef-84ec-e9246b235a67';
+    try {
+      const newFilePath = `${path}.m4a`;
+
+      const res = await RNFS.exists(path);
+      const res2 = await RNFS.exists(newFilePath);
+
+      console.log(res);
+      console.log(res2, 'Result 2');
+      if (!res2) {
+        await RNFS.moveFile(path, newFilePath);
+        setPath(newFilePath);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const IPlayit = async () => {
+    try {
+      console.log(path, ':::');
+      await audioPlayerRef.current?.startPlayer('file://' + path);
+      // await audioPlayer.startPlayer(uri);
+
+      // Add playback listener
+      audioPlayerRef.current?.addPlayBackListener(e => {
+        console.log('Playback progress:');
+
+        // Process waveform data if needed
+        // const waveform = processAudioData(e.currentPosition); // Simulated function for visualization
+        // setVoicePlay(prevState => ({...prevState, audioData: waveform}));
+
+        // const positionInSeconds = e.currentPosition / 1000;
+        // const playTime = audioPlayer.mmss(Math.floor(positionInSeconds));
+        // setVoicePlay(prevState => ({...prevState, playtime: playTime}));
+
+        // Stop playback when the audio finishes
+        if (e.currentPosition >= e.duration) {
+          stopPlay();
+        }
+      });
+    } catch (error) {}
+  };
+  const playVoiceFile = async () => {
+    console.log('Ss');
+    const originalPath =
+      '/Users/macbookpro/Library/Developer/CoreSimulator/Devices/CC78F9D9-1316-48E3-A56F-976C81F6572D/data/Containers/Data/Application/F09BC2F2-7F5B-40B3-B687-9A17A45AD514/Library/Application Support/HyphenateSDK/appdata/1/2/ecd0d930-d288-11ef-ba7a-8b0dedd12555';
+    const newPath = `${originalPath}.m4a`; // Append .m4a extension
+
+    try {
+      const fileExists = await RNFS.exists(originalPath);
+
+      if (!fileExists) {
+        Alert.alert('File not found', 'The original file does not exist.');
+        return;
+      }
+      console.log(fileExists, newPath);
+      // console.log(audioUrl);
+
+      // // Start playing the audio file from the URL
+      // // await audioPlayerRef.current.playA;
+      // await RNFS.copyFile(originalPath, newPath);
+      // const fileContent = await RNFS.readFile(newPath, 'base64'); // Load file as base64
+      // console.log(fileContent);
+      await audioPlayerRef.current?.startPlayer('file://' + newPath);
+
+      // // Add a playback listener to track the progress
+      audioPlayerRef.current?.addPlayBackListener(e => {
+        console.log('Playback:', e);
+        if (e.currentPosition === e.duration) {
+          audioPlayerRef.current?.stopPlayer();
+        }
+      });
+    } catch (error) {
+      console.error('Error playing voice file:', error);
+    }
+  };
+  return (
+    <View style={styles.container}>
+      <>
+        <View style={styles.chatHeader}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Icon
+                name="arrow-left-thin"
+                size={25}
+                color={colors.complimentary}
+              />
+            </TouchableOpacity>
+            <View style={{flexDirection: 'row', marginLeft: 10}}>
+              <Image
+                style={{width: 43, height: 43, borderRadius: 25}}
+                source={
+                  receiverUser.avatar
+                    ? {
+                        uri:
+                          envVar.API_URL + 'display-avatar/' + receiverUser.id,
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      }
+                    : require('../../../../assets/images/place.jpg')
+                }
+              />
+              <View style={{marginLeft: 10}}>
+                <Text style={styles.user}>
+                  {receiverUser.first_name + ' ' + receiverUser.last_name}
+                </Text>
+                {/* <Text
+                  style={styles.user}
+                  onPress={() => setTempUsers([tempUsers[1], tempUsers[0]])}>
+                  {tempUsers[1].first_name + ' ' + tempUsers[1].last_name} ::{' '}
+                  {tempUsers[1].id} |||{tempUsers[0].id}
+                </Text> */}
+                <Text
+                  style={styles.userStatus}
+                  onPress={() => navigation.navigate('Chat2')}>
+                  offline
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              onPress={() => {
+                logout();
+                // console.log(list);
+              }}>
+              <Icon
+                name="trash-can-outline"
+                size={25}
+                color={colors.complimentary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity style={{marginLeft: 10}} onPress={login}>
+              <Icon
+                name="information-outline"
+                size={25}
+                color={status.connected ? colors.complimentary : colors.accent}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* chat messages ... */}
+        <View style={{flexDirection: 'row'}}>
+          <Button title="Pre Message" onPress={getPreviousMessages} />
+          <Button title="Renew Token" onPress={callApiForRenewToken} />
+          <Button title="from local" onPress={getPreviousMessages} />
+          <Button title="view" onPress={() => console.log(messages)} />
+        </View>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+          <Text
+            style={{color: '#fff'}}
+            onPress={() => {
+              console.log(messages);
+            }}>
+            Logout
+          </Text>
+          <Text style={{color: '#fff'}} onPress={checkIfUserLogged}>
+            check login
+          </Text>
+          <Text style={{color: '#fff'}} onPress={sendMsg}>
+            send Msg
+          </Text>
+          <Text style={{color: '#fff'}} onPress={refreshNetwork}>
+            replace
+          </Text>
+        </View>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+          <Text style={{color: '#fff'}} onPress={playVoice2}>
+            Play Voice
+          </Text>
+          <Text style={{color: '#fff'}} onPress={IPlayit}>
+            IPlayit
+          </Text>
+          <Text
+            style={{color: '#fff'}}
+            onPress={() => {
+              console.log(audioPlayer);
+            }}>
+            check player
+          </Text>
+          <Text style={{color: '#fff'}} onPress={playVoiceFile}>
+            playVoiceFile
+          </Text>
+        </View>
+        <View
+          style={{
+            marginTop: 30,
+            marginVertical: 180,
+            height: deviceHeight * 0.7,
+          }}>
+          <FlatList
+            data={messages}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item}: any) => {
+              return (
+                <>
+                  {parseInt(item.to) == user.id ? (
+                    <TouchableOpacity
+                      onLongPress={() => {
+                        setModalInfo({modal: true, type: 'report'});
+                      }}>
+                      <View style={styles.myMessage}>
+                        {item.body.type == 'txt' ? (
+                          <Text
+                            style={[
+                              stylesC.bodyRg,
+                              {color: colors.complimentary},
+                            ]}>
+                            {item.body?.content}
+                          </Text>
+                        ) : item.body.type == 'voice' ? (
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                            }}>
+                            <TouchableOpacity onPress={() => playVoice(item)}>
+                              <Icon
+                                name={
+                                  voicePlay.id == item.id && voicePlay.played
+                                    ? 'pause'
+                                    : 'play'
+                                }
+                                size={25}
+                                color={colors.accent}
+                              />
+                            </TouchableOpacity>
+
+                            {voicePlay.id == item.msgId ? (
+                              <>
+                                <View style={styles.waveForm}>
+                                  <Svg height="18" width="100%">
+                                    <Polyline
+                                      points={voicePlay.audioData
+                                        .map(
+                                          (value, index) =>
+                                            `${index * 5},${18 - value}`,
+                                        )
+                                        .join(' ')}
+                                      fill="none"
+                                      stroke={colors.accent}
+                                      strokeWidth="2"
+                                    />
+                                  </Svg>
+                                </View>
+                                <Text
+                                  style={[
+                                    appStyles.regularTxtRg,
+                                    {
+                                      marginLeft: 10,
+                                      color: colors.complimentary,
+                                    },
+                                  ]}>
+                                  {voicePlay.playtime}
+                                </Text>
+                              </>
+                            ) : (
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  justifyContent: 'space-between',
+                                  width: '90%',
+                                }}>
+                                <Text style={{color: colors.complimentary}}>
+                                  {
+                                    '||||| :::: ||||| |||| ||||| ||||| ||| ||||| ::::::: |||||'
+                                  }
+                                </Text>
+                                <Text
+                                  style={{
+                                    alignSelf: 'flex-end',
+                                    color: colors.complimentary,
+                                  }}>
+                                  00:03
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        ) : (
+                          <Text>File Type</Text>
+                        )}
+                      </View>
+                      <Text style={[stylesC.smallTxt, {color: '#7B8095'}]}>
+                        {formatTime(item.localTime)}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.mineMessage}>
+                      <TouchableOpacity
+                        onLongPress={() => {
+                          setModalInfo({modal: true, type: 'report'});
+                        }}
+                        style={styles.myMessageBody}>
+                        {item.body.type == 'txt' ? (
+                          <Text style={[{color: colors.dominant}]}>
+                            {item.body?.content}
+                          </Text>
+                        ) : item.body.type == 'voice' ? (
+                          <>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                              }}>
+                              <TouchableOpacity onPress={() => playVoice(item)}>
+                                <Icon
+                                  name={
+                                    voicePlay.id == item.msgId &&
+                                    voicePlay.played
+                                      ? 'pause'
+                                      : 'play'
+                                  }
+                                  size={25}
+                                  color={colors.accent}
+                                />
+                              </TouchableOpacity>
+                              {voicePlay.id == item.msgId ? (
+                                <>
+                                  <View style={{width: '80%', marginLeft: 5}}>
+                                    <Svg height="18" width="100%">
+                                      <Polyline
+                                        points={voicePlay.audioData
+                                          .map(
+                                            (value, index) =>
+                                              `${index * 5},${18 - value}`,
+                                          )
+                                          .join(' ')}
+                                        fill="none"
+                                        stroke={colors.accent}
+                                        strokeWidth="2"
+                                      />
+                                    </Svg>
+                                  </View>
+
+                                  <Text
+                                    style={[
+                                      appStyles.regularTxtRg,
+                                      {marginLeft: 5},
+                                    ]}>
+                                    {voicePlay.playtime}
+                                  </Text>
+                                </>
+                              ) : (
+                                <>
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                      width: '90%',
+                                    }}>
+                                    <Text>
+                                      {
+                                        '||||| :::: ||||| |||| ||||| ||||| ||| ||||| ::::::: |||||'
+                                      }
+                                    </Text>
+                                    <Text style={{alignSelf: 'flex-end'}}>
+                                      00:03
+                                    </Text>
+                                  </View>
+                                </>
+                              )}
+                            </View>
+                          </>
+                        ) : (
+                          <Text>File Type</Text>
+                        )}
+                      </TouchableOpacity>
+                      <View
+                        style={{position: 'absolute', right: 10, bottom: 25}}>
+                        {item.status > 0 ? (
+                          <Icon
+                            name={item.status == 1 ? 'check' : 'check-all'}
+                            color={item.isRead ? 'blue' : colors.accent}
+                            size={16}
+                          />
+                        ) : (
+                          <Icon
+                            name="clock-time-four-outline"
+                            color={colors.lines}
+                            size={16}
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.messageTime}>
+                        {formatTime(item.localTime)}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              );
+            }}
+          />
+        </View>
+
+        <Modal
+          visible={modalInfo.modal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowModal(false)}>
+          {/* Backdrop */}
+          <View style={styles.backdrop}>
+            {/* Modal Content */}
+            <View style={styles.modalView}>
+              <Text style={[appStyles.title1, {color: colors.complimentary}]}>
+                {modalInfo.type === 'delete'
+                  ? 'Delete Conversation'
+                  : 'Report a Problem'}
+              </Text>
+              <View style={{marginVertical: 20}}>
+                <Text
+                  style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                  {modalInfo.type == 'delete'
+                    ? 'All will be permanently deleted for yourself'
+                    : 'Nudity, indecent exposure fake profile etc.'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setModalInfo({...modalInfo, modal: false})}
+                style={[styles.deleteButton]}>
+                <Text style={styles.deleteText}>
+                  {modalInfo.type == 'delete' ? 'Delete' : 'Report'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setModalInfo({...modalInfo, modal: false})}
+                style={styles.cancelButton}>
+                <Text style={[appStyles.paragraph1, {color: colors.unknown2}]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            alignSelf: 'center',
+            width: '100%',
+          }}>
+          <Input
+            audioPlayerRef={audioPlayerRef}
+            setMessage={setMessage}
+            message={message}
+            sendMsg={sendMsg}
+          />
+        </View>
+      </>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.dark_gradient,
+    padding: 16,
+  },
+  user: {
+    color: colors.complimentary,
+    ...stylesC.headline2,
+  },
+  userStatus: {
+    color: colors.body_text,
+    ...stylesC.regularTxtRg,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Custom RGBA backdrop color
+    justifyContent: 'center',
+    alignItems: 'center',
+    // alignSelf: 'center',
+  },
+  modalView: {
+    // width: 300,
+    padding: 20,
+    backgroundColor: colors.LG,
+    alignSelf: 'center',
+    width: '90%',
+    // minWidth
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderRadius: 26,
+  },
+  mineMessage: {
+    width: '90%',
+    alignSelf: 'flex-end',
+  },
+  myMessageBody: {
+    marginTop: 20,
+
+    // marginVertical: 30,
+    backgroundColor: colors.semantic,
+    padding: 16,
+    borderStartEndRadius: 16,
+    borderStartStartRadius: 16,
+    // borderEndEndRadius: 16,
+    borderEndStartRadius: 16,
+  },
+  modalBody: {
+    marginBottom: 20,
+  },
+  messageTime: {
+    ...stylesC.smallTxt,
+    color: '#7B8095',
+    marginTop: 10,
+    // marginTop: -15,
+    textAlign: 'right',
+  },
+  centeredView: {
+    flex: 1,
+    // backgroundColor: 'red',
+    opacity: 0.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  waveForm: {
+    height: 10,
+    width: '80%',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '99%',
+    marginTop: Platform.OS == 'ios' ? 50 : 20,
+  },
+  deleteButton: {
+    backgroundColor: colors.accent,
+    padding: 16,
+    borderRadius: 12,
+    width: '90%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  deleteText: {
+    color: colors.offwhite,
+    ...appStyles.paragraph1,
+  },
+  cancelButton: {
+    padding: 16,
+  },
+  myMessage: {
+    position: 'relative',
+    marginVertical: 10,
+    backgroundColor: colors.LG,
+    width: '90%',
+    padding: 20,
+    borderEndEndRadius: 16,
+    borderStartStartRadius: 16,
+    borderEndStartRadius: 16,
+  },
+});
+
+{
+  /* <View>
+          <View style={{marginTop: 20}}>
+            <View
+              style={{
+                width: '90%',
+                alignSelf: 'flex-end',
+              }}>
+              <TouchableOpacity
+                onLongPress={() => {
+                  setModalInfo({modal: true, type: 'report'});
+                }}
+                style={{
+                  marginVertical: 30,
+                  backgroundColor: colors.semantic,
+                  padding: 16,
+                  borderStartEndRadius: 16,
+                  borderStartStartRadius: 16,
+                  // borderEndEndRadius: 16,
+                  borderEndStartRadius: 16,
+                }}>
+                <Text style={[{color: colors.dominant}]}>
+                  I can't believe you're saying that!
+                </Text>
+              </TouchableOpacity>
+              <Text
+                style={[
+                  {
+                    color: '#7B8095',
+                    marginTop: -10,
+                    textAlign: 'right',
+                  },
+                  stylesC.smallTxt,
+                ]}>
+                10:08 PM 9 May
+              </Text>
+            </View>
+          </View>
+        </View> */
+}

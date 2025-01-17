@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import React, {useState, useRef} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Games from './Navigations/Games';
 import Popular from './Navigations/Popular';
 import Animated, {
   useSharedValue,
@@ -18,6 +17,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Battle from './Navigations/Battle';
+import Games from '../Games/Games';
+import Live from './Navigations/Live';
+import NewHost from './Navigations/NewHost';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
@@ -159,8 +161,7 @@ export default function Home({navigation}) {
       </View>
 
       <GestureDetector gesture={swipeGesture}>
-        <Animated.View
-          style={[animatedStyle, {flex: 1}]}>
+        <Animated.View style={[animatedStyle, {flex: 1}]}>
           {tab == 1 ? (
             <ScrollView contentContainerStyle={{marginTop: 20}}>
               <View
@@ -192,10 +193,15 @@ export default function Home({navigation}) {
                 <LiveScreen number={8}></LiveScreen>
               </View>
             </ScrollView>
-          ) : tab == 4 ? (
+          ) : tab == 2 ? (
+            <Live />
+          ) : tab == 3 ? (
+            <NewHost />
+          ) : // <Battle />
+          tab == 4 ? (
             <Battle />
           ) : (
-            <Games />
+            <Games navigation={navigation} />
           )}
         </Animated.View>
       </GestureDetector>

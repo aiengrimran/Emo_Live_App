@@ -1,0 +1,362 @@
+import {View, StyleSheet, Image, TouchableOpacity, Text} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+// import { Colors } from 'react-native/Libraries/NewAppScreen';
+import {colors} from '../../styles/colors';
+import appStyles from '../../styles/styles';
+import Svg, {Polyline} from 'react-native-svg';
+
+export default function Audio() {
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+
+  const [recordSecs, setRecordSecs] = useState(0);
+  const audio = require('../../assets/sample/test2.mp3');
+  const [audioData, setAudioData] = useState([]);
+  const [audioMessage, setAudioMessage] = useState({
+    record: false,
+  });
+  const [recordTime, setRecordTime] = useState('');
+  const [playTime, setPlayTime] = useState('');
+  const [duration, setDuration] = useState('');
+  const [currentPositionSec, setCurrentPositionSec] = useState<any>(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false); // New state
+  const [currentDurationSec, setCurrentDurationSec] = useState<any>(0);
+  const [file, setFile] = useState({
+    source:
+      'file:///Users/macbookpro/Library/Developer/CoreSimulator/Devices/9B56342A-16A9-4EBC-A996-9B76BD6DC2FA/data/Containers/Data/Application/2E4C6C9C-F746-4F59-928F-EB8A36E8D3C7/Library/Caches/sound.m4a',
+  });
+
+  const onStartRecord = async () => {
+    if (isRecording) {
+      console.warn('Recording is already in progress!');
+      return;
+    }
+
+    try {
+      //   const result = await audioRecorderPlayer;
+      const result = await audioRecorderPlayer.startRecorder();
+      setIsRecording(true); // Set recording status
+      audioRecorderPlayer.addRecordBackListener(e => {
+        setRecordSecs(e.currentPosition);
+        setRecordTime(
+          audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
+        );
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+
+  const onStopRecord = async () => {
+    if (!isRecording) {
+      console.warn('Recording is not active!');
+      setRecordTime('');
+      return;
+    }
+
+    try {
+      const result = await audioRecorderPlayer.stopRecorder();
+      audioRecorderPlayer.removeRecordBackListener();
+      setIsRecording(false); // Reset recording status
+      setRecordSecs(0);
+      setRecordTime('');
+      console.log('Recording stopped:', result);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+  const test2 = () => {
+    const path = Image.resolveAssetSource(audio);
+    console.log(audio, path);
+  };
+  const onStartPlay = async () => {
+    try {
+      const msg = await audioRecorderPlayer.startPlayer();
+      setIsPlaying(true);
+      audioRecorderPlayer.addPlayBackListener(e => {
+        const waveform = processAudioData(e.currentPosition); // Implement your data processing
+        setAudioData(waveform);
+        setCurrentPositionSec(
+          audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
+        );
+        setCurrentDurationSec(
+          audioRecorderPlayer.mmssss(Math.floor(e.duration)),
+        );
+        setPlayTime(audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)));
+        setDuration(audioRecorderPlayer.mmssss(Math.floor(e.duration)));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const onStartPlayv = async () => {
+    try {
+      console.log('onStartPlay ,,');
+      const sound = require('../../assets/sample/test2.mp3');
+      const uri =
+        'file:///Users/macbookpro/Library/Developer/CoreSimulator/Devices/9B56342A-16A9-4EBC-A996-9B76BD6DC2FA/data/Containers/Data/Application/2E4C6C9C-F746-4F59-928F-EB8A36E8D3C7/Library/Caches/sound.m4a'; // Get the file path
+      //   const {uri} = Image.resolveAssetSource(sound); // Get the file path
+      const msg = await audioRecorderPlayer.startPlayer(uri);
+      console.log(msg, 'i am king');
+      setIsPlaying(true);
+      audioRecorderPlayer.addPlayBackListener(e => {
+        const waveform = processAudioData(e.currentPosition); // Implement your data processing
+        setAudioData(waveform);
+        console.log('i am ');
+        setCurrentPositionSec(
+          audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
+        );
+        setCurrentDurationSec(
+          audioRecorderPlayer.mmssss(Math.floor(e.duration)),
+        );
+        setPlayTime(audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)));
+        setDuration(audioRecorderPlayer.mmssss(Math.floor(e.duration)));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onStartPlayx = async () => {
+    try {
+      console.log('onStartPlay ,,');
+      const msg = await audioRecorderPlayer.startPlayer(
+        require('../../assets/sample/test2.mp3'),
+      );
+      console.log(msg, 'i am king');
+      audioRecorderPlayer.addPlayBackListener(e => {
+        console.log(e);
+        setCurrentPositionSec(e.currentPosition);
+        setCurrentDurationSec(e.duration);
+        setPlayTime(audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)));
+        setDuration(audioRecorderPlayer.mmssss(Math.floor(e.duration)));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const processAudioData = position => {
+    const maxHeight = 18;
+    const maxAmplitude = 100;
+
+    return Array.from({length: 50}, () => {
+      const randomValue = Math.random() * maxAmplitude; // Simulate amplitude
+      return (randomValue / maxAmplitude) * maxHeight; // Normalize to maxHeight
+    });
+  };
+
+  //   const processAudioData = position => {
+  //     const maxHeight = 18; // Height of the waveform view
+  //     const maxAmplitude = 100;
+  //     // Simulate or fetch audio amplitude data
+  //     return Array.from({length: 50}, () => Math.random() * maxHeight);
+
+  //     // return Array.from({length: 50}, () => Math.random() * 100);
+  //   };
+
+  const onPausePlay = async () => {
+    try {
+      if (audioMessage.record) {
+        // const res = await audioRecorderPlayer.pausePlayer();
+        // onStopRecord()
+        const result = await audioRecorderPlayer.stopRecorder();
+        audioRecorderPlayer.removeRecordBackListener();
+        setIsRecording(false); // Reset recording status
+        setRecordSecs(0);
+        setRecordTime('');
+        setAudioMessage({...audioMessage, record: false});
+        // console.log(res);
+        return;
+      }
+      const result = await audioRecorderPlayer.startRecorder();
+      setIsRecording(true); // Set recording status
+      audioRecorderPlayer.addRecordBackListener(e => {
+        setAudioMessage({...audioMessage, record: true});
+        setRecordSecs(e.currentPosition);
+        setRecordTime(
+          audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
+        );
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onStopPlay = async () => {
+    console.log('onStopPlay');
+
+    await audioRecorderPlayer.stopPlayer();
+    setAudioData([]);
+  };
+  const deleteVoice = async () => {
+    await audioRecorderPlayer.stopRecorder();
+    await audioRecorderPlayer.stopPlayer();
+    setAudioMessage({...audioMessage, record: false});
+  };
+  return (
+    <View style={styles.container}>
+      <Text>Audio</Text>
+      <View>
+        <View style={{flexDirection: 'row'}}>
+          <Text
+            onPress={test2}
+            style={[appStyles.paragraph1, {color: colors.complimentary}]}>
+            Currt Duration : {currentDurationSec}
+          </Text>
+          <Text
+            style={[
+              appStyles.paragraph1,
+              {marginLeft: 20, color: colors.complimentary},
+            ]}>
+            Currt position : {currentPositionSec}
+          </Text>
+        </View>
+
+        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+          Record Time: {recordTime}
+        </Text>
+        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+          Play Time: {playTime}
+        </Text>
+        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+          Duration: {duration}
+        </Text>
+
+        <TouchableOpacity onPress={onStopRecord}>
+          <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+            Stop Recording
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onStartPlay}>
+          <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+            Start Playback
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onStopPlay}>
+          <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+            Stop Playback
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          marginTop: 40,
+          marginBottom: 40,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
+        <TouchableOpacity>
+          <Icon name="trash-can" size={35} color={colors.complimentary} />
+        </TouchableOpacity>
+        <View
+          style={{
+            width: '70%',
+            flexDirection: 'row',
+            backgroundColor: colors.complimentary,
+            alignItems: 'center',
+            borderRadius: 40,
+          }}>
+          <TouchableOpacity>
+            <Icon name="play" size={35} color={colors.accent} />
+          </TouchableOpacity>
+
+          <View style={{width: '70%', padding: 12}}>
+            <Text>||||| ..... ||| .... |||||</Text>
+          </View>
+          <Text>10:02</Text>
+        </View>
+        <View
+          style={{marginLeft: 20, flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity style={styles.pauseBtn}>
+            <Icon name="pause" size={25} color={colors.complimentary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={{marginLeft: 10}}>
+            <Icon name="send" size={25} color={colors.complimentary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        {audioMessage.record && (
+          <TouchableOpacity onPress={deleteVoice}>
+            <Icon name="trash-can" size={35} color={colors.complimentary} />
+          </TouchableOpacity>
+        )}
+
+        <View
+          style={{
+            width: '70%',
+            flexDirection: 'row',
+            backgroundColor: colors.complimentary,
+            alignItems: 'center',
+            borderRadius: 40,
+          }}>
+          {audioMessage.record ? (
+            <TouchableOpacity onPress={onStartPlay}>
+              <Icon name="play" size={35} color={colors.accent} />
+            </TouchableOpacity>
+          ) : (
+            <Text>{recordTime}</Text>
+          )}
+
+          <View style={{width: '70%', padding: 12}}>
+            <View style={styles.waveForm}>
+              <Svg height="18" width="100%">
+                <Polyline
+                  points={audioData
+                    .map((value, index) => `${index * 5},${18 - value}`)
+                    .join(' ')}
+                  fill="none"
+                  stroke={colors.accent}
+                  strokeWidth="2"
+                />
+              </Svg>
+            </View>
+          </View>
+          <Text>{playTime}</Text>
+        </View>
+        <View
+          style={{marginLeft: 20, flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity
+            style={[styles.pauseBtn, audioMessage.record && {borderWidth: 1}]}
+            onPress={onPausePlay}>
+            <Icon
+              name={audioMessage.record ? 'pause' : 'microphone'}
+              size={25}
+              color={colors.complimentary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={{marginLeft: 10}}>
+            <Icon name="send" size={25} color={colors.complimentary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.LG,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  waveForm: {
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pauseBtn: {
+    width: 35,
+    height: 35,
+    borderColor: colors.accent,
+    alignItems: 'center',
+    borderRadius: 20,
+    justifyContent: 'center',
+  },
+});

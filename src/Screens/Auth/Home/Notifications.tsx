@@ -10,7 +10,17 @@ import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../styles/styles';
 import {colors} from '../../../styles/colors';
+import axiosInstance from '../../../Api/axiosConfig';
 export default function Notifications({navigation}) {
+  const getNotification = async () => {
+    try {
+      const url = '';
+      const res = await axiosInstance(url);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <View style={styles.container}>
       <View
