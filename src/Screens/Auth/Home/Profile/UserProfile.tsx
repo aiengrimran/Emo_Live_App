@@ -62,11 +62,11 @@ export default function UserProfile({navigation}) {
       <TouchableOpacity
         style={{
           marginLeft: 30,
-          top: 60,
+          top: 40,
           position: 'absolute',
         }}
         onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" color="#fff" size={30} />
+        <Icon name="arrow-left" color="#fff" size={25} />
       </TouchableOpacity>
       <View
         style={{

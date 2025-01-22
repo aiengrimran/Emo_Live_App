@@ -501,7 +501,7 @@ const BottomSection = ({handleOpenSheet}: BottomSectionProps) => {
     <View style={{position: 'absolute', bottom: '5%'}}>
       <View style={{flexDirection: 'row', width: '80%'}}>
         <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-          EMo Live :{' '}
+          Emo Live :{' '}
         </Text>
         <Text
           style={[

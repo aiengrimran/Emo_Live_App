@@ -19,13 +19,7 @@ export default function NotificationSettings({navigation}) {
     setBlockNotifications(previousState => !previousState);
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 16,
-          marginTop: Platform.OS == 'ios' ? 60 : 20,
-        }}>
+      <View style={[appStyles.backBtn2, {paddingLeft: 10}]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left-thin" size={25} color={colors.complimentary} />
         </TouchableOpacity>
@@ -48,8 +42,9 @@ export default function NotificationSettings({navigation}) {
             <Text style={styles.tabText}>Mute All Notifications</Text>
           </View>
           <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={muteNotifications ? '#f5dd4b' : '#f4f3f4'}
+            trackColor={{false: colors.complimentary, true: colors.accent}}
+            thumbColor={colors.complimentary}
+            // thumbColor={muteNotifications ? '#f5dd4b' : '#f4f3f4'}
             ios_backgroundColor="#3e3e3e"
             onValueChange={updateNotification}
             value={muteNotifications}
@@ -65,8 +60,8 @@ export default function NotificationSettings({navigation}) {
             <Text style={styles.tabText}>Block All Notifications</Text>
           </View>
           <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={blockNotifications ? '#f5dd4b' : '#f4f3f4'}
+            trackColor={{false: colors.complimentary, true: colors.accent}}
+            thumbColor={colors.complimentary}
             ios_backgroundColor="#3e3e3e"
             onValueChange={updateBlockNotification}
             value={blockNotifications}
@@ -80,6 +75,7 @@ export default function NotificationSettings({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // padding: 16,
     backgroundColor: colors.dark_gradient,
   },
   tab: {

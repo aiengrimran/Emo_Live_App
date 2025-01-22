@@ -19,6 +19,7 @@ import Animated, {
 import Battle from './Navigations/Battle';
 import Games from '../Games/Games';
 import Live from './Navigations/Live';
+import {useSelector, UseSelector} from 'react-redux';
 import NewHost from './Navigations/NewHost';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 
@@ -27,6 +28,7 @@ import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
 
 export default function Home({navigation}) {
+  const {connected} = useSelector((state: any) => state.chat);
   const scrollViewRef = useRef<ScrollView>(null);
   const [tab, setTab] = useState(1);
   const translateX = useSharedValue(0);
@@ -88,7 +90,18 @@ export default function Home({navigation}) {
           width: '99%',
           marginTop: Platform.OS == 'ios' ? 50 : 20,
         }}>
-        <View style={{width: '40%'}} />
+        <View style={{width: '40%'}}>
+          <View
+            style={{
+              backgroundColor: connected ? colors.complimentary : colors.accent,
+              width: 20,
+              marginLeft: 20,
+              height: 20,
+              borderRadius: 15,
+            }}
+          />
+        </View>
+        {/* <View style={{width: '40%'}} /> */}
         <View
           style={{
             width: '60%',

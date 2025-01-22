@@ -7,13 +7,15 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
+  Button,
   Dimensions,
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React, {useState, useContext} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import DatePicker from 'react-native-date-picker';
+
 import Context from '../../Context/Context';
 import appStyles from '../../styles/styles';
 import {colors} from '../../styles/colors';
@@ -21,6 +23,8 @@ import axiosInstance from '../../Api/axiosConfig';
 // import {ScrollView} from 'react-native-gesture-handler';
 
 export default function Register({navigation}) {
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
   const [error, setError] = useState<any>('');
   const {userAuthInfo} = useContext(Context);
   const {setToken, setUser} = userAuthInfo;
@@ -35,6 +39,7 @@ export default function Register({navigation}) {
     securePass: true,
     secure_password_confirm: true,
     dob: '',
+    dobSelected: false,
     password_confirmation: '',
   });
   const [loading, setLoading] = useState(false);
@@ -46,7 +51,7 @@ export default function Register({navigation}) {
       console.log(res.data);
       setLoading(false);
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
-      await AsyncStorage.setItem('token', res.data.token);
+      await AsyncStorage.setItem('token', res.data.access_token);
       setUser(res.data.user);
       setToken(res.data.access_token);
     } catch (error: any) {
@@ -171,14 +176,46 @@ export default function Register({navigation}) {
                     </View>
                     <View>
                       <Text style={styles.label}>DOB:</Text>
-                      <TextInput
-                        style={styles.inputBox}
-                        onChangeText={(e: any) =>
-                          setForm(prevState => ({...prevState, dob: e}))
-                        }
-                        placeholder="yyyy-mm-dd"
-                        placeholderTextColor={colors.body_text}
+                      <DatePicker
+                        modal
+                        mode="date"
+                        open={open}
+                        date={date}
+                        onConfirm={date => {
+                          setDate(date);
+                          const Date = date.toISOString().split('T')[0];
+                          setOpen(false);
+                          setForm(prevState => ({
+                            ...prevState,
+                            dob: Date,
+                            dobSelected: true,
+                          }));
+                        }}
+                        onCancel={() => {
+                          setOpen(false);
+                        }}
                       />
+                      <TouchableOpacity
+                        style={{
+                          borderWidth: 1,
+                          borderColor: colors.complimentary,
+                          padding: 12,
+                          borderRadius: 4,
+                          marginTop: 5,
+                        }}
+                        onPress={() => {
+                          setOpen(true);
+                          console.log('caa');
+                        }}>
+                        <Text
+                          style={[
+                            form.dobSelected
+                              ? {color: colors.complimentary}
+                              : {color: colors.body_text},
+                          ]}>
+                          {form.dobSelected ? form.dob : 'yyyy-mm-dd'}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                     <View>
                       <Text style={styles.label}>Email:</Text>
@@ -203,6 +240,7 @@ export default function Register({navigation}) {
                         onChangeText={(e: any) =>
                           setForm(prevState => ({...prevState, password: e}))
                         }
+                        autoCapitalize="none"
                         value={form.password}
                         placeholder="**********"
                         placeholderTextColor={colors.body_text}
@@ -238,6 +276,7 @@ export default function Register({navigation}) {
                             password_confirmation: e,
                           }))
                         }
+                        autoCapitalize="none"
                         value={form.password_confirmation}
                         secureTextEntry={form.secure_password_confirm}
                         placeholder="**********"

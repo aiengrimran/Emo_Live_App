@@ -50,8 +50,6 @@ export default function Chat({navigation, route}: ChatProps) {
   );
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
-  // const {chatClientInstance} = chatClientMemo;
-
   const {token} = tokenMemo;
 
   const receiverUser = route.params.receiverUser;

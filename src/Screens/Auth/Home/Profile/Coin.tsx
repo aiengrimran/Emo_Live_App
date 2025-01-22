@@ -58,11 +58,11 @@ export default function Coin({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <View style={{marginTop: Platform.OS == 'ios' ? 40 : 40}}>
+      <View style={{marginTop: Platform.OS == 'ios' ? 40 : 10}}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}>
-          <Icon name="arrow-left-thin" color="#fff" size={40} />
+          <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
         </TouchableOpacity>
       </View>
 
@@ -81,8 +81,8 @@ export default function Coin({navigation}) {
           }
         />
         <Text style={styles.userText}>
-          Current Details
-          {/* {user.first_name + ' ' + user.last_name} */}
+          {/* Current Details */}
+          {user.first_name + ' ' + user.last_name}
         </Text>
         <View
           style={{
@@ -104,12 +104,6 @@ export default function Coin({navigation}) {
       <View style={styles.accountInfo}>
         <TouchableOpacity>
           <Text style={styles.balanceTxt}>Account Balance</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleOpenSheet}
-          style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Text style={styles.balanceTxt}>Payouts</Text>
-          <Icon name="chevron-right" color={colors.complimentary} size={23} />
         </TouchableOpacity>
       </View>
       <View style={styles.coinType}>

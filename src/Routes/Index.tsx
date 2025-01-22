@@ -32,7 +32,8 @@ import StrangerMessages from '../Screens/Auth/Home/Chat/StrangerMessages';
 import Settings from '../Screens/Auth/Home/Profile/ShortCuts/Settings';
 import NotificationSettings from '../Screens/Auth/Home/Profile/Settings/NotificationSettings';
 import ConnectionError from '../Screens/General/ConnectionError';
-
+import Privacy from '../Screens/Auth/Home/Profile/Settings/Privacy';
+import Level from '../Screens/Auth/Home/Profile/Level/Level';
 import NetInfo from '@react-native-community/netinfo';
 import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
@@ -105,10 +106,6 @@ export default function Index() {
   // };
   const userAuthInfo = useMemo(() => ({user, setUser}), [user]);
   const tokenMemo = useMemo(() => ({token, setToken}), [user]);
-  const chatClientMemo = useMemo(
-    () => ({chatClientInstance, setChatClientInstance}),
-    [chatClientInstance],
-  );
 
   const netConnection = useMemo(
     () => ({connection, setConnection}),
@@ -124,7 +121,6 @@ export default function Index() {
   const valueToContext = {
     userAuthInfo,
     tokenMemo,
-    chatClientMemo,
   };
   return (
     <Context.Provider value={valueToContext}>
@@ -197,10 +193,12 @@ export default function Index() {
                       />
                       <Stack.Screen name="Settings" component={Settings} />
                       <Stack.Screen name="JoinAgency" component={JoinAgency} />
+                      <Stack.Screen name="Level" component={Level} />
                       <Stack.Screen
                         name="EditProfile"
                         component={EditProfile}
                       />
+                      <Stack.Screen name="Privacy" component={Privacy} />
                       <Stack.Screen
                         name="Notifications"
                         component={Notifications}

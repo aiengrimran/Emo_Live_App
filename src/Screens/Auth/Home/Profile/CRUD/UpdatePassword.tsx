@@ -46,13 +46,17 @@ export default function JoinAgency({navigation}) {
 
   return (
     <View style={styles.container}>
-      <View style={[appStyles.backBtn]}>
+      <View style={[appStyles.backBtn2]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}>
-          <Icon name="arrow-left-thin" color="#fff" size={25} />
+          <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
         </TouchableOpacity>
-        <Text style={[appStyles.headline, {color: colors.complimentary}]}>
+        <Text
+          style={[
+            appStyles.headline,
+            {color: colors.complimentary, marginLeft: 20},
+          ]}>
           Password
         </Text>
       </View>
@@ -70,6 +74,7 @@ export default function JoinAgency({navigation}) {
             placeholder="*******"
             style={styles.input}
             value={form.password}
+            autoCapitalize="none"
             onChangeText={text => setForm({...form, password: text})}
             placeholderTextColor="#737380"
           />
@@ -85,6 +90,7 @@ export default function JoinAgency({navigation}) {
             secureTextEntry={form.securePass}
             placeholder="*******"
             style={styles.input}
+            autoCapitalize="none"
             value={form.new_password}
             onChangeText={text => setForm({...form, new_password: text})}
             placeholderTextColor="#737380"
@@ -93,13 +99,13 @@ export default function JoinAgency({navigation}) {
             onPress={() =>
               setForm({
                 ...form,
-                secure_password_confirm: !form.securePass,
+                securePass: !form.securePass,
               })
             }
             style={{
               position: 'absolute',
               right: 10,
-              top: 43,
+              top: 25,
             }}>
             <Icon
               name={form.securePass ? 'eye-outline' : 'eye-off-outline'}
@@ -120,6 +126,7 @@ export default function JoinAgency({navigation}) {
             placeholder="*******"
             style={styles.input}
             value={form.new_password}
+            autoCapitalize="none"
             onChangeText={text =>
               setForm({...form, new_password_confirmation: text})
             }
@@ -135,7 +142,7 @@ export default function JoinAgency({navigation}) {
             style={{
               position: 'absolute',
               right: 10,
-              top: 43,
+              top: 25,
             }}>
             <Icon
               name={
@@ -178,9 +185,7 @@ const styles = StyleSheet.create({
     // width: '30%',
     // position: 'absolute',
     // top: 20,
-    left: 10,
     alignItems: 'center',
-    padding: 10,
     borderRadius: 16,
   },
   input: {

@@ -9,6 +9,7 @@ import PodCast from './src/Screens/Auth/Home/Chat/PodCast/PodCast';
 import Chat from './src/Screens/Auth/Home/Chat/Chat';
 import Audio from './src/Routes/Test/Audio';
 import LiveStreaming from './src/Routes/Test/LiveStreaming';
+import Chats1 from './src/tests/Chats1';
 import {store} from './src/store/store';
 // import Sw
 import {Provider} from 'react-redux';
@@ -30,6 +31,7 @@ export default function App() {
           {/* <PodCast /> */}
           {/* <Audio /> */}
           {/* <Chat /> */}
+          {/* <Chats1 /> */}
           <Routes />
           {/* <BackDrop /> */}
         </Provider>

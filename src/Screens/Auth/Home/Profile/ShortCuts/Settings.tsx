@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import appStyles from '../../../../../styles/styles';
+import {ChatClient} from 'react-native-agora-chat';
 import {colors} from '../../../../../styles/colors';
 import React, {useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,6 +17,7 @@ import Context from '../../../../../Context/Context';
 import axiosInstance from '../../../../../Api/axiosConfig';
 
 export default function Settings({navigation}) {
+  const chatClient = ChatClient.getInstance();
   const {userAuthInfo} = useContext(Context);
 
   const logout = async () => {
@@ -26,11 +28,20 @@ export default function Settings({navigation}) {
       const keys = await AsyncStorage.getAllKeys();
       await AsyncStorage.multiRemove(keys);
       await AsyncStorage.removeItem('user');
+      logoutUserFromAgoraChat();
       userAuthInfo.setUser(null);
       console.log('All keys removed from AsyncStorage');
     } catch (error) {
       console.log(error);
       console.error('Error removing keys from AsyncStorage:', error);
+    }
+  };
+  const logoutUserFromAgoraChat = async () => {
+    try {
+      await chatClient.logout();
+      console.log('Logged out Successes !!');
+    } catch (error) {
+      console.log(error);
     }
   };
   const testApi = async () => {
@@ -76,7 +87,9 @@ export default function Settings({navigation}) {
 
             <Icon name="chevron-right" size={25} color={colors.lines} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tab} onPress={testApi}>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => navigation.navigate('Privacy')}>
             <View style={styles.icon}>
               <Icon name="history" size={25} color={colors.complimentary} />
               <Text style={styles.tabText}>Privacy Policy</Text>

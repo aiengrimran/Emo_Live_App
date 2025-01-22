@@ -183,109 +183,116 @@ export default function EditProfile({navigation}) {
         />
       ) : (
         <>
-          <View style={{marginTop: 30}}>
-            <View>
-              <Text
-                style={{
-                  color: '#737380',
-                }}>
-                First Name
-              </Text>
-              <TextInput
-                placeholder="Isabella Rose"
-                style={styles.input}
-                value={form?.first_name}
-                onChangeText={text => setForm({...form, first_name: text})}
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View style={{marginVertical: 20}}>
-              <Text style={styles.label}>Last Name</Text>
-              <TextInput
-                placeholder="Isabella Rose"
-                style={styles.input}
-                value={form?.last_name}
-                onChangeText={text => setForm({...form, last_name: text})}
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View>
-              <Text style={styles.label}>Bio</Text>
-              <TextInput
-                placeholder="Save Earth and Spread Love...."
-                style={styles.input}
-                value={form?.bio}
-                onChangeText={text => setForm({...form, bio: text})}
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View style={{marginTop: 20}}>
-              <Text style={styles.label}>City</Text>
-              <TextInput
-                placeholder="New York"
-                style={styles.input}
-                value={form?.address}
-                onChangeText={text => setForm({...form, address: text})}
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View style={{marginTop: 20}}>
-              <Text style={styles.label}>Date of Birth</Text>
-              <TextInput
-                placeholder="Please Provide DOB"
-                style={{
-                  borderBottomColor: 'grey',
-                  borderBottomWidth: 1,
-                  marginTop: 10,
-                  paddingBottom: 10,
-                  color: '#fff',
-                }}
-                value={form.dob}
-                // value="11 Sept 2001"
-                placeholderTextColor="#737380"
-              />
-            </View>
-            <View style={{marginTop: 20}}>
-              <Text style={styles.label}>Gender</Text>
-              <View style={styles.gender}>
-                <TouchableOpacity
-                  onPress={() => setForm({...form, gender: 'female'})}
-                  style={[
-                    styles.genderBtn,
-                    form.gender == 'female' && {backgroundColor: '#64566e'},
-                    {
-                      borderWidth: 1,
-                      borderTopLeftRadius: 10,
-                      borderBottomLeftRadius: 10,
-                    },
-                  ]}>
-                  <Text style={styles.genderTxt}>Female</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setForm({...form, gender: 'male'})}
-                  style={[
-                    styles.genderBtn,
-                    form.gender == 'male' && {backgroundColor: '#64566e'},
-
-                    {borderTopWidth: 1, borderBottomWidth: 1},
-                  ]}>
-                  <Text style={styles.genderTxt}>Male</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setForm({...form, gender: 'other'})}
-                  style={[
-                    styles.genderBtn,
-                    form.gender == 'other' && {backgroundColor: '#64566e'},
-                    {
-                      borderWidth: 1,
-                      borderTopRightRadius: 10,
-                      borderBottomEndRadius: 10,
-                    },
-                  ]}>
-                  <Text style={styles.genderTxt}>Other</Text>
-                </TouchableOpacity>
+          <View style={{marginTop: 20, marginBottom: 100, paddingBottom: 50}}>
+            <ScrollView>
+              <View>
+                <Text
+                  style={{
+                    color: '#737380',
+                  }}>
+                  First Name
+                </Text>
+                <TextInput
+                  placeholder="Isabella Rose"
+                  style={styles.input}
+                  value={form?.first_name}
+                  onChangeText={text => setForm({...form, first_name: text})}
+                  placeholderTextColor="#737380"
+                />
               </View>
-            </View>
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.label}>Last Name</Text>
+                <TextInput
+                  placeholder="Isabella Rose"
+                  style={styles.input}
+                  value={form?.last_name}
+                  onChangeText={text => setForm({...form, last_name: text})}
+                  placeholderTextColor="#737380"
+                />
+              </View>
+              <View>
+                <Text style={styles.label}>Bio</Text>
+                <TextInput
+                  placeholder="Save Earth and Spread Love...."
+                  style={styles.input}
+                  value={form?.bio}
+                  onChangeText={text => setForm({...form, bio: text})}
+                  placeholderTextColor="#737380"
+                />
+              </View>
+              <View style={{marginTop: 20}}>
+                <Text style={styles.label}>City</Text>
+                <TextInput
+                  placeholder="New York"
+                  style={styles.input}
+                  value={form?.address}
+                  onChangeText={text => setForm({...form, address: text})}
+                  placeholderTextColor="#737380"
+                />
+              </View>
+              <View style={{marginTop: 20}}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <TextInput
+                  placeholder="Please Provide DOB"
+                  style={{
+                    borderBottomColor: 'grey',
+                    borderBottomWidth: 1,
+                    marginTop: 10,
+                    paddingBottom: 10,
+                    color: '#fff',
+                  }}
+                  value={form.dob}
+                  // value="11 Sept 2001"
+                  placeholderTextColor="#737380"
+                />
+              </View>
+              <View style={{marginTop: 20, width: '98%'}}>
+                <Text style={styles.label}>Gender</Text>
+                <View style={styles.gender}>
+                  <TouchableOpacity
+                    onPress={() => setForm({...form, gender: 'female'})}
+                    style={[
+                      styles.genderBtn,
+                      form.gender == 'female' && {backgroundColor: '#64566e'},
+                      {
+                        borderWidth: 1,
+                        borderTopLeftRadius: 10,
+                        borderBottomLeftRadius: 10,
+                      },
+                    ]}>
+                    <Text style={styles.genderTxt}>Female</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setForm({...form, gender: 'male'})}
+                    style={[
+                      styles.genderBtn,
+                      form.gender == 'male' && {backgroundColor: '#64566e'},
+
+                      {borderTopWidth: 1, borderBottomWidth: 1},
+                    ]}>
+                    <Text style={styles.genderTxt}>Male</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setForm({...form, gender: 'other'})}
+                    style={[
+                      styles.genderBtn,
+                      form.gender == 'other' && {backgroundColor: '#64566e'},
+                      {
+                        borderWidth: 1,
+                        borderTopRightRadius: 10,
+                        borderBottomEndRadius: 10,
+                      },
+                    ]}>
+                    <Text style={styles.genderTxt}>Other</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.btn} onPress={updateProfile}>
+                <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
           {/* <GeneralPermission /> */}
           {error && (
@@ -329,11 +336,11 @@ export default function EditProfile({navigation}) {
               </View>
             </View>
           </Modal>
-          <TouchableOpacity style={styles.btn} onPress={updateProfile}>
+          {/* <TouchableOpacity style={styles.btn} onPress={updateProfile}>
             <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}>
               Save
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </>
       )}
     </View>
@@ -387,7 +394,7 @@ const styles = StyleSheet.create({
     // width: 300,
     padding: 20,
     backgroundColor: colors.LG,
-    alignSelf: 'center',
+    // alignSelf: 'center',
     width: '90%',
     // minWidth
     alignItems: 'center',
@@ -490,11 +497,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   btn: {
-    backgroundColor: '#ef0143',
-    width: '90%',
+    backgroundColor: colors.accent,
+    width: '99%',
     padding: 15,
-    position: 'absolute',
-    bottom: 60,
+    marginTop: 30,
+    // position: 'absolute',
+    // bottom: 60,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'center',

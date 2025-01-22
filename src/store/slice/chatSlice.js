@@ -42,12 +42,24 @@ const chatSlice = createSlice({
     initialized: false,
     connected: false,
     error: null,
+    tokenRenewed: false,
+    messages: [],
+    chatMessages: [],
     // chatManager: null, // Store the chatManager in Redux
     // chatClient: null, // Store the chatClient instance
   },
   reducers: {
     setConnectionStatus(state, action) {
       state.connected = action.payload;
+    },
+    setTokenRenewed(state, action) {
+      state.tokenRenewed = action.payload;
+    },
+    setMessages(state, action) {
+      state.messages = action.payload;
+    },
+    setChatMessages(state, action) {
+      state.chatMessages = action.payload;
     },
     setInitialized(state, action) {
       state.initialized = action.payload;
@@ -58,7 +70,13 @@ const chatSlice = createSlice({
   },
 });
 
-export const {setConnectionStatus, setInitialized, setConnected} =
-  chatSlice.actions;
+export const {
+  setConnectionStatus,
+  setTokenRenewed,
+  setMessages,
+  setChatMessages,
+  setInitialized,
+  setConnected,
+} = chatSlice.actions;
 
 export default chatSlice.reducer;

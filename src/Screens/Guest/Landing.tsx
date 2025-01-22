@@ -8,6 +8,7 @@ import {
   TextInput,
   Platform,
   Dimensions,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React, {useState, useContext, useEffect} from 'react';
@@ -22,7 +23,7 @@ import {
 
 import {colors} from '../../styles/colors';
 
-export default function Landing({navigation}) {
+export default function Landing({navigation}: any) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {setUser} = userAuthInfo;
   const {setToken} = tokenMemo;
@@ -35,16 +36,16 @@ export default function Landing({navigation}) {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // useEffect(() => {
-  //   // Initialize Google Sign-In
-  //   GoogleSignin.configure({
-  //     webClientId:
-  //       '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com', // Replace with your Web client ID from Google Console
-  //     offlineAccess: true,
-  //     iosClientId:
-  //       '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
-  //   });
-  // }, []);
+  useEffect(() => {
+    // Initialize Google Sign-In
+    GoogleSignin.configure({
+      webClientId:
+        '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com', // Replace with your Web client ID from Google Console
+      offlineAccess: true,
+      iosClientId:
+        '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
+    });
+  }, []);
 
   const signInWithGoogle = async () => {
     try {
@@ -55,7 +56,7 @@ export default function Landing({navigation}) {
       console.log('User Info:', userInfo);
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        alert('google sign in cancelled by user');
+        Alert.alert('Error', 'google sign in cancelled by user');
         console.log('User cancelled the login flow');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         console.log('Sign-in is in progress');
@@ -74,7 +75,7 @@ export default function Landing({navigation}) {
         last_name: data.familyName,
         avatar: data.photo,
       };
-      const url = '';
+      const url = 'register-with-google';
       const res = await axiosInstance.post(url, JSON.stringify(formData));
       console.log(res.data);
       setLoading(false);
@@ -180,6 +181,7 @@ export default function Landing({navigation}) {
                   <TextInput
                     style={styles.passwordInput}
                     secureTextEntry={form.secure}
+                    autoCapitalize="none"
                     onChangeText={(text: any) =>
                       setForm({...form, password: text})
                     }

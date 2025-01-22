@@ -33,10 +33,15 @@ import {
   request,
 } from 'react-native-permissions';
 
+import {
+  checkPermission,
+  checkAudioInputPermission,
+} from '../../../../../scripts';
+
 // Define basic information
 const appId = 'cb178859ff01400d80dc40de177fedbc';
 const token =
-  '007eJxTYFib5rpg1kXnNofnfubnArK9lnU8CtRyE9z7Km1qg/jBquUKDMlJhuYWFqaWaWkGhiYGBikWBinJJgYpqYbm5mmpKUnJIacb0hsCGRnmJ+5hYWSAQBCfhaEktbiEgQEAYoMgOg==';
+  '007eJxTYJAJy/Nz3y63V37hV6aq5Ba5W8nhfHlibUt+vznd8Fw5aIUCQ3KSobmFhallWpqBoYmBQYqFQUqyiUFKqqG5eVpqSlLyVN/e9IZARobs38GMjAwQCOKzMJSkFpcwMAAA+n4fHw==';
 const channelName = 'test';
 // const uid = 0; // Local user Uid, no need to modify
 
@@ -58,6 +63,15 @@ const App = () => {
       agoraEngineRef.current?.release();
     };
   }, []);
+
+  const checkCamPermission = async () => {
+    // const result =await checkPermission();
+    const result2 = await checkAudioInputPermission();
+    console.log(result2);
+
+    try {
+    } catch (error) {}
+  };
 
   // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
@@ -98,7 +112,7 @@ const App = () => {
       });
       // Enable local video
       // agoraEngine.enableVideo();
-      // agoraEngine.enableLocalAudio(true);
+      agoraEngine.enableLocalAudio(true);
       //   agoraEngine.enableLocalAudio(true);
     } catch (e) {
       console.log(e);
@@ -183,7 +197,7 @@ const App = () => {
         console.log('Joining as an audience...');
         // Join the channel as an audience
         result1 = agoraEngineRef.current.joinChannel(token, channelName, uid, {
-          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+          // channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
           clientRoleType: ClientRoleType.ClientRoleAudience,
           publishMicrophoneTrack: false, // Audience shouldn't publish microphone
           autoSubscribeAudio: true,
@@ -273,6 +287,7 @@ const App = () => {
           </Text>
         )}
         <Text style={styles.info}>{message}</Text>
+        <Text onPress={checkCamPermission}>Get Permision </Text>
       </ScrollView>
     </SafeAreaView>
   );

@@ -81,8 +81,16 @@ const appStyles = StyleSheet.create({
     width: '50%',
     padding: 16,
   },
+  backBtn2: {
+    marginTop: Platform.OS == 'ios' ? 70 : 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    // padding: 16,
+    paddingLeft: 10,
+  },
   bottomBtn: {
     position: 'absolute',
+    // bottom: 50,
     bottom: Platform.OS == 'ios' ? 40 : 20,
     backgroundColor: colors.accent,
     // backgroundColor: colors.alpha_dark,

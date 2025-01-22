@@ -74,7 +74,7 @@ export default function BlockedUsers({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <View style={[appStyles.backBtn]}>
+      <View style={[appStyles.backBtn2]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left-thin" size={25} color={colors.complimentary} />
         </TouchableOpacity>
@@ -97,10 +97,9 @@ export default function BlockedUsers({navigation}) {
         />
       ) : (
         <View>
-          <Text onPress={getBlockUsers}>T</Text>
           <FlatList
             data={users}
-            keyExtractor={item => item.id?.toString()}
+            keyExtractor={(item: any) => item.id?.toString()}
             renderItem={({item}: any) => (
               <View style={styles.userSection}>
                 <TouchableOpacity

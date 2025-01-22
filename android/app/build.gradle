@@ -127,3 +127,14 @@ dependencies {
 }
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+
+// added temp fix for lint issue on icons
+afterEvaluate {
+    tasks.named('generateDebugLintReportModel').configure {
+        dependsOn tasks.named('copyReactNativeVectorIconFonts')
+    }
+
+    tasks.named('lintAnalyzeDebug').configure {
+        dependsOn tasks.named('copyReactNativeVectorIconFonts')
+    }    
+}

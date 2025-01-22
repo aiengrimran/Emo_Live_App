@@ -9,7 +9,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import Context from '../../../../Context/Context';
@@ -24,8 +24,7 @@ import envVar from '../../../../config/envVar';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
-  const {userAuthInfo, tokenMemo, chatClientMemo} = useContext(Context);
-  const {chatClientInstance} = chatClientMemo;
+  const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user} = userAuthInfo;
   const chatClient = ChatClient.getInstance();
   const {token} = tokenMemo;
@@ -33,6 +32,9 @@ export default function Search({navigation}) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    getUnreadMessages();
+  }, []);
   const createAgoraChatToken = async () => {
     try {
       setLoading(true);
@@ -50,9 +52,9 @@ export default function Search({navigation}) {
   };
   const getUnreadMessages = async () => {
     try {
-      const count = await chatClientInstance.chatManager.getUnreadCount();
+      const count = await chatClient.chatManager.getUnreadCount();
       setUnreadMessageCount(count);
-      console.log(count);
+      // console.log(count);
     } catch (error) {
       console.log(error);
     }
@@ -232,7 +234,9 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Agencies</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigation.navigate('JoinAgency')}>
                   <View style={styles.icon}>
                     <Icon
                       name="weight-lifter"
@@ -266,7 +270,9 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Join Agency</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Level')}
+                  style={styles.iconBtn}>
                   <View style={styles.icon}>
                     <Icon name="star" size={33} color={colors.complimentary} />
                   </View>
@@ -286,9 +292,7 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Ranking</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconBtn}
-                  onPress={createAgoraChatToken}>
+                <TouchableOpacity style={styles.iconBtn}>
                   <View style={styles.icon}>
                     <Icon
                       name="book-open-page-variant-outline"
@@ -332,7 +336,7 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Terms</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={logout} style={styles.iconBtn}>
+                <TouchableOpacity style={styles.iconBtn}>
                   <View style={styles.icon}>
                     <Icon
                       name="logout"
@@ -340,7 +344,7 @@ export default function Search({navigation}) {
                       color={colors.complimentary}
                     />
                   </View>
-                  <Text style={styles.actionTxr}>Logout</Text>
+                  <Text style={styles.actionTxr}>Add </Text>
                 </TouchableOpacity>
               </View>
             </View>

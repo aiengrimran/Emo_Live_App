@@ -7,14 +7,25 @@ import Notifications from './Notifications';
 import GoLive2 from './Chat/GoLive2';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {setTokenRenewed} from '../../../store/slice/chatSlice';
 import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
+import axiosInstance from '../../../Api/axiosConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Context from '../../../Context/Context';
 const Tab = createBottomTabNavigator();
-import {ChatClient, ChatOptions} from 'react-native-agora-chat';
+import {
+  ChatClient,
+  ChatOptions,
+  ChatConnectEventListener,
+} from 'react-native-agora-chat';
 import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
-import {setInitialized, setConnected} from '../../../store/slice/chatSlice';
+import {
+  setInitialized,
+  setConnected,
+  setMessages,
+} from '../../../store/slice/chatSlice';
 import {useSelector, useDispatch} from 'react-redux';
 
 export default function HomeB() {
@@ -23,11 +34,9 @@ export default function HomeB() {
   const chatManager = chatClient.chatManager;
   const chatClientRef = useRef(chatClient);
   const chatManagerRef = useRef(chatManager);
-  const {userAuthInfo, chatClientMemo, tokenMemo} = useContext(Context);
-  const {setChatClientInstance} = chatClientMemo;
+  const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
-  const [init, setInit] = useState(false);
-  const {user} = userAuthInfo;
+  const {user, setUser} = userAuthInfo;
   const {initialized, connected, error} = useSelector(
     (state: any) => state.chat,
   );
@@ -35,9 +44,7 @@ export default function HomeB() {
   useEffect(() => {
     let initializedOnce = false; // Prevents duplicate initialization
     const unsubscribe = NetInfo.addEventListener(state => {
-      console.log(state.isConnected);
-
-      if (state.isConnected) {
+      if (state.isConnected && !connected) {
         if (!initialized && !initializedOnce) {
           initializedOnce = true;
           console.log('Network available, initializing chat SDK...Home');
@@ -65,30 +72,30 @@ export default function HomeB() {
     chatClient
       .init(o)
       .then(() => {
-        console.log('init success');
+        console.log('init success ::::');
         dispatch(setInitialized(true));
-        addToContext();
-
-        // setChatCLient(chatClient);
-        // setChatManager(chatManager);
-        let listener = {
+        // login();
+        let listener: ChatConnectEventListener = {
           onTokenWillExpire() {
-            console.log('token expire.');
+            callApiForRenewToken();
+            Alert.alert('Token Expired', 'Token will expired soon');
           },
           onTokenDidExpire() {
+            callApiForRenewToken();
             console.log('token did expire');
           },
           onConnected() {
             console.log('onConnected');
             // setMessageListener();
             dispatch(setConnected(true));
-            // setStatus({...status, connected: true});
           },
-          onDisconnected(errorCode: any) {
+          onDisconnected() {
             dispatch(setConnected(false));
-            // setStatus({...status, connected: false});
-            console.log('onDisconnected:x' + errorCode);
-            // console.log('onDisconnected:' + errorCode);
+            Alert.alert('Disconnected', 'Disconnected from agora');
+            console.log('onDisconnected:x');
+          },
+          onUserAuthenticationFailed() {
+            loginUser();
           },
         };
         chatClient.addConnectionListener(listener);
@@ -101,11 +108,67 @@ export default function HomeB() {
       });
   };
 
-  const addToContext = () => {
+  useEffect(() => {
+    // Registers listeners for messaging.
+    const setMessageListener = () => {
+      console.log('run message listener ...');
+      let msgListener = {
+        onMessagesReceived(messagesReceived: any) {
+          // console.log(messages);
+          setMessages((prevMessages: any) => {
+            const updatedMessages = [...prevMessages, ...messagesReceived];
+            // console.log('Updated messages:', updatedMessages);
+            return updatedMessages;
+          });
+        },
+        onMessagesRead: messages => {
+          console.log('onMessagesRead: ' + JSON.stringify(messages));
+        },
+        onMessagesDelivered: messages => {},
+        onMessagesRecalled: messages => {},
+      };
+      chatClient.chatManager.removeAllMessageListener();
+      chatClient.chatManager.addMessageListener(msgListener);
+    };
+    if (connected) {
+      setMessageListener();
+    }
+  }, [connected]);
+
+  // Logs in with an account ID and a token.
+  const loginUser = async () => {
+    const isLoggedIn = await chatClient.isLoginBefore();
+    if (isLoggedIn) {
+      dispatch(setConnected(true));
+      console.log('User is already logged in.');
+      return; // Prevent duplicate login
+    }
+
+    if (!initialized) console.log('Perform initialization first.');
     try {
-      console.log('i add value to context');
-      setChatClientInstance(chatClient);
-    } catch (error) {}
+      await chatClient.loginWithToken(String(user.id), user.agora_chat_token);
+      console.log('login operation success.');
+    } catch (error: any) {
+      console.log(error);
+      if (error.code == 2) {
+        return;
+      }
+      if (error.code == 111 || error.code == 202) {
+        callApiForRenewToken();
+      }
+    }
+  };
+
+  const callApiForRenewToken = async () => {
+    try {
+      const res = await axiosInstance.get('/renew-agora-token');
+      console.log(res.data.user);
+      dispatch(setTokenRenewed(true));
+      setUser(res.data.user);
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
