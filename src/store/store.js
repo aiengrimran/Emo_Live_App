@@ -1,11 +1,15 @@
 import {configureStore} from '@reduxjs/toolkit';
 import usersReducer from './slice/usersSlice';
 import chatReducer from './slice/chatSlice';
+import notificationReducer from './slice/notificationSlice';
+import podcastReducer from './slice/podcastSlice';
 
 export const store = configureStore({
   reducer: {
     usersReducer,
     chat: chatReducer,
+    notification: notificationReducer,
+    podcast: podcastReducer,
   },
 });
 export default store;

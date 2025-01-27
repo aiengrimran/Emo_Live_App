@@ -183,7 +183,7 @@ export default function Coin({navigation}) {
                       appStyles.paragraph1,
                       {color: colors.complimentary, marginLeft: 15},
                     ]}>
-                    Meow Live Offline
+                    Emo Live Offline
                   </Text>
                 </View>
                 <Icon name="chevron-right" size={25} color={colors.lines} />

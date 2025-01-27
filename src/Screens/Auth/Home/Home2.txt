@@ -1,4 +1,4 @@
-import {View, Text, Image, Alert, StyleSheet} from 'react-native';
+import {View, Text, Image, Alert} from 'react-native';
 import React, {useContext, useRef, useEffect, useState} from 'react';
 import Home from './Home';
 import Search from './Tabs/Search';
@@ -11,6 +11,7 @@ import {setTokenRenewed} from '../../../store/slice/chatSlice';
 import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
 import axiosInstance from '../../../Api/axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import Context from '../../../Context/Context';
 const Tab = createBottomTabNavigator();
 import {
@@ -28,44 +29,41 @@ import {
   setMessages,
 } from '../../../store/slice/chatSlice';
 import {useSelector, useDispatch} from 'react-redux';
-import appStyles from '../../../styles/styles';
-import axios from 'axios';
 
 export default function HomeB() {
   const dispatch = useDispatch();
-  // const chatClient = ChatClient.getInstance();
-  // const chatManager = chatClient.chatManager;
-  // const chatClientRef = useRef(chatClient);
-  // const chatManagerRef = useRef(chatManager);
+  const chatClient = ChatClient.getInstance();
+  const chatManager = chatClient.chatManager;
+  const chatClientRef = useRef(chatClient);
+  const chatManagerRef = useRef(chatManager);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
   const {initialized, messages, connected, error} = useSelector(
     (state: any) => state.chat,
   );
-  const {unread} = useSelector((state: any) => state.notification);
 
-  // useEffect(() => {
-  //   let initializedOnce = false; // Prevents duplicate initialization
-  //   const unsubscribe = NetInfo.addEventListener(state => {
-  //     if (state.isConnected && !connected) {
-  //       if (!initialized && !initializedOnce) {
-  //         initializedOnce = true;
-  //         console.log('Network available, initializing chat SDK...Home');
-  //         // Initialize the chat SDK here
-  //         initializedAgoraChat();
-  //       }
-  //     } else {
-  //       console.log('No network connection.');
-  //       Alert.alert('Network Error', 'Please check your internet connection.');
-  //     }
-  //   });
+  useEffect(() => {
+    let initializedOnce = false; // Prevents duplicate initialization
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected && !connected) {
+        if (!initialized && !initializedOnce) {
+          initializedOnce = true;
+          console.log('Network available, initializing chat SDK...Home');
+          // Initialize the chat SDK here
+          initializedAgoraChat();
+        }
+      } else {
+        console.log('No network connection.');
+        Alert.alert('Network Error', 'Please check your internet connection.');
+      }
+    });
 
-  //   return () => {
-  //     console.log('Cleaning up network listener...');
-  //     unsubscribe(); // Unsubscribe from NetInfo listener
-  //   };
-  // }, [initialized, chatManagerRef.current, chatClientRef.current]);
+    return () => {
+      console.log('Cleaning up network listener...');
+      unsubscribe(); // Unsubscribe from NetInfo listener
+    };
+  }, [initialized, chatManagerRef.current, chatClientRef.current]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -76,7 +74,6 @@ export default function HomeB() {
     chatClient
       .init(o)
       .then(() => {
-        loginUser();
         console.log('init success ::::');
         dispatch(setInitialized(true));
         // login();
@@ -119,43 +116,29 @@ export default function HomeB() {
       console.log('run message listener ...');
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
-          let currentMessages = [...messages]; // Clone current messages to avoid mutation
-
+          let currentMessages = messages;
           messagesReceived.forEach((message: ChatMessage) => {
-            const existingConversation = currentMessages.find(
-              item => item.conversationId === message.conversationId,
+            let added = currentMessages.find(
+              (item: ChatMessage) =>
+                item.conversationId == message.conversationId,
             );
-
-            if (existingConversation) {
-              // Append the new message to the existing conversation's messages
-              existingConversation.messages.push(message);
+            if (added) {
+              currentMessages['conversationId'] = [
+                ...currentMessages['conversationId'],
+                messagesReceived,
+              ];
             } else {
-              // Create a new conversation with this message
-              currentMessages.push({
-                conversationId: message.conversationId,
-                messages: [message],
-              });
+              currentMessages['conversationId'] = [messagesReceived];
             }
           });
-
-          // Dispatch the updated messages
           dispatch(setMessages(currentMessages));
-          // let currentMessages = messages;
-          // messagesReceived.forEach((message: ChatMessage) => {
-          //   let added = currentMessages.find(
-          //     (item: ChatMessage) =>
-          //       item.conversationId == message.conversationId,
-          //   );
-          //   if (added) {
-          //     currentMessages['conversationId'] = [
-          //       ...currentMessages['conversationId'],
-          //       messagesReceived,
-          //     ];
-          //   } else {
-          //     currentMessages['conversationId'] = [messagesReceived];
-          //   }
+
+          // messages.find(item => item.id == messages)
+          // setMessages((prevMessages: any) => {
+
+          //   const updatedMessages = [...prevMessages, ...messagesReceived];
+          //   return updatedMessages;
           // });
-          // dispatch(setMessages(currentMessages));
         },
         onMessagesRead: messages => {
           console.log('onMessagesRead: ' + JSON.stringify(messages));
@@ -283,20 +266,6 @@ export default function HomeB() {
                 size={25}
                 color={focused ? colors.complimentary : colors.body_text}
               />
-              {unread && (
-                <View style={styles.unread}>
-                  <Text
-                    style={[
-                      appStyles.smallM,
-                      {
-                        color: colors.complimentary,
-                        fontSize: 10,
-                      },
-                    ]}>
-                    {unread}
-                  </Text>
-                </View>
-              )}
             </View>
           ),
         }}
@@ -330,15 +299,3 @@ export default function HomeB() {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  unread: {
-    position: 'absolute',
-    right: -5,
-    backgroundColor: colors.accent,
-    borderRadius: 20,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    top: -4,
-  },
-});

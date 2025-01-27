@@ -151,8 +151,7 @@ export default function Search({navigation}) {
                               Authorization: `Bearer ${token}`,
                             },
                           }
-                        : // ? {uri:  item.avatar}
-                          require('../../../../assets/images/place.jpg')
+                        : require('../../../../assets/images/place.jpg')
                     }
                   />
                   <View style={{marginLeft: 20}}>

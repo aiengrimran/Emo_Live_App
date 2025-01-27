@@ -1,0 +1,245 @@
+import {
+  View,
+  Text,
+  ScrollView,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import React, {useContext, useState, useEffect} from 'react';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import axiosInstance from '../../../../Api/axiosConfig';
+import {colors} from '../../../../styles/colors';
+import axios from 'axios';
+import envVar from '../../../../config/envVar';
+import appStyles from '../../../../styles/styles';
+const token = '';
+
+export default function Popular() {
+  const [data, setData] = useState([
+    {
+      id: 1,
+      host: 1,
+      duration: '20',
+      title: 'get to gether',
+      coin_earned: 0,
+      status: 'STARTED',
+      type: 'PUBLIC',
+      channel: 'ch_58682_de4d',
+      listeners: 0,
+      listeners_added: 'null',
+      created_at: '2025-01-23T18:58:02.000000Z',
+      updated_at: '2025-01-23T18:58:02.000000Z',
+      user: {
+        id: 1,
+        user_name: null,
+        first_name: 'Imran',
+        last_name: 'Khan',
+        phone: null,
+        dob: '2021-02-20',
+        gender: 'male',
+        email: 'imran@gmail.com',
+        agora_chat_token:
+          '007eJxTYKgw2qex1fBGzzLuHS+Xn7PIre3/kn9jeUTAw8+KKaY5V0QVGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSLTZ2pL8415GuKtPFwMjACsSMDCA+I4MhADObIkY=',
+        agora_chat_uid: null,
+        account_verified: 0,
+        provider: null,
+        provider_id: null,
+        avatar: 'users/avatars/1736019229.jpg',
+        address: 'Buner kpk',
+        bio: 'Save earth live',
+        created_at: '2024-12-28T19:27:39.000000Z',
+        updated_at: '2025-01-16T07:11:52.000000Z',
+      },
+    },
+    {
+      id: 2,
+      host: 6,
+      duration: '20',
+      title: 'Chemistry subject',
+      coin_earned: 0,
+      status: 'STARTED',
+      type: 'PUBLIC',
+      channel: 'ch_58682_de5g',
+      listeners: 0,
+      listeners_added: 'null',
+      created_at: '2025-01-23T18:58:02.000000Z',
+      updated_at: '2025-01-23T18:58:02.000000Z',
+      user: {
+        id: 6,
+        user_name: null,
+        first_name: 'Ahmad',
+        last_name: 'Khan',
+        phone: null,
+        dob: '2021-02-20',
+        gender: 'male',
+        email: 'imran@gmail.com',
+        agora_chat_token:
+          '007eJxTYKgw2qex1fBGzzLuHS+Xn7PIre3/kn9jeUTAw8+KKaY5V0QVGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSLTZ2pL8415GuKtPFwMjACsSMDCA+I4MhADObIkY=',
+        agora_chat_uid: null,
+        account_verified: 0,
+        provider: null,
+        provider_id: null,
+        avatar: null,
+        // avatar: 'users/avatars/1736019229.jpg',
+        address: 'Buner kpk',
+        bio: 'Let be please',
+        created_at: '2024-12-28T19:27:39.000000Z',
+        updated_at: '2025-01-16T07:11:52.000000Z',
+      },
+    },
+  ]);
+  const getPodcast = async () => {
+    try {
+      const url = envVar.LOCAL_URL + 'active-podcasts';
+      console.log(url);
+      const res = await axios.get(url);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return (
+    <View>
+      <View style={{marginTop: 20}}>
+        <Text
+          onPress={getPodcast}
+          style={{marginVertical: 20, color: colors.complimentary}}>
+          GetPodcast
+        </Text>
+
+        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+          <LiveScreen number={1}></LiveScreen>
+          <LiveScreen number={2}></LiveScreen>
+        </View>
+        <FlatList
+          data={data}
+          keyExtractor={item => item.id?.toString()}
+          numColumns={2}
+          contentContainerStyle={{
+            justifyContent: 'space-between',
+            width: '100%',
+            // backgroundColor: 'red',
+          }}
+          renderItem={({item}: any) => (
+            <View style={{position: 'relative', backgroundColor: 'red'}}>
+              <View
+                style={{
+                  width: 160,
+                  height: 160,
+                }}>
+                <Image
+                  style={styles.userImage}
+                  source={
+                    item.avatar
+                      ? {
+                          uri: envVar.API_URL + 'display-avatar/' + item.id,
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        }
+                      : require('../../../../assets/images/place.jpg')
+                  }
+
+                  // source={images[number]} // Use the mapping here
+                  //   source={require('../../../assets/images/live/girl' + number + '.jpg')}
+                />
+                <TouchableOpacity style={styles.waveform}>
+                  <Icon name="waveform" color="#fff" size={30} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.userStats}>
+                  <Icon name="diamond" color="#fff" size={20} />
+                  <Text style={styles.userFollower}>10.51K</Text>
+                </TouchableOpacity>
+                <Text style={styles.userTxt}>Emily Jhonson</Text>
+              </View>
+            </View>
+          )}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  waveform: {
+    top: 10,
+    position: 'absolute',
+    backgroundColor: colors.LG,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    borderRadius: 25,
+  },
+  userStats: {
+    top: 10,
+    position: 'absolute',
+    flexDirection: 'row',
+    right: 10,
+    backgroundColor: colors.LG,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 90,
+    borderRadius: 15,
+  },
+  userTxt: {
+    position: 'absolute',
+    bottom: 10,
+    ...appStyles.regularTxtRg,
+    color: colors.complimentary,
+  },
+  userFollower: {
+    color: colors.complimentary,
+    marginLeft: 5,
+    ...appStyles.bodyRg,
+  },
+  userImage: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    borderRadius: 6,
+  },
+});
+interface LiveScreenProps {
+  number: number;
+}
+const LiveScreen = ({number}: LiveScreenProps) => {
+  const images = {
+    1: require('../../../../assets/images/live/girl1.jpg'),
+    2: require('../../../../assets/images/live/girl2.jpg'),
+    3: require('../../../../assets/images/live/girl3.jpg'),
+    4: require('../../../../assets/images/live/girl4.jpg'),
+  };
+  return (
+    <View style={{position: 'relative'}}>
+      <View
+        style={{
+          width: 160,
+          height: 160,
+        }}>
+        <Image
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            borderRadius: 6,
+          }}
+          source={images[number]} // Use the mapping here
+          //   source={require('../../../assets/images/live/girl' + number + '.jpg')}
+        />
+        <TouchableOpacity style={styles.waveform}>
+          <Icon name="waveform" color="#fff" size={30} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.userStats}>
+          <Icon name="diamond" color="#fff" size={20} />
+          <Text style={styles.userFollower}>10.51K</Text>
+        </TouchableOpacity>
+        <Text style={styles.userTxt}>Emily Jhonson</Text>
+      </View>
+    </View>
+  );
+};

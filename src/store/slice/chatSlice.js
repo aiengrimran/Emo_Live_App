@@ -44,14 +44,20 @@ const chatSlice = createSlice({
     error: null,
     tokenRenewed: false,
     messages: [],
-    chatMessages: [],
-    // chatManager: null, // Store the chatManager in Redux
-    // chatClient: null, // Store the chatClient instance
+    chatScreenMessages: [],
   },
   reducers: {
     setConnectionStatus(state, action) {
       state.connected = action.payload;
     },
+    setModalInfo(state, action) {
+      state.modalInfo.modal = action.payload.modal;
+      state.modalInfo.isHost = action.payload.isHost;
+    },
+    setHostLeftPodcast(state, action) {
+      state.hostLeftPodcast = action.payload;
+    },
+
     setTokenRenewed(state, action) {
       state.tokenRenewed = action.payload;
     },
@@ -59,7 +65,7 @@ const chatSlice = createSlice({
       state.messages = action.payload;
     },
     setChatMessages(state, action) {
-      state.chatMessages = action.payload;
+      state.chatScreenMessages = action.payload;
     },
     setInitialized(state, action) {
       state.initialized = action.payload;

@@ -7,9 +7,16 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Popular from './Navigations/Popular';
+import envVar from '../../../config/envVar';
+
+import {
+  setUnreadCount,
+  setUnreadNotification,
+} from '../../../store/slice/notificationSlice';
+import axios from 'axios';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,20 +26,43 @@ import Animated, {
 import Battle from './Navigations/Battle';
 import Games from '../Games/Games';
 import Live from './Navigations/Live';
-import {useSelector, UseSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 import NewHost from './Navigations/NewHost';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
+import Context from '../../../Context/Context';
+const token = `34|wpjSAN9CJShZCXoxV7l6F52zp4VkTj9w6ka1UObvfebe0ec1`;
 
 export default function Home({navigation}) {
+  const {tokenMemo} = useContext(Context);
+  const dispatch = useDispatch();
+  // const {token} = tokenMemo;
   const {connected} = useSelector((state: any) => state.chat);
   const scrollViewRef = useRef<ScrollView>(null);
   const [tab, setTab] = useState(1);
   const translateX = useSharedValue(0);
 
+  const getNotifications = async () => {
+    try {
+      const url = envVar.LOCAL_URL + 'notifications/unread';
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const count = res.data.notifications.length;
+      if (count > 0) {
+        dispatch(setUnreadCount(count));
+        dispatch(setUnreadNotification(res.data.notifications));
+      }
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const updateTab = (direction: string) => {
     console.log(direction);
     let newTab = tab;
@@ -82,35 +112,23 @@ export default function Home({navigation}) {
     // <ReanimatedSwipeable>
 
     <View style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          // justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '99%',
-          marginTop: Platform.OS == 'ios' ? 50 : 20,
-        }}>
+      <View style={styles.screenTop}>
         <View style={{width: '40%'}}>
           <View
-            style={{
-              backgroundColor: connected ? colors.complimentary : colors.accent,
-              width: 20,
-              marginLeft: 20,
-              height: 20,
-              borderRadius: 15,
-            }}
+            style={[
+              styles.connectIcon,
+              {
+                backgroundColor: connected
+                  ? colors.complimentary
+                  : colors.accent,
+              },
+            ]}
           />
         </View>
-        {/* <View style={{width: '40%'}} /> */}
-        <View
-          style={{
-            width: '60%',
-            alignSelf: 'center',
-            flexDirection: 'row',
-            // justifyContent:"center",
-            justifyContent: 'space-between',
-          }}>
-          <Text style={styles.heading}>Emo Live</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.heading} onPress={getNotifications}>
+            Emo Live
+          </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}>
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
@@ -176,43 +194,13 @@ export default function Home({navigation}) {
       <GestureDetector gesture={swipeGesture}>
         <Animated.View style={[animatedStyle, {flex: 1}]}>
           {tab == 1 ? (
-            <ScrollView contentContainerStyle={{marginTop: 20}}>
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-                <LiveScreen number={1}></LiveScreen>
-                <LiveScreen number={2}></LiveScreen>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-around',
-                  marginVertical: 20,
-                }}>
-                <LiveScreen number={3}></LiveScreen>
-                <LiveScreen number={4}></LiveScreen>
-              </View>
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-                <LiveScreen number={5}></LiveScreen>
-                <LiveScreen number={6}></LiveScreen>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-around',
-                  marginVertical: 20,
-                }}>
-                <LiveScreen number={7}></LiveScreen>
-                <LiveScreen number={8}></LiveScreen>
-              </View>
-            </ScrollView>
+            <Popular navigation={navigation} />
           ) : tab == 2 ? (
             <Live />
           ) : tab == 3 ? (
             <NewHost />
-          ) : // <Battle />
-          tab == 4 ? (
-            <Battle />
+          ) : tab == 4 ? (
+            <Battle navigation={navigation} />
           ) : (
             <Games navigation={navigation} />
           )}
@@ -235,11 +223,15 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
     textAlign: 'center',
   },
+  screenTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '99%',
+    marginTop: Platform.OS == 'ios' ? 50 : 20,
+  },
   tab: {
-    // backgroundColor: '#f00044',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    // color: '#fff',
     borderRadius: 30,
   },
   tabText: {
@@ -247,79 +239,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 16,
   },
+  connectIcon: {
+    width: 20,
+    marginLeft: 20,
+    height: 20,
+    borderRadius: 15,
+  },
+  headerLeft: {
+    width: '60%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
 });
-
-interface LiveScreenProps {
-  number: number;
-}
-const LiveScreen = ({number}: LiveScreenProps) => {
-  const images = {
-    1: require('../../../assets/images/live/girl1.jpg'),
-    2: require('../../../assets/images/live/girl2.jpg'),
-    3: require('../../../assets/images/live/girl3.jpg'),
-    4: require('../../../assets/images/live/girl4.jpg'),
-    5: require('../../../assets/images/live/girl5.jpg'),
-    6: require('../../../assets/images/live/girl6.jpg'),
-    7: require('../../../assets/images/live/girl7.jpg'),
-    8: require('../../../assets/images/live/girl8.jpg'),
-  };
-  return (
-    <View style={{position: 'relative'}}>
-      <View
-        style={{
-          width: 160,
-          height: 160,
-        }}>
-        <Image
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            borderRadius: 6,
-          }}
-          source={images[number]} // Use the mapping here
-          //   source={require('../../../assets/images/live/girl' + number + '.jpg')}
-        />
-        <TouchableOpacity
-          style={{
-            top: 10,
-            position: 'absolute',
-            backgroundColor: '#64534b',
-            height: 40,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            borderRadius: 25,
-          }}>
-          <Icon name="waveform" color="#fff" size={30} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            top: 10,
-            position: 'absolute',
-            flexDirection: 'row',
-            right: 10,
-            backgroundColor: '#64534b',
-            height: 40,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 90,
-            borderRadius: 15,
-          }}>
-          <Icon name="diamond" color="#fff" size={20} />
-          <Text style={{color: '#fff', marginLeft: 5}}>10.51K</Text>
-        </TouchableOpacity>
-        <Text
-          style={{
-            position: 'absolute',
-            bottom: 10,
-            fontSize: 20,
-            color: '#fff',
-            fontWeight: '500',
-          }}>
-          Emily Jhonson
-        </Text>
-      </View>
-    </View>
-  );
-};

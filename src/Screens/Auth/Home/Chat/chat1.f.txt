@@ -49,7 +49,7 @@ import appStyles from '../../../../styles/styles';
 
 interface ChatProps {
   navigation: any;
-  route: any;
+  route: string;
 }
 export default function Chat({navigation, route}: ChatProps) {
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);

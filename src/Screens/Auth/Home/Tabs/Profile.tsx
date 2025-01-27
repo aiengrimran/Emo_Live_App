@@ -33,7 +33,7 @@ export default function Search({navigation}) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getUnreadMessages();
+    // getUnreadMessages();
   }, []);
   const createAgoraChatToken = async () => {
     try {
@@ -73,6 +73,9 @@ export default function Search({navigation}) {
       console.log(error);
       console.error('Error removing keys from AsyncStorage:', error);
     }
+  };
+  const logToken = () => {
+    console.log('dd');
   };
   return (
     <View style={styles.container}>
@@ -244,11 +247,13 @@ export default function Search({navigation}) {
                       color={colors.complimentary}
                     />
                   </View>
-                  <Text style={styles.actionTxr}>Create Family</Text>
+                  <Text style={styles.actionTxr}>Family</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.iconsRow}>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigation.navigate('Coin')}>
                   <View style={styles.icon}>
                     <Icon
                       name="wallet"

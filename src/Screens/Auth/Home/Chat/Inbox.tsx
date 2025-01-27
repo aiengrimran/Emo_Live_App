@@ -5,14 +5,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  FlatList,
   Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import {ChatClient, ChatConversationType} from 'react-native-agora-chat';
 import {colors} from '../../../../styles/colors';
-
+import envVar from '../../../../config/envVar';
+import Context from '../../../../Context/Context';
 import Stranger from '../../../../assets/svg/stranger.svg';
 import {UseSelector, useDispatch, useSelector} from 'react-redux';
 import {setConnected, setInitialized} from '../../../../store/slice/chatSlice';
@@ -20,7 +22,11 @@ import axiosInstance from '../../../../Api/axiosConfig';
 // import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 export default function Inbox({navigation}) {
+  const {tokenMemo} = useContext(Context);
+  const {token} = tokenMemo;
+
   const {connected} = useSelector((state: any) => state.chat);
+  const [error, setError] = useState('');
 
   const chatClient = ChatClient.getInstance();
   const chatManager = chatClient.chatManager;
@@ -35,68 +41,157 @@ export default function Inbox({navigation}) {
       pinnedTime: 0,
     },
   ]);
-  // const [inboxMessages, setInboxMessages] = useState<any>([]);
+  const [conversation, setConversation] = useState<any>({
+    lastMessages: [],
+    local: [
+      {
+        convId: '1',
+        convType: 0,
+        ext: undefined,
+        isChatThread: false,
+        isPinned: false,
+        marks: [Array],
+        pinnedTime: 0,
+      },
+    ],
+    messagesGet: true,
+    users: [],
+    usersGet: true,
+    finalConversation: [],
+    // local: [],
+    // users: [],
+    // lastMessages: [],
+    // usersGet: false,
+    // finalConversation: [],
+    // messagesGet: false,
+  });
+  const [users1, setUsers] = useState<any>([]);
   const getAllConversation = async () => {
     try {
-      let key = await chatClient.isConnected();
-      console.log(key);
-
-      // const conversation =
-      //   await chatManager.fetchConversationsFromServerWithCursor();
+      setError('');
       const local = await chatManager.getAllConversations();
-      console.log(local, 'local');
+      if (local.length > 0) {
+        console.log('calling apis', local.length);
+        getUsersFromAPI(local);
+        getLastMessages(local);
+        setConversation((prevState: any) => ({...prevState, local: local}));
+      }
     } catch (error) {
+      setError('error occurred: please check internet connection(SDK)');
       console.log(error);
     }
   };
-  // const getAllConversation = async () => {
-  //   try {
-  //     let key = await chatClient.isConnected();
 
-  //     const conversation =
-  //       await chatManager.fetchConversationsFromServerWithCursor();
-  //     const local = await chatManager.getAllConversations();
-  //     console.log(local, 'local');
-  //     console.log(conversation);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  useEffect(() => {
+    if (conversation.usersGet && conversation.lastMessageGet) {
+      console.log('sss');
+      mergeData();
+    }
+  }, [conversation.usersGet, conversation.lastMessageGet]);
 
-  const getUsersFromAPI = async () => {
-    // const getUsersFromAPI = convId => {
+  const getUsersFromAPI = async (local: any) => {
     try {
-      // const ids = inboxMessages.map()
-      const data = {
-        users: [1, 2, 3],
+      const idsArray = local.map((item: any) => item.convId);
+      let data = {
+        users: idsArray,
       };
-
+      console.log(data);
       const url = 'users-info';
-      const res = await axiosInstance.post(url, JSON.stringify(data));
+      const res = await axiosInstance.post(url, data);
+      // const res = await axiosInstance.post(url, JSON.stringify(data));
       console.log(res.data);
+      if (res.data.users.length > 0) {
+        const users = res.data.users;
+        setConversation((prevState: any) => ({
+          ...prevState,
+          users: users,
+          usersGet: true,
+        }));
+      }
     } catch (error: any) {
-      console.log(error.response);
+      setError('error occurred: please check internet connection(API)');
+      console.log(error['_response']);
     }
   };
-  const getLastMessages = async () => {
-    // const getLastMessages = async (conv: any) => {
+  const getLastMessages = async (conv: any) => {
     try {
-      const lastMessages = await Promise.all(
-        inboxMessages.map(async (item: any) => {
+      let lastMessages1 = [];
+      console.log('getting last messages ');
+      let lastMessages = await Promise.all(
+        conv.map(async (item: any) => {
           // conv.map(async (item: any) => {
           const message = await chatManager.getLatestMessage(
             String(item.convId),
             ChatConversationType.PeerChat,
           );
+          lastMessages1.push(message);
+
           return message || null; // Return null if no message is found
         }),
       );
-      console.log(lastMessages);
-
-      console.log(lastMessages.filter(Boolean)); // Filter out null values
+      console.log(lastMessages1);
+      // lastMessages = lastMessages.filter(Boolean);
+      setConversation((prevState: any) => ({
+        ...prevState,
+        lastMessages: lastMessages1,
+        messagesGet: true,
+      }));
+      console.log(lastMessages, 's');
     } catch (error) {
+      setError('error occurred: please check internet connection(m)');
       console.log(error);
     }
+  };
+  const getLastMessages2 = async (conv: any) => {
+    try {
+      // conv.map(async (item: any) => {
+      const message = await chatManager.getLatestMessage(
+        String(1),
+        ChatConversationType.PeerChat,
+      );
+      console.log(message);
+    } catch (error) {
+      setError('error occurred: please check internet connection(m)');
+      console.log(error);
+    }
+  };
+
+  const formatTime = timestamp => {
+    const date = new Date(timestamp);
+
+    // Get the time components
+
+    // Extract components
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth()).padStart(2, '0');
+    const year = String(date.getFullYear()).padStart(2, '0');
+
+    // Create the formatted string
+    const formattedTime = `${hours}:${minutes} | ${day}-${month}-${year}`;
+    return formattedTime;
+  };
+  const mergeData = () => {
+    try {
+      console.log('merging data...');
+      const mergedArray = conversation.users
+        .map((item1: any) => {
+          const match = conversation.lastMessages.find(
+            (item2: any) => item1.id === Number(item2.conversationId),
+            // (item2: any) => item1.id === Number(item2.convId),
+          );
+          return match ? {...item1, ...match} : null; // Merge objects if there's a match
+        })
+        .filter((item: any) => item !== null);
+
+      setConversation((prevState: any) => ({
+        ...prevState,
+        finalConversation: mergedArray,
+      }));
+
+      console.log(mergedArray);
+    } catch (error) {}
   };
   return (
     <View style={styles.container}>
@@ -111,8 +206,8 @@ export default function Inbox({navigation}) {
           <Text style={styles.heading}>Inbox</Text>
         </TouchableOpacity>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('StrangerMessages')}>
+          <TouchableOpacity onPress={getLastMessages2}>
+            {/* onPress={() => navigation.navigate('StrangerMessages')}> */}
             <Stranger width={25} height={25} />
             {/* <Icon name="panda" color={colors.complimentary} size={25} /> */}
           </TouchableOpacity>
@@ -124,6 +219,19 @@ export default function Inbox({navigation}) {
         </View>
       </View>
 
+      <Text
+        style={{marginTop: 40, color: '#fff'}}
+        onPress={() => console.log(conversation)}>
+        {' '}
+        test user
+      </Text>
+      {error && <Text style={[appStyles.errorText]}>{error}</Text>}
+      {/* <Text style={{color: '#fff', fontSize: 20}}>
+        {JSON.stringify(conversation)}
+      </Text> */}
+      <Text style={{color: '#fff'}} onPress={mergeData}>
+        mergeData
+      </Text>
       <View style={{marginTop: 40}}>
         <View style={styles.userSection}>
           <TouchableOpacity style={styles.profile} onPress={getUsersFromAPI}>
@@ -136,47 +244,56 @@ export default function Inbox({navigation}) {
             </View>
           </TouchableOpacity>
         </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile} onPress={getLastMessages}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl1.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Layla Grace</Text>
-              <Text style={styles.msgText}>I want to meet you</Text>
-              <Text style={styles.msgTime}>07:59 | 18 -04-2024</Text>
+        <FlatList
+          data={conversation.finalConversation}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({item}: any) => (
+            <View style={styles.userSection}>
+              <TouchableOpacity
+                style={styles.profile}
+                onPress={() =>
+                  navigation.navigate('Chat', {receiverUser: item})
+                }>
+                <Image
+                  style={{width: 50, height: 50, borderRadius: 25}}
+                  loadingIndicatorSource={require('../../../../assets/images/place.jpg')}
+                  source={
+                    item.avatar
+                      ? {
+                          uri: envVar.API_URL + 'display-avatar/' + item.id,
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        }
+                      : require('../../../../assets/images/place.jpg')
+                  }
+                  // source={require('../../../../assets/images/live/girl4.jpg')}
+                />
+                <View style={{marginLeft: 20}}>
+                  <Text style={styles.userText}>
+                    {item.first_name + ' ' + item.last_name}
+                  </Text>
+                  {item.body.type == 'voice' ? (
+                    <View style={{marginVertical: 5, flexDirection: 'row'}}>
+                      <Icon
+                        name={'microphone'}
+                        size={20}
+                        color={colors.accent}
+                      />
+                      <Text style={{color: colors.complimentary}}>0:25</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.msgText}></Text>
+                  )}
+                  <Text style={styles.msgTime}>
+                    {formatTime(item.localTime)}
+                  </Text>
+                  {/* <Text style={styles.msgTime}>12:59 | 11 -04-2022 07:59</Text> */}
+                </View>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl2.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Layla Grace</Text>
-              <Text style={styles.msgText}>I Love you ❤️</Text>
-              <Text style={styles.msgTime}>03:39 | 18 -12-2023</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.userSection}>
-          <TouchableOpacity style={styles.profile}>
-            <Image
-              style={{width: 50, height: 50, borderRadius: 25}}
-              source={require('../../../../assets/images/live/girl4.jpg')}
-            />
-            <View style={{marginLeft: 20}}>
-              <Text style={styles.userText}>Lily Evelyn</Text>
-              <Text style={styles.msgText}>Lets Collab😈</Text>
-              <Text style={styles.msgTime}>
-                12:59 | 11 -04-2022 07:59 | 18 -04-2024
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+          )}
+        />
       </View>
     </View>
   );

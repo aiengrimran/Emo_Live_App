@@ -26,7 +26,6 @@ import {
 } from 'react-native-agora-chat';
 import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
-import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
 import Input from './Components/Input';
 import axiosInstance from '../../../../Api/axiosConfig';
 import envVar from '../../../../config/envVar';
@@ -51,52 +50,8 @@ export default function Chat({navigation, route}: ChatProps) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
-
   const receiverUser = route.params.receiverUser;
-  const [tempUsers, setTempUsers] = useState([
-    {
-      account_verified: 0,
-      address: 'Buner kpk',
-      agora_chat_token:
-        '007eJxTYPjyYIZ6qIX8UsFWG61996cHWZ24ErjjP2ee6Yo/Fwx2/9VTYEhOMjS3sDC1TEszMDQxMEixMEhJNjFISTU0N09LTUlKvnChLr3hXV36p29JTIwMrAyMQAjiMzIYAgA1ZSOL',
-      agora_chat_uid: null,
-      avatar: 'users/avatars/1736019229.jpg',
-      bio: 'Save earth live',
-      created_at: '2024-12-28T19:27:39.000000Z',
-      dob: '2021-02-20',
-      email: 'imrankhan@gmail.com',
-      first_name: 'Imran',
-      gender: 'male',
-      id: 1,
-      last_name: 'Khan',
-      phone: null,
-      provider: null,
-      provider_id: null,
-      updated_at: '2025-01-08T19:24:00.000000Z',
-      user_name: null,
-    },
-    {
-      account_verified: 0,
-      address: 'buner kpk',
-      agora_chat_token:
-        '007eJxTYOApXp5s7lJfz2LrZ12aqrnKWiX4z7Rld/5fvsTE+1P6aKsCQ3KSobmFhallWpqBoYmBQYqFQUqyiUFKqqG5eVpqSlLypot16Unv69K1GBhZGBlYGRiBEMRnZDACAE77Hu4=',
-      agora_chat_uid: null,
-      avatar: 'users/avatars/1736177116.jpg',
-      bio: 'something should happen special',
-      created_at: '2024-12-28T19:50:57.000000Z',
-      dob: '1997-03-15',
-      email: 'zalkip@gmail.com',
-      first_name: 'zalkip',
-      gender: 'male',
-      id: 2,
-      last_name: 'khan',
-      phone: null,
-      provider: null,
-      provider_id: null,
-      updated_at: '2025-01-08T19:27:46.000000Z',
-      user_name: null,
-    },
-  ]);
+
   const [status, setStatus] = useState({
     connected: false,
     error: '',
@@ -120,7 +75,6 @@ export default function Chat({navigation, route}: ChatProps) {
   });
   const [modal, setShowModal] = useState(true);
   const [messages, setMessages] = useState<any>([]);
-  const [renewToken, setRenewToken] = useState(false);
   // useEffect(() => {
   //   // Subscribe to network state updates
   //   const unsubscribe = NetInfo.addEventListener(state => {
@@ -145,41 +99,6 @@ export default function Chat({navigation, route}: ChatProps) {
       audioPlayerRef.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    // Registers listeners for messaging.
-    const setMessageListener = () => {
-      console.log('run message listner ...');
-      let msgListener = {
-        onMessagesReceived(messagesReceived: any) {
-          console.log(messages);
-          setMessages((prevMessages: any) => {
-            const updatedMessages = [...prevMessages, ...messagesReceived];
-            // console.log('Updated messages:', updatedMessages);
-            return updatedMessages;
-          });
-        },
-        onCmdMessagesReceived: messages => {
-          // let msgs= messages
-          // msgs.push(messages)
-          // setMessages(msgs)
-        },
-        onMessagesRead: messages => {
-          console.log('onMessagesRead: ' + JSON.stringify(messages));
-        },
-        onGroupMessageRead: groupMessageAcks => {},
-        onMessagesDelivered: messages => {},
-        onMessagesRecalled: messages => {},
-        onConversationsUpdate: () => {},
-        onConversationRead: (from, to) => {},
-      };
-      chatClient.chatManager.removeAllMessageListener();
-      chatClient.chatManager.addMessageListener(msgListener);
-    };
-    if (connected) {
-      setMessageListener();
-    }
-  }, [connected]);
 
   const getConversationDevice = async () => {
     try {
@@ -209,44 +128,6 @@ export default function Chat({navigation, route}: ChatProps) {
     }
   };
 
-  // Logs in with an account ID and a token.
-  const login = async () => {
-    const isLoggedIn = await chatClient.isLoginBefore();
-    if (isLoggedIn) {
-      setStatus({...status, connected: true});
-      dispatch(setConnected(true));
-      console.log('User is already logged in.');
-      return; // Prevent duplicate login
-    }
-
-    if (!initialized) console.log('Perform initialization first.');
-    try {
-      await chatClient.loginWithToken(String(user.id), user.agora_chat_token);
-      console.log('login operation success.');
-    } catch (error: any) {
-      console.log(error);
-      if (error.code == 2) {
-        setStatus({...status, error: error.description});
-        return;
-      }
-      if (error.code == 111 || error.code == 202) {
-        callApiForRenewToken();
-      }
-      console.log(error);
-    }
-  };
-  // Logs out from server.
-  const logout = async () => {
-    if (!initialized) console.log('Perform initialization first.');
-    console.log('start logout ...');
-    try {
-      await chatClient.logout();
-      console.log('logout success.');
-      setStatus({...status, connected: false});
-    } catch (error) {
-      console.log('logout fail:' + JSON.stringify(error));
-    }
-  };
   // Sends a text message to somebody.
   const sendMsg = async () => {
     try {
@@ -501,17 +382,6 @@ export default function Chat({navigation, route}: ChatProps) {
       .padStart(2, '0')} ${ampm} ${day} ${month} ${year}`;
     return formattedTime;
   };
-  const callApiForRenewToken = async () => {
-    try {
-      const res = await axiosInstance.get('/renew-agora-token');
-      console.log(res.data.user);
-      setRenewToken(true);
-      setUser(res.data.user);
-      // await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const clearMessages = async () => {
     try {
@@ -568,7 +438,6 @@ export default function Chat({navigation, route}: ChatProps) {
           <View style={{flexDirection: 'row'}}>
             <TouchableOpacity
               onPress={() => {
-                logout();
                 // console.log(list);
               }}>
               <Icon
@@ -577,7 +446,7 @@ export default function Chat({navigation, route}: ChatProps) {
                 color={colors.complimentary}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={{marginLeft: 10}} onPress={login}>
+            <TouchableOpacity style={{marginLeft: 10}}>
               <Icon
                 name="information-outline"
                 size={25}
@@ -623,7 +492,7 @@ export default function Chat({navigation, route}: ChatProps) {
                   {parseInt(item.to) == user.id ? (
                     <TouchableOpacity
                       onLongPress={() => {
-                        setModalInfo({modal: true, type: 'report'});
+                        setModalInfo(() => ({modal: true, type: 'report'}));
                       }}>
                       <View style={chatStyles.myMessage}>
                         {item.body.type == 'txt' ? (
@@ -714,7 +583,10 @@ export default function Chat({navigation, route}: ChatProps) {
                     <View style={chatStyles.mineMessage}>
                       <TouchableOpacity
                         onLongPress={() => {
-                          setModalInfo({modal: true, type: 'report'});
+                          setModalInfo((prevState: any) => ({
+                            ...prevState,
+                            type: 'report',
+                          }));
                         }}
                         style={chatStyles.myMessageBody}>
                         {item.body.type == 'txt' ? (
@@ -841,14 +713,24 @@ export default function Chat({navigation, route}: ChatProps) {
                 </Text>
               </View>
               <TouchableOpacity
-                onPress={() => setModalInfo({...modalInfo, modal: false})}
+                onPress={() =>
+                  setModalInfo((prevState: any) => ({
+                    ...prevState,
+                    modal: false,
+                  }))
+                }
                 style={[chatStyles.deleteButton]}>
                 <Text style={chatStyles.deleteText}>
                   {modalInfo.type == 'delete' ? 'Delete' : 'Report'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setModalInfo({...modalInfo, modal: false})}
+                onPress={() =>
+                  setModalInfo((prevState: any) => ({
+                    ...prevState,
+                    modal: false,
+                  }))
+                }
                 style={chatStyles.cancelButton}>
                 <Text style={[appStyles.paragraph1, {color: colors.unknown2}]}>
                   Cancel

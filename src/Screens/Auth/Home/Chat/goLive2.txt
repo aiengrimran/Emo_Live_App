@@ -7,7 +7,6 @@ import {
   Image,
   Platform,
 } from 'react-native';
-
 import React, {useState, useContext} from 'react';
 import {colors} from '../../../../styles/colors';
 import appStyles from '../../../../styles/styles';
@@ -32,17 +31,13 @@ export default function GoLive2({navigation}) {
   };
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
-  const {user, setUser} = userAuthInfo;
+  const {user} = userAuthInfo;
   const {token} = tokenMemo;
   const [room, setRoom] = useState(null);
-  const localToken = user.id == 1 ? envVar.IMRAN_TOKEN : envVar.ZALKIP_TOKEN;
   const [btnColor, setBtnColor] = useState(colors.body_text);
 
   const startPodCast = async () => {
     try {
-      // setUser
-      navigation.navigate('GoLive');
-      return;
       const url = envVar.LOCAL_URL + 'podcast/start';
       // const url = envVar + 'podcast/start';
       const data = {
@@ -53,16 +48,9 @@ export default function GoLive2({navigation}) {
       };
       const res = await axios.post(url, data, {
         headers: {
-          Authorization: `Bearer ${localToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      // JSON.stringify('')
-      if (res.status == 201) {
-        setUser((user: any) => ({
-          ...user,
-          agora_rtc_token: res.data.user.agora_rtc_token,
-        }));
-      }
       // const res = await axiosInstance.post(url, JSON.stringify(data));
       console.log(res.data);
     } catch (error) {
@@ -109,6 +97,45 @@ export default function GoLive2({navigation}) {
         <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
           Add Tags
         </Text>
+        <View style={styles.row}>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #Explore
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #ExploreEverywhere
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #Explore
+            </Text>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #Explore
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #ExploreEverywhere
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #Awaits
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+              #DiscoverMore
+            </Text>
+          </View>
+        </View>
         <View style={styles.row}>
           <View style={styles.tag}>
             <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
@@ -220,8 +247,7 @@ export default function GoLive2({navigation}) {
 
       <TouchableOpacity
         style={styles.btn}
-        // onPress={() => navigation.navigate('GoLive')}>
-        onPress={() => startPodCast()}>
+        onPress={() => navigation.navigate('GoLive')}>
         <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
           Go Live
         </Text>

@@ -34,6 +34,7 @@ import NotificationSettings from '../Screens/Auth/Home/Profile/Settings/Notifica
 import ConnectionError from '../Screens/General/ConnectionError';
 import Privacy from '../Screens/Auth/Home/Profile/Settings/Privacy';
 import Level from '../Screens/Auth/Home/Profile/Level/Level';
+import LiveBattle from '../Screens/Auth/Home/PK/LiveBattle';
 import NetInfo from '@react-native-community/netinfo';
 import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
@@ -115,7 +116,7 @@ export default function Index() {
   const hideLoader = () => {
     setTimeout(() => {
       setLoader(false);
-    }, 800);
+    }, 600);
   };
 
   const valueToContext = {
@@ -173,6 +174,12 @@ export default function Index() {
                         name="PurchaseVIP"
                         component={PurchaseVIP}
                       />
+                      <Stack.Group>
+                        <Stack.Screen
+                          name="LiveBattle"
+                          component={LiveBattle}
+                        />
+                      </Stack.Group>
                       <Stack.Screen
                         name="UpdatePassword"
                         component={UpdatePassword}

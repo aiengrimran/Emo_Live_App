@@ -4,31 +4,93 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Modal,
   Platform,
   Image,
   FlatList,
   TextInput,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
-import React, {useRef, useContext, useCallback, useState} from 'react';
+import React, {
+  useRef,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+import Tools from './Podcast/Tools';
+import {
+  createAgoraRtcEngine,
+  ChannelProfileType,
+  ClientRoleType,
+  IRtcEngine,
+  AudienceLatencyLevelType,
+  RtcSurfaceView,
+  RtcConnection,
+  IRtcEngineEventHandler,
+  ConnectionStateType,
+  ConnectionChangedReasonType,
+} from 'react-native-agora';
+import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 import Context from '../../../../Context/Context';
 import {useSelector, useDispatch} from 'react-redux';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import axiosInstance from '../../../../Api/axiosConfig';
+import EndLive from './Podcast/EndLive';
+import Gifts from './Podcast/Gifts';
 import {updateUsers} from '../../../../store/slice/usersSlice';
+// const podcast = {
+//   title: 'get to gether',
+//   duration: '20',
+//   type: 'public',
+//   listeners_added: 'null',
+//   host: 1,
+//   status: 'STARTED',
+//   channel: 'ch_91287_5473',
+//   updated_at: '2025-01-25T07:48:07.000000Z',
+//   created_at: '2025-01-25T07:48:07.000000Z',
+//   id: 3,
+// };
 import envVar from '../../../../config/envVar';
 import Users from './Podcast/Users';
+import axios from 'axios';
+import {
+  setModalInfo,
+  setPodcastListeners,
+  setHostLeftPodcast,
+  setRoomId,
+} from '../../../../store/slice/podcastSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive({navigation}: any) {
+  const chatClient = ChatClient.getInstance();
+  const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
+  const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
+
+  const [isJoined, setIsJoined] = useState(false);
+  const [isHost, setIsHost] = useState(false);
   const dispatch = useDispatch();
   const users = useSelector((state: any) => state.usersReducer.users);
+  const {hostId, podcast, podcastListeners, roomId} = useSelector(
+    (state: any) => state.podcast,
+  );
+  // const {hostId,podcast} = useSelector((state: any) => state.podcast);
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
-  const {user} = userAuthInfo;
+  const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
+  const localToken =
+    user.id == 1
+      ? '32|qzTMhPRcuTIVn6rIarSu9ald2mTQaQ60YUxp7iOV09be42ba'
+      : '34|wpjSAN9CJShZCXoxV7l6F52zp4VkTj9w6ka1UObvfebe0ec1';
+  let channelToken =
+    user.id == 1
+      ? '007eJxTYDB/tjV3Wv5UvkPHrlSaivf9PW5+c3OasVBCk/IhNw7+5aIKDMlJhuYWFqaWaWkGhiYGBikWBinJJgYpqYbm5mmpKUnJVzdNSW8IZGSYsSiQmZEBAkGAlyE5I97S0MjCPN7UxNyYkUELAGxgII0='
+      : '007eJxTYFDOLd50L5Xrb0v/y5Y5S/28HKVb3xdwnjJ3CPqV5qP3jlmBITnJ0NzCwtQyLc3A0MTAIMXCICXZxCAl1dDcPC01JSnZZ9OU9IZARobd+28wMTJAIAjwMiRnxFsaGlmYx5uamBszMmgBAH3pISE=';
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [sheet, setSheet] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -40,6 +102,70 @@ export default function GoLive({navigation}: any) {
     // console.log('handleSheetChanges', index);
     if (index < 0) setSheet(false);
   }, []);
+
+  useEffect(() => {
+    // Initialize the engine when the App starts
+    // setupVideoSDKEngine();
+    // Release memory when the App is closed
+    return () => {
+      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      agoraEngineRef.current?.release();
+    };
+  }, []);
+
+  // Define the setupVideoSDKEngine method called when the App starts
+  const setupVideoSDKEngine = async () => {
+    try {
+      // Create RtcEngine after obtaining device permissions
+
+      console.log('initializing engine');
+      agoraEngineRef.current = createAgoraRtcEngine();
+      const agoraEngine = agoraEngineRef.current;
+      eventHandler.current = {
+        onJoinChannelSuccess: (_connection: RtcConnection, uid: number) => {
+          console.log('Successfully joined channel: ' + uid);
+
+          // createUserChatRoom()
+          // showMessage('Successfully joined channel: ' + channelName);
+          setIsJoined(true);
+        },
+        onUserJoined: (_connection: RtcConnection, uid: number) => {
+          console.log('Remote user ' + uid + ' joined');
+          getUserInfoFromAPI(uid);
+          // setRemoteUid(uid);
+        },
+        onUserOffline: (_connection: RtcConnection, uid: number) => {
+          if (uid === hostId) {
+            hostEndedPodcast();
+          }
+
+          console.log('Remote user ' + uid + ' left the channel');
+          // setRemoteUid(0);
+        },
+        onConnectionStateChanged: (
+          _connection: RtcConnection,
+          state: ConnectionStateType,
+          reason: ConnectionChangedReasonType,
+        ) => {
+          console.log('Connection state changed:', state, _connection);
+          console.log('reason state changed:', reason);
+        },
+      };
+
+      // Register the event handler
+      agoraEngine.registerEventHandler(eventHandler.current);
+      // Initialize the engine
+      agoraEngine.initialize({
+        appId: envVar.AGORA_APP_ID,
+      });
+      // Enable local video
+      // agoraEngine.enableVideo();
+      // agoraEngine.enableLocalAudio(true);
+      //   agoraEngine.enableLocalAudio(true);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   // Function to handle open Bottom Sheet
   const handleOpenSheet = useCallback((type: string) => {
@@ -53,6 +179,191 @@ export default function GoLive({navigation}: any) {
     bottomSheetRef.current?.expand();
   }, []);
 
+  const createUserChatRoom = async () => {
+    if (user.can_create_chat_room) {
+      createChatRoomHost();
+      return;
+    }
+    try {
+      const url = envVar.LOCAL_URL + 'chat-room/create/super-admin';
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${localToken}`,
+        },
+      });
+      console.log(res.data);
+      if (res.status == 201) {
+        setUser(res.data.user);
+        await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+        createChatRoomHost();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'user: Please try again');
+      console.log(error);
+    }
+  };
+  const createChatRoomHost = async () => {
+    try {
+      const chatRoom = await chatClient.roomManager.createChatRoom(
+        'Podcast',
+        'Hi',
+        'wellcome',
+        [],
+        5,
+      );
+      const roomId = chatRoom.roomId;
+      saveChatRoomId(roomId);
+      setRoomId(roomId);
+      userJoinChatRoom(roomId);
+      console.log(roomId, 'Sss');
+    } catch (error) {
+      console.log(error, 'ss');
+    }
+    try {
+    } catch (error) {}
+  };
+  const saveChatRoomId = async (roomId: string) => {
+    try {
+      const url = envVar.LOCAL_URL + 'podcast/save-roomId';
+      const data = {
+        chatRoomId: roomId,
+        id: podcast.id,
+      };
+      const res = await axios.post(url, JSON.stringify(data));
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const getUserInfoFromAPI = async (id: any) => {
+    try {
+      const idsArray = [id];
+      let data = {
+        users: idsArray,
+      };
+      console.log(data);
+      const url = 'users-info';
+      const res = await axiosInstance.post(url, data);
+      // const res = await axiosInstance.post(url, JSON.stringify(data));
+      console.log(res.data);
+      if (res.data.users.length > 0) {
+        const users = res.data.users;
+        let currentUser = [...podcastListeners];
+        let updatedUsers = [...currentUser, ...currentUser];
+        dispatch(setPodcastListeners(updatedUsers));
+      }
+    } catch (error: any) {
+      // setError('error occurred: please check internet connection(API)');
+      console.log(error['_response']);
+    }
+  };
+  const userJoinChatRoom = async (roomId: any) => {
+    try {
+      await chatClient.roomManager.joinChatRoom(roomId);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const hostEndedPodcast = async () => {
+    try {
+      dispatch(setHostLeftPodcast(true));
+      let payload = {
+        modal: true,
+        isHost: false,
+      };
+      dispatch(setModalInfo(payload));
+      return;
+
+      const url = envVar.LOCAL_URL + 'podcast/end' + podcast.id;
+      const data = {
+        id: podcast.id,
+      };
+      const res = await axios.post(url);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const join = () => {
+    console.log('connecting', isJoined);
+    if (isJoined) {
+      return;
+    }
+
+    try {
+      if (!agoraEngineRef.current) {
+        throw new Error('Agora engine is not initialized.');
+      }
+      let result1;
+
+      if (isHost) {
+        console.log('Joining as a host...');
+        // Join the channel as a broadcaster
+        result1 = agoraEngineRef.current.joinChannel(
+          channelToken,
+          // token,
+          podcast.channel,
+          user.id,
+          {
+            channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+            clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+            publishMicrophoneTrack: true,
+            autoSubscribeAudio: true,
+          },
+        );
+      } else {
+        console.log('Joining as an audience...');
+        // Join the channel as an audience
+        result1 = agoraEngineRef.current.joinChannel(
+          channelToken,
+          // user.agora_rtc_token,
+          podcast.channel,
+          user.id,
+          {
+            // channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+            clientRoleType: ClientRoleType.ClientRoleAudience,
+            publishMicrophoneTrack: false, // Audience shouldn't publish microphone
+            autoSubscribeAudio: true,
+            audienceLatencyLevel:
+              AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
+          },
+        );
+      }
+      console.log('result1', result1);
+
+      console.log('Successfully joined the channel!');
+    } catch (error) {
+      console.error('Failed to join the channel:', error);
+      throw new Error('Unable to connect to the channel. Please try again.');
+    }
+  };
+
+  const endPodcastForUser = async () => {
+    try {
+      if (podcast.host == user.id) {
+        chatClient.roomManager.destroyChatRoom(podcast.chat_room_id || roomId);
+      } else {
+        await chatClient.roomManager.leaveChatRoom(podcast.chat_room_id);
+      }
+      const res = agoraEngineRef.current?.leaveChannel();
+
+      // await chatClient.roomManager.leaveChatRoom(podcast.roomId);
+      navigation.navigate('Home');
+    } catch (error) {}
+  };
+
+  const leaveChannel = () => {
+    try {
+      const res = agoraEngineRef.current?.leaveChannel();
+      setIsJoined(false);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const getActiveUsers = async () => {
     try {
       const res = await axiosInstance.get('/chat/active-users');
@@ -62,7 +373,42 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
-
+  const enableAudio = () => {
+    try {
+      const res = agoraEngineRef.current?.enableAudio();
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const startPodCast = async () => {
+    try {
+      const url = 'podcast/start';
+      const data = {
+        title: 'Start View',
+        duration: 10,
+        listeners: 2,
+        type: 'PUBLIC',
+      };
+      const res = await axiosInstance.post(url, JSON.stringify(data));
+      console.log(res.data);
+    } catch (error) {}
+  };
+  const podCastNotifications = async () => {
+    try {
+      const res = await axiosInstance.get('podcast-notification');
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const leavePodcast = () => {
+    let payload = {
+      modal: true,
+      isHost: user.id == hostId,
+    };
+    dispatch(setModalInfo(payload));
+  };
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -74,6 +420,7 @@ export default function GoLive({navigation}: any) {
           navigation={navigation}
           token={token}
           envVar={envVar}
+          leavePodcast={leavePodcast}
         />
         <View
           style={{
@@ -136,7 +483,18 @@ export default function GoLive({navigation}: any) {
             </TouchableOpacity>
           </View>
         </View>
-        <View>{/* <Text>{JSON.stringify(users)}</Text> */}</View>
+        <Text onPress={createUserChatRoom}>
+          {isHost ? 'i am host' : 'i am subscriber'}
+        </Text>
+        <Text
+          style={{color: '#fff', marginVertical: 10}}
+          onPress={() => setIsHost(!isHost)}>
+          Update hOst
+        </Text>
+        <TouchableOpacity style={{marginVertical: 10}}>
+          <Text onPress={join}>Join Chanel</Text>
+        </TouchableOpacity>
+        <Text onPress={leaveChannel}>Leave Channel</Text>
         <View>
           <FlatList
             data={users}
@@ -176,24 +534,32 @@ export default function GoLive({navigation}: any) {
             )}
           />
         </View>
-
-        <View
+        <View>
+          <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
+        </View>
+        <View style={{marginTop: 30}}>
+          <Text style={{color: '#fff'}}>Chat Room Id :{roomId}</Text>
+        </View>
+        <EndLive
+          user={user}
+          endPodcastForUser={endPodcastForUser}
+          navigation={navigation}
+          id={podcast.id}
+        />
+        {/* <View
           style={{
             flexDirection: 'row',
             width: '60%',
             alignSelf: 'center',
             justifyContent: 'space-around',
           }}>
-          <TouchableOpacity
-            onPress={() => {
-              handleOpenSheet('users');
-            }}>
+          <TouchableOpacity onPress={enableAudio}>
             <Image
               source={require('../../../../assets/images/male/james.jpeg')}
               style={{width: 60, height: 60, borderRadius: 35}}
             />
             <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-              James
+              Enbale audio
             </Text>
             <View style={styles.points}>
               <Icon name="star-four-points" size={20} color={colors.dominant} />
@@ -217,7 +583,8 @@ export default function GoLive({navigation}: any) {
               </Text>
             </View>
           </TouchableOpacity>
-        </View>
+        </View> */}
+
         <BottomSheet
           index={-1}
           enablePanDownToClose={true}
@@ -303,8 +670,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '99%',
     marginTop: 20,
-    // padding: 15,
-    // bottom: Platform.OS == 'ios' ? 40 : 15,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'space-between',
@@ -342,18 +707,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: colors.LG,
-  },
-  sheetBtn: {
-    paddingBottom: 10,
-    // borderBottomColor: colors.complimentary,
-    borderBottomWidth: 2,
-    justifyContent: 'center',
-    width: '40%',
-  },
-  sheetTab: {
-    marginVertical: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   sheetAvatar: {
     height: 80,
@@ -405,25 +758,10 @@ const styles = StyleSheet.create({
     width: '90%',
     alignSelf: 'center',
   },
-  giftTxt: {
-    ...appStyles.smallTxt,
-    color: colors.complimentary,
-  },
-  giftNum: {
-    ...appStyles.bodyMd,
-    color: colors.complimentary,
-  },
   sheetBtnTxt: {
     ...appStyles.regularTxtMd,
     color: colors.body_text,
     textAlign: 'center',
-  },
-  toolBtn: {
-    paddingHorizontal: 25,
-    paddingVertical: 20,
-    backgroundColor: colors.lines,
-    borderRadius: 26,
-    // backgroundColor: colors.tool_btn,
   },
 });
 interface HeaderProps {
@@ -432,6 +770,7 @@ interface HeaderProps {
   navigation: any;
   token: string;
   envVar: any;
+  leavePodcast: any;
   // getActiveUsers
 }
 
@@ -441,6 +780,7 @@ const Header = ({
   navigation,
   token,
   envVar,
+  leavePodcast,
 }: HeaderProps) => {
   return (
     <View style={styles.header}>
@@ -483,7 +823,8 @@ const Header = ({
         <TouchableOpacity>
           <Icon name="eye" size={25} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={leavePodcast}>
+          {/* <TouchableOpacity onPress={() => navigation.goBack()}> */}
           {/* <TouchableOpacity onPress={() => navigation.navigate('HomeB')}> */}
           <Icon name="close" size={25} color="#fff" />
         </TouchableOpacity>
@@ -551,256 +892,6 @@ const BottomSection = ({handleOpenSheet}: BottomSectionProps) => {
 
         {/* <Icon name="dots-horizontal" color={colors.complimentary} size={24} /> */}
         <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}></Text>
-      </View>
-    </View>
-  );
-};
-
-const Gifts = () => {
-  const [tab, setTab] = useState(1);
-  return (
-    <View style={{width: '99%', flex: 1, position: 'relative'}}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '99%',
-        }}>
-        <TouchableOpacity>
-          <Image
-            source={require('../../../../assets/images/live/girl3.jpg')}
-            style={{
-              backgroundColor: colors.complimentary,
-              height: 30,
-              width: 30,
-              borderRadius: 15,
-            }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-            All
-          </Text>
-          <Icon name="chevron-right" size={25} color={colors.complimentary} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.sheetTab}>
-        <TouchableOpacity
-          onPress={() => setTab(1)}
-          style={[
-            styles.sheetBtn,
-            tab == 1 && {borderBottomColor: colors.complimentary},
-          ]}>
-          <Text
-            style={[
-              styles.sheetBtnTxt,
-              tab == 1 && {color: colors.complimentary},
-            ]}>
-            Gifts
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setTab(2)}
-          style={[
-            styles.sheetBtn,
-            tab == 2 && {borderBottomColor: colors.complimentary},
-            {marginLeft: 10},
-          ]}>
-          <Text
-            style={[
-              styles.sheetBtnTxt,
-              tab == 2 && {color: colors.complimentary},
-            ]}>
-            Lucky Gifts
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-        }}>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          marginVertical: 10,
-        }}>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-        }}>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.giftTxt}>Treasure</Text>
-          <View>
-            <Icon name="palm-tree" size={25} color={colors.accent} />
-            <Text style={styles.giftNum}>500</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          backgroundColor: '#1D1F31',
-          borderTopColor: '#494759',
-          paddingVertical: 30,
-          borderTopWidth: 1,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          width: '99%',
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginLeft: 20,
-            width: '60%',
-            alignItems: 'center',
-          }}>
-          <TextInput
-            style={{
-              width: '80%',
-              backgroundColor: '#292b3c',
-              color: colors.complimentary,
-              padding: 10,
-              borderRadius: 10,
-            }}
-            placeholder="122"
-            value="1222"
-          />
-          <TouchableOpacity
-            style={{
-              height: 30,
-              width: 30,
-              borderRadius: 15,
-              backgroundColor: colors.primary_gradient,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginLeft: 10,
-            }}>
-            <Icon name="plus" size={25} color={colors.complimentary} />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={{
-            paddingHorizontal: 10,
-
-            paddingVertical: 5,
-            backgroundColor: '#494759',
-            borderRadius: 10,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-            Send
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -933,229 +1024,6 @@ const AvatarSheet = ({
             Chat
           </Text>
         </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
-
-const Tools = () => {
-  return (
-    <View>
-      <Text
-        style={[
-          appStyles.headline,
-          {
-            color: colors.complimentary,
-            textAlign: 'center',
-            marginVertical: 20,
-          },
-        ]}>
-        Tools
-      </Text>
-      <View style={{borderTopColor: '#fff', borderTopWidth: 1}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            marginTop: 20,
-          }}>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon name="email" size={32} color={colors.complimentary} />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Inbox
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon
-                name="share-variant"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Games
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon
-                name="gamepad-variant"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Games 2
-            </Text>
-          </View>
-
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon
-                name="gamepad-variant"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Room Skin
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            marginVertical: 10,
-          }}>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon
-                name="google-classroom"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Room Skin
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon name="music-note" size={32} color={colors.complimentary} />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Music
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon name="volume-high" size={32} color={colors.complimentary} />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Speaker
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <Icon
-                name="block-helper"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              BlockList
-            </Text>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', marginLeft: 10}}>
-          <View>
-            <TouchableOpacity style={styles.toolBtn}>
-              <IconM
-                name="warning-amber"
-                size={32}
-                color={colors.complimentary}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Notice
-            </Text>
-          </View>
-          <View>
-            <TouchableOpacity style={[styles.toolBtn, {marginLeft: 18}]}>
-              <Icon name="send" size={32} color={colors.complimentary} />
-            </TouchableOpacity>
-            <Text
-              style={[
-                appStyles.regularTxtRg,
-                {
-                  color: colors.complimentary,
-                  textAlign: 'center',
-                  marginTop: 10,
-                },
-              ]}>
-              Rocket
-            </Text>
-          </View>
-        </View>
       </View>
     </View>
   );
