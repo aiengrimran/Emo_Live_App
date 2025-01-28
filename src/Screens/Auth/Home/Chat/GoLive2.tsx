@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   Platform,
+  Alert,
 } from 'react-native';
 
 import React, {useState, useContext} from 'react';
@@ -20,8 +21,15 @@ import axiosInstance from '../../../../Api/axiosConfig';
 import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
 import axios from 'axios';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  setGuests,
+  updateStreamListeners,
+} from '../../../../store/slice/streamingSlice';
 
 export default function GoLive2({navigation}) {
+  const {guests} = useSelector((state: any) => state.streaming);
+  const dispatch = useDispatch();
   const createChannelToken = async () => {
     try {
       const res = await axiosInstance.get('/agora/create-channel-token');
@@ -38,17 +46,21 @@ export default function GoLive2({navigation}) {
   const localToken = user.id == 1 ? envVar.IMRAN_TOKEN : envVar.ZALKIP_TOKEN;
   const [btnColor, setBtnColor] = useState(colors.body_text);
 
-  const startPodCast = async () => {
+  const startLive = async () => {
     try {
       // setUser
-      navigation.navigate('GoLive');
-      return;
-      const url = envVar.LOCAL_URL + 'podcast/start';
+      if (!guests) {
+        Alert.alert('error', 'select seat');
+        return;
+      }
+      // navigation.navigate('LiveStreaming');
+      // return;
+      const url = envVar.LOCAL_URL + 'stream/start';
       // const url = envVar + 'podcast/start';
       const data = {
         title: 'Start View',
         duration: 10,
-        listeners: 2,
+        listeners: guests,
         type: 'PUBLIC',
       };
       const res = await axios.post(url, data, {
@@ -62,6 +74,8 @@ export default function GoLive2({navigation}) {
           ...user,
           agora_rtc_token: res.data.user.agora_rtc_token,
         }));
+        dispatch(setGuests(guests));
+        dispatch(updateStreamListeners(guests));
       }
       // const res = await axiosInstance.post(url, JSON.stringify(data));
       console.log(res.data);
@@ -97,11 +111,7 @@ export default function GoLive2({navigation}) {
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('HomeB')}
-          style={{
-            width: '10%',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-          }}>
+          style={styles.closeBtn}>
           <Icon name="close" color={colors.complimentary} size={25} />
         </TouchableOpacity>
       </View>
@@ -138,17 +148,17 @@ export default function GoLive2({navigation}) {
         </View>
       </View>
       <View style={styles.room}>
-        <TouchableOpacity onPress={() => setRoom(1)}>
+        <TouchableOpacity onPress={() => dispatch(setGuests(1))}>
           <View
             style={[
               styles.singleRoom,
               {
-                backgroundColor: room == 1 ? colors.accent : colors.body_text,
+                backgroundColor: guests == 1 ? colors.accent : colors.body_text,
               },
             ]}></View>
           <Text style={styles.seatTxt}>1 Seat</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setRoom(4)}>
+        <TouchableOpacity onPress={() => dispatch(setGuests(4))}>
           <View
             style={{
               width: 33,
@@ -161,7 +171,7 @@ export default function GoLive2({navigation}) {
                   styles.room4,
                   {
                     backgroundColor:
-                      room == 4 ? colors.accent : colors.body_text,
+                      guests == 4 ? colors.accent : colors.body_text,
                   },
                 ]}></View>
               <View
@@ -169,7 +179,7 @@ export default function GoLive2({navigation}) {
                   styles.room4,
                   {
                     backgroundColor:
-                      room == 4 ? colors.accent : colors.body_text,
+                      guests == 4 ? colors.accent : colors.body_text,
                   },
                 ]}></View>
             </View>
@@ -184,7 +194,7 @@ export default function GoLive2({navigation}) {
                   styles.room4,
                   {
                     backgroundColor:
-                      room == 4 ? colors.accent : colors.body_text,
+                      guests == 4 ? colors.accent : colors.body_text,
                   },
                 ]}></View>
               <View
@@ -192,15 +202,15 @@ export default function GoLive2({navigation}) {
                   styles.room4,
                   {
                     backgroundColor:
-                      room == 4 ? colors.accent : colors.body_text,
+                      guests == 4 ? colors.accent : colors.body_text,
                   },
                 ]}></View>
             </View>
           </View>
           <Text style={styles.seatTxt}>4 Seat</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setRoom(6)}>
-          {room == 6 ? (
+        <TouchableOpacity onPress={() => dispatch(setGuests(6))}>
+          {guests == 6 ? (
             <Room6On width={32} height={32} />
           ) : (
             <Room6 width={32} height={32} />
@@ -208,8 +218,8 @@ export default function GoLive2({navigation}) {
 
           <Text style={styles.seatTxt}>6 Seat</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setRoom(9)}>
-          {room == 9 ? (
+        <TouchableOpacity onPress={() => dispatch(setGuests(9))}>
+          {guests == 9 ? (
             <Room9On width={32} height={32} />
           ) : (
             <Room9 width={32} height={32} />
@@ -218,10 +228,7 @@ export default function GoLive2({navigation}) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={styles.btn}
-        // onPress={() => navigation.navigate('GoLive')}>
-        onPress={() => startPodCast()}>
+      <TouchableOpacity style={styles.btn} onPress={startLive}>
         <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
           Go Live
         </Text>
@@ -262,12 +269,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.lines,
   },
+  closeBtn: {
+    width: '10%',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   btn: {
     marginTop: 40,
     backgroundColor: '#ef0143',
     width: '90%',
     position: 'absolute',
-    bottom: 20,
+    bottom: 30,
     padding: 15,
     alignSelf: 'center',
     borderRadius: 15,

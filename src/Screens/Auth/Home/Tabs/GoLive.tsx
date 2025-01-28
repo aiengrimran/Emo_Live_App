@@ -36,6 +36,9 @@ import {
 import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
+// import Header
+import Header from './Podcast/Header';
+
 import Context from '../../../../Context/Context';
 import {useSelector, useDispatch} from 'react-redux';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
@@ -62,50 +65,37 @@ import {
   setModalInfo,
   setPodcastListeners,
   setHostLeftPodcast,
+  setRTCTokenRenewed,
   setRoomId,
 } from '../../../../store/slice/podcastSlice';
+import {setConnected} from '../../../../store/slice/chatSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive({navigation}: any) {
   const chatClient = ChatClient.getInstance();
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
   const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
-
   const [isJoined, setIsJoined] = useState(false);
-  const [isHost, setIsHost] = useState(false);
   const dispatch = useDispatch();
-  const users = useSelector((state: any) => state.usersReducer.users);
-  const {hostId, podcast, podcastListeners, roomId} = useSelector(
-    (state: any) => state.podcast,
-  );
-  // const {hostId,podcast} = useSelector((state: any) => state.podcast);
+  const {connected} = useSelector((state: any) => state.chat);
+  const {hostId, podcast, podcastListeners, rtcTokenRenewed, roomId} =
+    useSelector((state: any) => state.podcast);
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
-  const localToken =
-    user.id == 1
-      ? '32|qzTMhPRcuTIVn6rIarSu9ald2mTQaQ60YUxp7iOV09be42ba'
-      : '34|wpjSAN9CJShZCXoxV7l6F52zp4VkTj9w6ka1UObvfebe0ec1';
-  let channelToken =
-    user.id == 1
-      ? '007eJxTYDB/tjV3Wv5UvkPHrlSaivf9PW5+c3OasVBCk/IhNw7+5aIKDMlJhuYWFqaWaWkGhiYGBikWBinJJgYpqYbm5mmpKUnJVzdNSW8IZGSYsSiQmZEBAkGAlyE5I97S0MjCPN7UxNyYkUELAGxgII0='
-      : '007eJxTYFDOLd50L5Xrb0v/y5Y5S/28HKVb3xdwnjJ3CPqV5qP3jlmBITnJ0NzCwtQyLc3A0MTAIMXCICXZxCAl1dDcPC01JSnZZ9OU9IZARobd+28wMTJAIAjwMiRnxFsaGlmYx5uamBszMmgBAH3pISE=';
+
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [onLive, setOnLive] = useState<boolean>(false);
   const [sheet, setSheet] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  // const [users, setUsers] = useState<Array<any>>([]);
   const [sheetType, setSheetType] = useState<string | null>('');
 
   // callbacks
-  const handleSheetChanges = useCallback((index: number) => {
-    // console.log('handleSheetChanges', index);
-    if (index < 0) setSheet(false);
-  }, []);
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -122,16 +112,17 @@ export default function GoLive({navigation}: any) {
       agoraEngineRef.current = createAgoraRtcEngine();
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
-        onJoinChannelSuccess: (_connection: RtcConnection, uid: number) => {
-          console.log('Successfully joined channel: ' + uid);
-
-          // createUserChatRoom()
+        onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
+          console.log('Successfully joined channel: ' + elapsed);
+          if (podcast.host == user.id) {
+            createUserChatRoom();
+          }
           // showMessage('Successfully joined channel: ' + channelName);
           setIsJoined(true);
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           console.log('Remote user ' + uid + ' joined');
-          getUserInfoFromAPI(uid);
+          // getUserInfoFromAPI(uid);
           // setRemoteUid(uid);
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
@@ -149,6 +140,7 @@ export default function GoLive({navigation}: any) {
         ) => {
           console.log('Connection state changed:', state, _connection);
           console.log('reason state changed:', reason);
+          handelConnection(reason);
         },
       };
 
@@ -158,12 +150,29 @@ export default function GoLive({navigation}: any) {
       agoraEngine.initialize({
         appId: envVar.AGORA_APP_ID,
       });
-      // Enable local video
-      // agoraEngine.enableVideo();
       // agoraEngine.enableLocalAudio(true);
-      //   agoraEngine.enableLocalAudio(true);
     } catch (e) {
       console.log(e);
+    }
+  };
+
+  const handelConnection = (state: number) => {
+    switch (state) {
+      case 1:
+        setOnLive(true);
+        setIsJoined(true);
+        break;
+      case 9:
+        if (!rtcTokenRenewed) {
+          // renewRtcToken();
+        }
+        // setOnLive(true);
+        break;
+      case 1:
+        setOnLive(true);
+        break;
+      default:
+        break;
     }
   };
 
@@ -179,52 +188,55 @@ export default function GoLive({navigation}: any) {
     bottomSheetRef.current?.expand();
   }, []);
 
-  const createUserChatRoom = async () => {
-    if (user.can_create_chat_room) {
-      createChatRoomHost();
-      return;
-    }
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index < 0) setSheet(false);
+  }, []);
+
+  const loginUser = async () => {
     try {
-      const url = envVar.LOCAL_URL + 'chat-room/create/super-admin';
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${localToken}`,
-        },
-      });
-      console.log(res.data);
-      if (res.status == 201) {
-        setUser(res.data.user);
-        await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
-        createChatRoomHost();
+      const loggedIn = await chatClient.isLoginBefore();
+      if (!loggedIn) {
+        const res = await chatClient.loginWithToken(
+          String(user.id),
+          user.agora_chat_token,
+        );
+        console.log(res);
+        dispatch(setConnected(true));
       }
     } catch (error) {
-      Alert.alert('Error', 'user: Please try again');
       console.log(error);
     }
   };
-  const createChatRoomHost = async () => {
+
+  const createUserChatRoom = async () => {
     try {
+      if (!connected) {
+        loginUser();
+        return;
+      }
       const chatRoom = await chatClient.roomManager.createChatRoom(
         'Podcast',
         'Hi',
-        'wellcome',
+        'welcome',
         [],
         5,
       );
       const roomId = chatRoom.roomId;
+
       saveChatRoomId(roomId);
       setRoomId(roomId);
       userJoinChatRoom(roomId);
       console.log(roomId, 'Sss');
     } catch (error) {
       console.log(error, 'ss');
+      console.log(error, 'error in creating room');
     }
-    try {
-    } catch (error) {}
   };
+
   const saveChatRoomId = async (roomId: string) => {
     try {
-      const url = envVar.LOCAL_URL + 'podcast/save-roomId';
+      console.log('calling api to roomId');
+      const url = envVar.API_URL + 'podcast/save-roomId';
       const data = {
         chatRoomId: roomId,
         id: podcast.id,
@@ -249,7 +261,7 @@ export default function GoLive({navigation}: any) {
       if (res.data.users.length > 0) {
         const users = res.data.users;
         let currentUser = [...podcastListeners];
-        let updatedUsers = [...currentUser, ...currentUser];
+        let updatedUsers = [...currentUser, ...users];
         dispatch(setPodcastListeners(updatedUsers));
       }
     } catch (error: any) {
@@ -286,24 +298,34 @@ export default function GoLive({navigation}: any) {
     }
   };
 
-  const join = () => {
-    console.log('connecting', isJoined);
+  const join = async () => {
+    // console.log('Connecting...', isJoined, user.id == podcast.host);
+    // return;
+
+    // if (!connected) {
+    //   loginUser()
+    //   return
+    // }
+
+    // Exit if already joined
     if (isJoined) {
+      console.log('User is already in the channel.');
       return;
     }
 
     try {
+      // Check if Agora engine is initialized
       if (!agoraEngineRef.current) {
         throw new Error('Agora engine is not initialized.');
       }
+
       let result1;
 
-      if (isHost) {
+      // Join as host or audience
+      if (user.id == podcast.host) {
         console.log('Joining as a host...');
-        // Join the channel as a broadcaster
         result1 = agoraEngineRef.current.joinChannel(
-          channelToken,
-          // token,
+          user.agora_rtc_token,
           podcast.channel,
           user.id,
           {
@@ -315,31 +337,34 @@ export default function GoLive({navigation}: any) {
         );
       } else {
         console.log('Joining as an audience...');
-        // Join the channel as an audience
         result1 = agoraEngineRef.current.joinChannel(
-          channelToken,
-          // user.agora_rtc_token,
-          podcast.channel,
+          String(user.agora_rtc_token),
+          String(podcast.channel),
           user.id,
           {
-            // channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
             clientRoleType: ClientRoleType.ClientRoleAudience,
-            publishMicrophoneTrack: false, // Audience shouldn't publish microphone
+            publishMicrophoneTrack: false,
             autoSubscribeAudio: true,
             audienceLatencyLevel:
               AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
           },
         );
       }
-      console.log('result1', result1);
+      console.log(result1);
 
-      console.log('Successfully joined the channel!');
-    } catch (error) {
-      console.error('Failed to join the channel:', error);
+      // Check if joinChannel was successful
+      if (result1 < 0) {
+        throw new Error(`Failed to join channel. Error code: ${result1}`);
+      }
+      if (result1 == 0) {
+        console.log('Successfully joined the channel!');
+        setIsJoined(true); // Update joined state
+      }
+    } catch (error: any) {
+      console.error('Failed to join the channel:', error.message);
       throw new Error('Unable to connect to the channel. Please try again.');
     }
   };
-
   const endPodcastForUser = async () => {
     try {
       if (podcast.host == user.id) {
@@ -414,14 +439,22 @@ export default function GoLive({navigation}: any) {
       <ImageBackground
         style={styles.image}
         source={require('../../../../assets/images/LiveBg.png')}>
+        {/* ************ Header Start ************ */}
         <Header
           user={user}
+          onLive={onLive}
           getActiveUsers={getActiveUsers}
           navigation={navigation}
           token={token}
           envVar={envVar}
           leavePodcast={leavePodcast}
+          connected={connected}
         />
+
+        {/* ************ Header end ************ */}
+
+        {/* ************ second row ************ */}
+
         <View
           style={{
             flexDirection: 'row',
@@ -483,21 +516,24 @@ export default function GoLive({navigation}: any) {
             </TouchableOpacity>
           </View>
         </View>
-        <Text onPress={createUserChatRoom}>
-          {isHost ? 'i am host' : 'i am subscriber'}
-        </Text>
-        <Text
-          style={{color: '#fff', marginVertical: 10}}
-          onPress={() => setIsHost(!isHost)}>
-          Update hOst
-        </Text>
+
+        <View>
+          <Text
+            onPress={createUserChatRoom}
+            style={{color: '#fff', marginVertical: 10}}>
+            createUserChatRoom
+          </Text>
+        </View>
+
+        {/* ************ second row ************ */}
+
         <TouchableOpacity style={{marginVertical: 10}}>
           <Text onPress={join}>Join Chanel</Text>
         </TouchableOpacity>
         <Text onPress={leaveChannel}>Leave Channel</Text>
         <View>
           <FlatList
-            data={users}
+            data={podcastListeners}
             keyExtractor={item => item.id.toString()}
             renderItem={({item}: any) => (
               <View style={styles.usersList}>
@@ -626,12 +662,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    marginTop: Platform.OS == 'ios' ? 50 : 20,
-    flexDirection: 'row',
-    width: '90%',
-    justifyContent: 'space-between',
-  },
   heading: {
     fontSize: 26,
     fontWeight: '600',
@@ -658,12 +688,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '99%',
     justifyContent: 'space-around',
-  },
-  userInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '40%',
-    alignItems: 'center',
   },
   btn1: {
     position: 'relative',
@@ -715,11 +739,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.lines,
   },
-  addBtn: {
-    padding: 2,
-    backgroundColor: '#F00044',
-    borderRadius: 20,
-  },
   sheetUser: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -764,74 +783,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-interface HeaderProps {
-  user: any;
-  getActiveUsers: any;
-  navigation: any;
-  token: string;
-  envVar: any;
-  leavePodcast: any;
-  // getActiveUsers
-}
-
-const Header = ({
-  user,
-  getActiveUsers,
-  navigation,
-  token,
-  envVar,
-  leavePodcast,
-}: HeaderProps) => {
-  return (
-    <View style={styles.header}>
-      <View style={styles.userInfo}>
-        <Image
-          source={
-            user.avatar
-              ? {
-                  uri: envVar.API_URL + 'display-avatar/' + user.id,
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              : require('../../../../assets/images/place.jpg')
-          }
-          // source={require('../../../../assets/images/live/girl1.jpg')}
-          style={{width: 28, height: 28, borderRadius: 15}}
-        />
-        <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-          {user.last_name}
-        </Text>
-        <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
-          <Text style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
-            LV:1
-          </Text>
-        </View>
-        <TouchableOpacity onPress={getActiveUsers} style={styles.addBtn}>
-          <Icon name="plus" color="#fff" size={20} />
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          width: '30%',
-        }}>
-        <TouchableOpacity onPress={() => navigation.navigate('TempUI')}>
-          <IconM name="warning" size={25} color="#F0DF00" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="eye" size={25} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={leavePodcast}>
-          {/* <TouchableOpacity onPress={() => navigation.goBack()}> */}
-          {/* <TouchableOpacity onPress={() => navigation.navigate('HomeB')}> */}
-          <Icon name="close" size={25} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
 
 interface BottomSectionProps {
   handleOpenSheet: any;

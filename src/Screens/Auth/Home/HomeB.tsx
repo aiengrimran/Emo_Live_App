@@ -6,6 +6,7 @@ import Profile from './Tabs/Profile';
 import Notifications from './Notifications';
 import GoLive2 from './Chat/GoLive2';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import StartLive from './Tabs/StartLive';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setTokenRenewed} from '../../../store/slice/chatSlice';
 import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
@@ -33,10 +34,10 @@ import axios from 'axios';
 
 export default function HomeB() {
   const dispatch = useDispatch();
-  // const chatClient = ChatClient.getInstance();
-  // const chatManager = chatClient.chatManager;
-  // const chatClientRef = useRef(chatClient);
-  // const chatManagerRef = useRef(chatManager);
+  const chatClient = ChatClient.getInstance();
+  const chatManager = chatClient.chatManager;
+  const chatClientRef = useRef(chatClient);
+  const chatManagerRef = useRef(chatManager);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
@@ -45,27 +46,27 @@ export default function HomeB() {
   );
   const {unread} = useSelector((state: any) => state.notification);
 
-  // useEffect(() => {
-  //   let initializedOnce = false; // Prevents duplicate initialization
-  //   const unsubscribe = NetInfo.addEventListener(state => {
-  //     if (state.isConnected && !connected) {
-  //       if (!initialized && !initializedOnce) {
-  //         initializedOnce = true;
-  //         console.log('Network available, initializing chat SDK...Home');
-  //         // Initialize the chat SDK here
-  //         initializedAgoraChat();
-  //       }
-  //     } else {
-  //       console.log('No network connection.');
-  //       Alert.alert('Network Error', 'Please check your internet connection.');
-  //     }
-  //   });
+  useEffect(() => {
+    let initializedOnce = false; // Prevents duplicate initialization
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected && !connected) {
+        if (!initialized && !initializedOnce) {
+          initializedOnce = true;
+          console.log('Network available, initializing chat SDK...Home');
+          // Initialize the chat SDK here
+          initializedAgoraChat();
+        }
+      } else {
+        console.log('No network connection.');
+        Alert.alert('Network Error', 'Please check your internet connection.');
+      }
+    });
 
-  //   return () => {
-  //     console.log('Cleaning up network listener...');
-  //     unsubscribe(); // Unsubscribe from NetInfo listener
-  //   };
-  // }, [initialized, chatManagerRef.current, chatClientRef.current]);
+    return () => {
+      console.log('Cleaning up network listener...');
+      unsubscribe(); // Unsubscribe from NetInfo listener
+    };
+  }, [initialized, chatManagerRef.current, chatClientRef.current]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -251,6 +252,24 @@ export default function HomeB() {
         }}
       />
       <Tab.Screen
+        name="StartLive"
+        component={StartLive}
+        options={{
+          tabBarLabel: 'StartLive',
+          tabBarActiveTintColor: colors.complimentary,
+          tabBarInactiveTintColor: colors.body_text,
+          tabBarIcon: ({focused}) => (
+            <View style={{position: 'relative'}}>
+              <Icon
+                name="camera-plus-outline"
+                size={25}
+                color={focused ? colors.complimentary : colors.body_text}
+              />
+            </View>
+          ),
+        }}
+      />
+      {/* <Tab.Screen
         name="GoLive2"
         component={GoLive2}
         options={{
@@ -267,7 +286,7 @@ export default function HomeB() {
             </View>
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         // name="Alerts"
         name="Notifications"

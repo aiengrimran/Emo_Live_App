@@ -3,6 +3,7 @@ import usersReducer from './slice/usersSlice';
 import chatReducer from './slice/chatSlice';
 import notificationReducer from './slice/notificationSlice';
 import podcastReducer from './slice/podcastSlice';
+import streamingReducer from './slice/streamingSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     chat: chatReducer,
     notification: notificationReducer,
     podcast: podcastReducer,
+    streaming: streamingReducer,
   },
 });
 export default store;

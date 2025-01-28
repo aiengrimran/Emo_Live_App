@@ -35,7 +35,9 @@ import ConnectionError from '../Screens/General/ConnectionError';
 import Privacy from '../Screens/Auth/Home/Profile/Settings/Privacy';
 import Level from '../Screens/Auth/Home/Profile/Level/Level';
 import LiveBattle from '../Screens/Auth/Home/PK/LiveBattle';
+import LiveStreaming from '../Screens/Auth/Home/Tabs/Streaming/LiveStreaming';
 import NetInfo from '@react-native-community/netinfo';
+import GoLive2 from '../Screens/Auth/Home/Chat/GoLive2';
 import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
 // import Chat2 from ""
@@ -184,6 +186,14 @@ export default function Index() {
                         name="UpdatePassword"
                         component={UpdatePassword}
                       />
+                      <Stack.Group>
+                        <Stack.Screen name="GoLive2" component={GoLive2} />
+                        <Stack.Screen
+                          name="LiveStreaming"
+                          component={LiveStreaming}
+                        />
+                      </Stack.Group>
+
                       <Stack.Screen name="Chat" component={Chat} />
                       <Stack.Screen name="PlayCenter" component={PlayCenter} />
 

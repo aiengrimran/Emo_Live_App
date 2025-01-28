@@ -13,6 +13,7 @@ const podcastSlice = createSlice({
       isHost: '',
     },
     hostLeftPodcast: false,
+    rtcTokenRenewed: false,
   },
   reducers: {
     setPodcast: (state, action) => {
@@ -23,6 +24,9 @@ const podcastSlice = createSlice({
     },
     setHostId(state, action) {
       state.hostId = action.payload;
+    },
+    setRTCTokenRenewed(state, action) {
+      state.rtcTokenRenewed = action.payload;
     },
     setModalInfo(state, action) {
       state.modalInfo.modal = action.payload.modal;
@@ -45,6 +49,7 @@ export const {
   setRoomId,
   setHostId,
   setPodcastListeners,
+  setRTCTokenRenewed,
   setHostLeftPodcast,
   setModalInfo,
 } = podcastSlice.actions;

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
 import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
+import axiosInstance from '../Api/axiosConfig';
 export default scripts = {
   clearError: (setError, setLoading) => {
     setLoading(false);
@@ -63,5 +64,14 @@ export const checkAudioInputPermission = async () => {
     } else {
       return false;
     }
+  }
+};
+
+export const createUserRTCToken = async () => {
+  try {
+    const res = await axiosInstance.get('');
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
   }
 };
