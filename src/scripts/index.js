@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
 import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import axiosInstance from '../Api/axiosConfig';
+import envVar from '../config/envVar';
+
 export default scripts = {
   clearError: (setError, setLoading) => {
     setLoading(false);
@@ -66,12 +68,72 @@ export const checkAudioInputPermission = async () => {
     }
   }
 };
+export const renewRTCToken = (channel, role) => {
+  return new Promise((resolve, reject) => {
+    const url = envVar.API_URL + 'user/renew-rtc-token';
+    const data = {channel, role};
 
-export const createUserRTCToken = async () => {
-  try {
-    const res = await axiosInstance.get('');
-    console.log(res.data);
-  } catch (error) {
-    console.log(error);
-  }
+    axiosInstance
+      .post(url, data)
+      .then(response => resolve(response.data.user)) // Resolve with the user data
+      .catch(error => {
+        console.log(error);
+        reject(error); // Reject the promise on error
+      });
+  });
 };
+export const renewRTMToken = () => {
+  return new Promise((resolve, reject) => {
+    const url = envVar.API_URL + 'renew-agora-token';
+
+    axiosInstance
+      .get(url)
+      .then(response => resolve(response.data.user)) // Resolve with the user data
+      .catch(error => {
+        console.log(error);
+        reject(error); // Reject the promise on error
+      });
+  });
+};
+export const checkCamPermission = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (Platform.OS === 'ios') {
+        const photoPermission = await check(PERMISSIONS.IOS.PHOTO_LIBRARY);
+        if (photoPermission === RESULTS.GRANTED) {
+          return resolve(true);
+        }
+        if (photoPermission === RESULTS.DENIED) {
+          const PermissionResult = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
+          return resolve(PermissionResult === RESULTS.GRANTED);
+        }
+      } else {
+        const cameraPermission = await check(PERMISSIONS.ANDROID.CAMERA);
+        if (cameraPermission === RESULTS.GRANTED) {
+          return resolve(true);
+        }
+        if (cameraPermission === RESULTS.DENIED) {
+          const result = await request(PERMISSIONS.ANDROID.CAMERA);
+          return resolve(result === RESULTS.GRANTED);
+        }
+      }
+      resolve(false); // If no condition matches, return false
+    } catch (error) {
+      reject(error); // Reject the Promise on error
+    }
+  });
+};
+
+// export const renewRTCToken = async (channel, role) => {
+//   try {
+//     const url = envVar.API_URL + 'user/renew-rtc-token';
+//     const data = {
+//       channel: channel,
+//       role: role,
+//     };
+//     const res = await axiosInstance.post(url, data);
+//     return res.data.user;
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };

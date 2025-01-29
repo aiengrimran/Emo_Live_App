@@ -7,39 +7,53 @@ import {useSelector, useDispatch} from 'react-redux';
 // import setModalInfo from '../../'
 import {
   setHostLeftPodcast,
-  setModalInfo,
+  setLeaveModal,
 } from '../../../../../store/slice/podcastSlice';
 import axios from 'axios';
 import envVar from '../../../../../config/envVar';
+import axiosInstance from '../../../../../Api/axiosConfig';
 
-export default function EndLive({user, endPodcastForUser, navigation, id}) {
+interface EndLiveProps {
+  user: any;
+  endPodcastForUser: any;
+  navigation: any;
+  id: any;
+}
+export default function EndLive({
+  user,
+  endPodcastForUser,
+  navigation,
+  id,
+}: EndLiveProps) {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
-  const {hostId, hostLeftPodcast, modalInfo} = useSelector(
+  const [disabled, setDisabled] = useState(false);
+  const {leaveModal, hostLeftPodcast, modalInfo, podcast} = useSelector(
     (state: any) => state.podcast,
   );
   const endPodcast = () => {
     try {
-      let payload = {
-        modal: false,
-        isHost: modalInfo.host,
-      };
-      dispatch(setModalInfo(payload));
-      dispatch(setHostLeftPodcast(false));
-      if (modalInfo.isHost) {
+      setDisabled(true);
+      if (user.id == podcast.host) {
         apiCall();
         return;
       }
-      navigation.navigate('HomeB');
-    } catch (error) {
-      console.log(error);
+      setDisabled(false);
+      endPodcastForUser();
+
+      // dispatch(setHostLeftPodcast(false));
+    } catch (error: any) {
+      console.log(error.response);
     }
   };
   const apiCall = async () => {
     try {
-      const url = envVar.LOCAL_URL + 'podcast/end' + id;
-      const res = await axios.get(url);
+      console.log('ending podcast');
+      const url = envVar.API_URL + 'podcast/end/' + id;
+      const res = await axiosInstance.get(url);
       console.log(res.data);
+      setDisabled(false);
+
       endPodcastForUser();
     } catch (error) {
       console.log(error);
@@ -47,17 +61,13 @@ export default function EndLive({user, endPodcastForUser, navigation, id}) {
   };
 
   const cancelLeave = () => {
-    let payload = {
-      modal: false,
-      isHost: modalInfo.host,
-    };
-    dispatch(setModalInfo(payload));
+    dispatch(setLeaveModal(false));
   };
 
   return (
     <View>
       <Modal
-        visible={modalInfo.modal}
+        visible={leaveModal}
         transparent={true}
         animationType="slide"
         onRequestClose={cancelLeave}>
@@ -72,13 +82,14 @@ export default function EndLive({user, endPodcastForUser, navigation, id}) {
               <Text style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
                 {hostLeftPodcast
                   ? 'Host Has Left PodCast'
-                  : modalInfo.isHost
+                  : user.id == podcast.id
                   ? 'Are you sure to end this podcast Host'
                   : 'Are you sure to left this Podcast.'}
               </Text>
             </View>
 
             <TouchableOpacity
+              disabled={disabled}
               onPress={endPodcast}
               style={[styles.deleteButton]}>
               <Text style={styles.deleteText}>
@@ -87,6 +98,7 @@ export default function EndLive({user, endPodcastForUser, navigation, id}) {
             </TouchableOpacity>
             {!hostLeftPodcast && (
               <TouchableOpacity
+                disabled={disabled}
                 onPress={cancelLeave}
                 style={styles.cancelButton}>
                 <Text style={[appStyles.paragraph1, {color: colors.unknown2}]}>

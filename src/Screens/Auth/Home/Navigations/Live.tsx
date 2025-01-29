@@ -12,34 +12,34 @@ import React, {useContext, useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
-import axios from 'axios';
-import {setPodcast} from '../../../../store/slice/podcastSlice';
+import {setStream, setStreams} from '../../../../store/slice/streamingSlice';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Context from '../../../../Context/Context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Popular({navigation}) {
   const {tokenMemo, userAuthInfo} = useContext(Context);
+  const {streams} = useSelector(state => state.streaming);
   const {token} = tokenMemo;
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const getPodcast = async () => {
+  const getStream = async () => {
     try {
+      console.log('sss');
       setLoading(true);
       const url = envVar.API_URL + 'stream/active';
-      // const url = envVar.LOCAL_URL + 'active-podcasts';
       const res = await axiosInstance.get(url);
       setLoading(false);
 
-      if (res.data.podcast.length) {
-        setData(res.data.podcast);
+      if (res.data.stream.length) {
+        setData(res.data.streams);
+        dispatch(setStreams(res.data.stream));
       }
-      // dispatch(setPodcast(res.data))
-      console.log(res.data);
     } catch (error) {
       setLoading(false);
 
@@ -47,7 +47,7 @@ export default function Popular({navigation}) {
     }
   };
 
-  const joinPodcast = async (item: any) => {
+  const joinStream = async (item: any) => {
     try {
       setLoading(true);
       const url = envVar.API_URL + 'stream/join';
@@ -56,17 +56,17 @@ export default function Popular({navigation}) {
         id: item.id,
       };
       const res = await axiosInstance.post(url, data);
-      console.log(res.data);
       setLoading(false);
-
+      console.log(res.data);
+      return;
+      dispatch(setStream(item));
       setUser(res.data.user);
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+      navigation.navigate('LiveStreaming');
     } catch (error) {
       setLoading(false);
 
       console.log(error);
-      // console.log(item);
-      dispatch(setPodcast(item));
-      navigation.navigate('GoLive');
     }
   };
 
@@ -80,19 +80,19 @@ export default function Popular({navigation}) {
             size={'small'}
           />
         </View>
-        <TouchableOpacity onPress={getPodcast}>
-          <Text style={{marginVertical: 20, color: colors.complimentary}}>
+        <TouchableOpacity onPress={getStream}>
+          <Text style={{marginVertical: 10, color: colors.complimentary}}>
             Get Live Streaming
           </Text>
         </TouchableOpacity>
         <FlatList
-          data={data}
+          data={streams}
           keyExtractor={(item: any) => item.id?.toString()}
           numColumns={2}
           renderItem={({item}: any) => (
             <TouchableOpacity
               style={styles.PodcastUser}
-              onPress={() => joinPodcast(item)}>
+              onPress={() => joinStream(item)}>
               <View
                 style={{
                   width: '100%',

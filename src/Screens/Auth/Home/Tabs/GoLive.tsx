@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  ActivityIndicator,
   Image,
   FlatList,
   TextInput,
@@ -33,7 +34,15 @@ import {
   ConnectionStateType,
   ConnectionChangedReasonType,
 } from 'react-native-agora';
-import {ChatClient} from 'react-native-agora-chat';
+import {
+  ChatClient,
+  ChatMessageType,
+  ChatOptions,
+  ChatConversationType,
+  ChatMessageChatType,
+  ChatSearchDirection,
+  ChatMessage,
+} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 // import Header
@@ -46,29 +55,20 @@ import axiosInstance from '../../../../Api/axiosConfig';
 import EndLive from './Podcast/EndLive';
 import Gifts from './Podcast/Gifts';
 import {updateUsers} from '../../../../store/slice/usersSlice';
-// const podcast = {
-//   title: 'get to gether',
-//   duration: '20',
-//   type: 'public',
-//   listeners_added: 'null',
-//   host: 1,
-//   status: 'STARTED',
-//   channel: 'ch_91287_5473',
-//   updated_at: '2025-01-25T07:48:07.000000Z',
-//   created_at: '2025-01-25T07:48:07.000000Z',
-//   id: 3,
-// };
+
 import envVar from '../../../../config/envVar';
 import Users from './Podcast/Users';
-import axios from 'axios';
 import {
-  setModalInfo,
   setPodcastListeners,
   setHostLeftPodcast,
   setRTCTokenRenewed,
   setRoomId,
+  setPodcast,
+  setLoading,
+  setLeaveModal,
 } from '../../../../store/slice/podcastSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
+import {renewRTCToken} from '../../../../scripts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive({navigation}: any) {
@@ -85,11 +85,18 @@ export default function GoLive({navigation}: any) {
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
 
+  const [message, setMessage] = useState({
+    type: 'initial',
+    uri: '',
+    content: '',
+    icon: 'microphone',
+  });
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [onLive, setOnLive] = useState<boolean>(false);
   const [sheet, setSheet] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [sheetType, setSheetType] = useState<string | null>('');
+  const [messages, setMessages] = useState<any>([]);
 
   // callbacks
 
@@ -122,7 +129,7 @@ export default function GoLive({navigation}: any) {
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           console.log('Remote user ' + uid + ' joined');
-          // getUserInfoFromAPI(uid);
+          getUserInfoFromAPI(uid);
           // setRemoteUid(uid);
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
@@ -138,9 +145,11 @@ export default function GoLive({navigation}: any) {
           state: ConnectionStateType,
           reason: ConnectionChangedReasonType,
         ) => {
-          console.log('Connection state changed:', state, _connection);
-          console.log('reason state changed:', reason);
-          handelConnection(reason);
+          console.log('state', state, 'reason', reason);
+          // setOnLive(true);
+          // console.log('Connection state changed:', state, _connection);
+          // console.log('reason state changed:', reason);
+          handelConnection(reason, state);
         },
       };
 
@@ -156,23 +165,39 @@ export default function GoLive({navigation}: any) {
     }
   };
 
-  const handelConnection = (state: number) => {
+  const handelConnection = (reason: any, state: number) => {
+    switch (reason) {
+      case 9:
+        handleRenewRtcToken();
+        break;
+
+      default:
+        break;
+    }
     switch (state) {
-      case 1:
+      case 3:
         setOnLive(true);
         setIsJoined(true);
         break;
-      case 9:
-        if (!rtcTokenRenewed) {
-          // renewRtcToken();
-        }
-        // setOnLive(true);
+      case 5:
+        leaveChannel();
         break;
       case 1:
-        setOnLive(true);
+        console.log('disconnected');
         break;
       default:
         break;
+    }
+  };
+  const handleRenewRtcToken = async () => {
+    try {
+      const role = user.id == podcast.host ? 1 : 2;
+      const updateUser = await renewRTCToken(podcast.channel, role);
+      setUser(updateUser);
+      dispatch(setRTCTokenRenewed(true));
+      await AsyncStorage.setItem('user', JSON.stringify(updateUser));
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -194,6 +219,7 @@ export default function GoLive({navigation}: any) {
 
   const loginUser = async () => {
     try {
+      console.log('login to chat ...');
       const loggedIn = await chatClient.isLoginBefore();
       if (!loggedIn) {
         const res = await chatClient.loginWithToken(
@@ -224,11 +250,10 @@ export default function GoLive({navigation}: any) {
       const roomId = chatRoom.roomId;
 
       saveChatRoomId(roomId);
-      setRoomId(roomId);
+      dispatch(setRoomId(roomId));
       userJoinChatRoom(roomId);
       console.log(roomId, 'Sss');
     } catch (error) {
-      console.log(error, 'ss');
       console.log(error, 'error in creating room');
     }
   };
@@ -241,32 +266,36 @@ export default function GoLive({navigation}: any) {
         chatRoomId: roomId,
         id: podcast.id,
       };
-      const res = await axios.post(url, JSON.stringify(data));
-      console.log(res.data);
+      const res = await axiosInstance.post(url, data);
+      dispatch(setPodcast(res.data.podcast));
     } catch (error) {
       console.log(error);
     }
   };
   const getUserInfoFromAPI = async (id: any) => {
     try {
+      dispatch(setLoading(true));
       const idsArray = [id];
+      console.log(idsArray);
       let data = {
         users: idsArray,
       };
-      console.log(data);
       const url = 'users-info';
       const res = await axiosInstance.post(url, data);
       // const res = await axiosInstance.post(url, JSON.stringify(data));
       console.log(res.data);
+      dispatch(setLoading(false));
       if (res.data.users.length > 0) {
         const users = res.data.users;
         let currentUser = [...podcastListeners];
         let updatedUsers = [...currentUser, ...users];
+        console.log(updatedUsers);
         dispatch(setPodcastListeners(updatedUsers));
       }
     } catch (error: any) {
       // setError('error occurred: please check internet connection(API)');
       console.log(error['_response']);
+      dispatch(setLoading(false));
     }
   };
   const userJoinChatRoom = async (roomId: any) => {
@@ -278,28 +307,18 @@ export default function GoLive({navigation}: any) {
   };
 
   const hostEndedPodcast = async () => {
-    try {
-      dispatch(setHostLeftPodcast(true));
-      let payload = {
-        modal: true,
-        isHost: false,
-      };
-      dispatch(setModalInfo(payload));
-      return;
+    dispatch(setHostLeftPodcast(true));
+    dispatch(setLeaveModal(true));
+  };
+  const destroyEngine = () => {
+    const res = agoraEngineRef.current?.leaveChannel();
 
-      const url = envVar.LOCAL_URL + 'podcast/end' + podcast.id;
-      const data = {
-        id: podcast.id,
-      };
-      const res = await axios.post(url);
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
+    agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+    agoraEngineRef.current?.release();
   };
 
   const join = async () => {
-    // console.log('Connecting...', isJoined, user.id == podcast.host);
+    console.log('Connecting...', isJoined, user.id, podcast.host);
     // return;
 
     // if (!connected) {
@@ -318,10 +337,7 @@ export default function GoLive({navigation}: any) {
       if (!agoraEngineRef.current) {
         throw new Error('Agora engine is not initialized.');
       }
-
       let result1;
-
-      // Join as host or audience
       if (user.id == podcast.host) {
         console.log('Joining as a host...');
         result1 = agoraEngineRef.current.joinChannel(
@@ -350,15 +366,13 @@ export default function GoLive({navigation}: any) {
           },
         );
       }
-      console.log(result1);
-
       // Check if joinChannel was successful
       if (result1 < 0) {
         throw new Error(`Failed to join channel. Error code: ${result1}`);
       }
       if (result1 == 0) {
         console.log('Successfully joined the channel!');
-        setIsJoined(true); // Update joined state
+        // setIsJoined(true); // Update joined state
       }
     } catch (error: any) {
       console.error('Failed to join the channel:', error.message);
@@ -374,28 +388,76 @@ export default function GoLive({navigation}: any) {
       }
       const res = agoraEngineRef.current?.leaveChannel();
 
+      dispatch(setLeaveModal(false));
+
       // await chatClient.roomManager.leaveChatRoom(podcast.roomId);
-      navigation.navigate('Home');
+      navigation.navigate('HomeB');
     } catch (error) {}
   };
 
   const leaveChannel = () => {
     try {
       const res = agoraEngineRef.current?.leaveChannel();
-      setIsJoined(false);
+      // setIsJoined(false);
       console.log(res);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const getActiveUsers = async () => {
+  // Sends a text message to somebody.
+  const sendMessage = async () => {
     try {
-      const res = await axiosInstance.get('/chat/active-users');
-      console.log(res.data);
-      dispatch(updateUsers(res.data.users));
+      let msg;
+      if (message.type == 'text') {
+        msg = ChatMessage.createTextMessage(
+          String(roomId),
+          message.content,
+          ChatMessageChatType.ChatRoom,
+        );
+      }
+      if (message.type == 'voice') {
+        let messageInfo = {
+          displayName: 'voice',
+        };
+        let fileUri = message.uri.replace('file:///', '/');
+        msg = ChatMessage.createVoiceMessage(
+          String(roomId.id),
+          fileUri,
+          // message.uri,
+          // messageInfo,
+        );
+      }
+      const callback = new (class {
+        onProgress(locaMsgId, progress) {
+          console.log(`send message process: ${locaMsgId}, ${progress}`);
+        }
+        onError(locaMsgId, error) {
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          console.log(
+            `send message fail: ${locaMsgId}, ${JSON.stringify(error)}`,
+          );
+        }
+        onSuccess(message: any) {
+          Alert.alert('Test', 'message sent');
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          const updatedMessages = [...messages, message];
+          setMessages(updatedMessages);
+          // console.log('send message success: ' + message.localMsgId);
+        }
+      })();
+      await chatClient.chatManager.sendMessage(msg, callback);
+      // Push the new message to the messages array and update the state
     } catch (error) {
-      console.log(error);
+      console.error('Unexpected error occurred:', error);
     }
   };
   const enableAudio = () => {
@@ -406,19 +468,6 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
-  const startPodCast = async () => {
-    try {
-      const url = 'podcast/start';
-      const data = {
-        title: 'Start View',
-        duration: 10,
-        listeners: 2,
-        type: 'PUBLIC',
-      };
-      const res = await axiosInstance.post(url, JSON.stringify(data));
-      console.log(res.data);
-    } catch (error) {}
-  };
   const podCastNotifications = async () => {
     try {
       const res = await axiosInstance.get('podcast-notification');
@@ -427,12 +476,25 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
+
+  const muteUnmuteUser = (item: any) => {
+    console.log(item);
+    if (user.id !== podcast.host) return;
+    let update = [...podcastListeners];
+
+    const updatedData = update.map((obj: any) => {
+      if (obj.id === item.id) {
+        agoraEngineRef.current?.muteRemoteAudioStream(item.id, !item.muted);
+        return {...obj, muted: !item.muted};
+      }
+      return obj;
+    });
+
+    // Update state or variable if necessary
+    dispatch(setPodcastListeners(updatedData)); // Assuming podcastListeners is state
+  };
   const leavePodcast = () => {
-    let payload = {
-      modal: true,
-      isHost: user.id == hostId,
-    };
-    dispatch(setModalInfo(payload));
+    dispatch(setLeaveModal(true));
   };
   return (
     <View style={styles.container}>
@@ -443,7 +505,6 @@ export default function GoLive({navigation}: any) {
         <Header
           user={user}
           onLive={onLive}
-          getActiveUsers={getActiveUsers}
           navigation={navigation}
           token={token}
           envVar={envVar}
@@ -525,6 +586,8 @@ export default function GoLive({navigation}: any) {
           </Text>
         </View>
 
+        <Text onPress={loginUser}>login chat</Text>
+
         {/* ************ second row ************ */}
 
         <TouchableOpacity style={{marginVertical: 10}}>
@@ -565,6 +628,20 @@ export default function GoLive({navigation}: any) {
                     ]}>
                     {item.first_name + ' ' + item.last_name}
                   </Text>
+                  <TouchableOpacity
+                    onPress={() => muteUnmuteUser(item)}
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                    }}>
+                    <Icon
+                      name={item.muted ? 'microphone-off' : 'microphone'}
+                      // name="microphone" microphone-off
+
+                      size={25}
+                      color={colors.complimentary}
+                    />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               </View>
             )}
@@ -574,8 +651,13 @@ export default function GoLive({navigation}: any) {
           <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
         </View>
         <View style={{marginTop: 30}}>
-          <Text style={{color: '#fff'}}>Chat Room Id :{roomId}</Text>
+          <Text onPress={() => setIsJoined(false)} style={{color: '#fff'}}>
+            Chat Room Idb :{roomId}
+          </Text>
         </View>
+        {/* <Text style={{marginTop: 10}} onPress={() => getUserInfoFromAPI(2)}>
+          getUserInfoFromAPI
+        </Text> */}
         <EndLive
           user={user}
           endPodcastForUser={endPodcastForUser}
@@ -620,7 +702,9 @@ export default function GoLive({navigation}: any) {
             </View>
           </TouchableOpacity>
         </View> */}
-
+        <Text style={{color: '#fff'}} onPress={destroyEngine}>
+          destroyEngine
+        </Text>
         <BottomSheet
           index={-1}
           enablePanDownToClose={true}
@@ -715,6 +799,7 @@ const styles = StyleSheet.create({
   },
   inputBox: {
     backgroundColor: '#11132c',
+    color: colors.complimentary,
     borderWidth: 1,
     width: '50%',
     borderStartEndRadius: 48,
@@ -809,7 +894,7 @@ const BottomSection = ({handleOpenSheet}: BottomSectionProps) => {
         <TextInput
           style={styles.inputBox}
           placeholder="Say hello ...."
-          placeholderTextColor={'#fff'}
+          placeholderTextColor={'grey'}
         />
         <View style={styles.action}>
           <TouchableOpacity>

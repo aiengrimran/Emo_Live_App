@@ -3,6 +3,7 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
   ScrollView,
   TextInput,
   StyleSheet,
@@ -10,7 +11,7 @@ import {
 import appStyles from '../../../../../styles/styles';
 import {ChatClient} from 'react-native-agora-chat';
 import {colors} from '../../../../../styles/colors';
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Context from '../../../../../Context/Context';
@@ -19,23 +20,31 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 export default function Settings({navigation}) {
   const chatClient = ChatClient.getInstance();
   const {userAuthInfo} = useContext(Context);
+  const [loading, setLoading] = useState(false);
 
   const logout = async () => {
     try {
+      setLoading(true);
       const res = await axiosInstance.get('/logout');
-      console.log(res.data);
-
+      clearUserData();
+      console.log('All keys removed from AsyncStorage');
+    } catch (error) {
+      clearUserData();
+      console.log(error);
+      // console.('Error removing keys from AsyncStorage:', error);
+    }
+  };
+  const clearUserData = async () => {
+    try {
       const keys = await AsyncStorage.getAllKeys();
       await AsyncStorage.multiRemove(keys);
       await AsyncStorage.removeItem('user');
       logoutUserFromAgoraChat();
+      setLoading(false);
       userAuthInfo.setUser(null);
-      console.log('All keys removed from AsyncStorage');
-    } catch (error) {
-      console.log(error);
-      console.error('Error removing keys from AsyncStorage:', error);
-    }
+    } catch (error) {}
   };
+
   const logoutUserFromAgoraChat = async () => {
     try {
       await chatClient.logout();
@@ -67,117 +76,128 @@ export default function Settings({navigation}) {
           Settings
         </Text>
       </View>
-      <ScrollView>
-        <View style={{marginTop: 20}}>
-          <TouchableOpacity style={styles.tab}>
-            <View style={styles.icon}>
-              <Icon name="history" size={25} color={colors.complimentary} />
-              <Text style={styles.tabText}>Payout History</Text>
-            </View>
+      {loading ? (
+        <ActivityIndicator
+          style={appStyles.indicatorStyle}
+          size={'large'}
+          color={colors.complimentary}
+        />
+      ) : (
+        <ScrollView>
+          <View style={{marginTop: 20}}>
+            <TouchableOpacity style={styles.tab}>
+              <View style={styles.icon}>
+                <Icon name="history" size={25} color={colors.complimentary} />
+                <Text style={styles.tabText}>Payout History</Text>
+              </View>
 
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => navigation.navigate('NotificationSettings')}>
-            <View style={styles.icon}>
-              <Icon name="bell-ring" size={25} color={colors.complimentary} />
-              <Text style={styles.tabText}>Notifications</Text>
-            </View>
+              <Icon name="chevron-right" size={25} color={colors.lines} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => navigation.navigate('NotificationSettings')}>
+              <View style={styles.icon}>
+                <Icon name="bell-ring" size={25} color={colors.complimentary} />
+                <Text style={styles.tabText}>Notifications</Text>
+              </View>
 
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => navigation.navigate('Privacy')}>
-            <View style={styles.icon}>
-              <Icon name="history" size={25} color={colors.complimentary} />
-              <Text style={styles.tabText}>Privacy Policy</Text>
-            </View>
+              <Icon name="chevron-right" size={25} color={colors.lines} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => navigation.navigate('Privacy')}>
+              <View style={styles.icon}>
+                <Icon name="history" size={25} color={colors.complimentary} />
+                <Text style={styles.tabText}>Privacy Policy</Text>
+              </View>
 
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => navigation.navigate('BlockedUsers')}>
-            <View style={styles.icon}>
-              <Icon
-                name="account-lock"
-                size={25}
-                color={colors.complimentary}
-              />
-              <Text style={styles.tabText}>Blocked List</Text>
-            </View>
-
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => navigation.navigate('UpdatePassword')}>
-            <View style={styles.icon}>
-              <Icon name="lock" size={25} color={colors.complimentary} />
-              <Text style={styles.tabText}>Manage Password</Text>
-            </View>
-
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
-            <View style={styles.icon}>
-              <Icon
-                name="link-variant"
-                size={25}
-                color={colors.complimentary}
-              />
-              <Text style={styles.tabText}>Link Account</Text>
-            </View>
-
-            <Icon name="chevron-right" size={25} color={colors.lines} />
-          </TouchableOpacity>
-          <View>
-            <Text
-              style={[
-                appStyles.regularTxtMd,
-                {color: colors.body_text, paddingLeft: 16},
-              ]}>
-              Others
-            </Text>
-            <TouchableOpacity style={[styles.tab, {marginTop: 30}]}>
+              <Icon name="chevron-right" size={25} color={colors.lines} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => navigation.navigate('BlockedUsers')}>
               <View style={styles.icon}>
                 <Icon
-                  name="delete-restore"
+                  name="account-lock"
                   size={25}
                   color={colors.complimentary}
                 />
-                <Text style={styles.tabText}>Clean Cache</Text>
+                <Text style={styles.tabText}>Blocked List</Text>
+              </View>
+
+              <Icon name="chevron-right" size={25} color={colors.lines} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => navigation.navigate('UpdatePassword')}>
+              <View style={styles.icon}>
+                <Icon name="lock" size={25} color={colors.complimentary} />
+                <Text style={styles.tabText}>Manage Password</Text>
               </View>
 
               <Icon name="chevron-right" size={25} color={colors.lines} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.tab}>
               <View style={styles.icon}>
-                <Icon name="account" size={25} color={colors.complimentary} />
-                <Text style={styles.tabText}>Connected Account</Text>
-              </View>
-
-              <Icon name="shield-check" size={25} color={'#0DB561'} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tab}>
-              <View style={styles.icon}>
                 <Icon
-                  name="information-outline"
+                  name="link-variant"
                   size={25}
                   color={colors.complimentary}
                 />
-                <Text style={styles.tabText}>About us</Text>
+                <Text style={styles.tabText}>Link Account</Text>
               </View>
 
               <Icon name="chevron-right" size={25} color={colors.lines} />
             </TouchableOpacity>
+            <View>
+              <Text
+                style={[
+                  appStyles.regularTxtMd,
+                  {color: colors.body_text, paddingLeft: 16},
+                ]}>
+                Others
+              </Text>
+              <TouchableOpacity style={[styles.tab, {marginTop: 30}]}>
+                <View style={styles.icon}>
+                  <Icon
+                    name="delete-restore"
+                    size={25}
+                    color={colors.complimentary}
+                  />
+                  <Text style={styles.tabText}>Clean Cache</Text>
+                </View>
+
+                <Icon name="chevron-right" size={25} color={colors.lines} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.tab}>
+                <View style={styles.icon}>
+                  <Icon name="account" size={25} color={colors.complimentary} />
+                  <Text style={styles.tabText}>Connected Account</Text>
+                </View>
+
+                <Icon name="shield-check" size={25} color={'#0DB561'} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.tab}>
+                <View style={styles.icon}>
+                  <Icon
+                    name="information-outline"
+                    size={25}
+                    color={colors.complimentary}
+                  />
+                  <Text style={styles.tabText}>About us</Text>
+                </View>
+
+                <Icon name="chevron-right" size={25} color={colors.lines} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
 
-      <TouchableOpacity style={[appStyles.bottomBtn]} onPress={logout}>
+      <TouchableOpacity
+        disabled={loading}
+        style={[appStyles.bottomBtn]}
+        onPress={logout}>
         <Text style={[styles.tabText, {alignSelf: 'center'}]}>Logout</Text>
       </TouchableOpacity>
     </View>

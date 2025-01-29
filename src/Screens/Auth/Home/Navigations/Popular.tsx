@@ -16,12 +16,15 @@ import axios from 'axios';
 import {setPodcast} from '../../../../store/slice/podcastSlice';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Context from '../../../../Context/Context';
+import {setPodcasts} from '../../../../store/slice/podcastSlice';
 
 export default function Popular({navigation}) {
+  const {podcasts} = useSelector((state: any) => state.podcast);
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {token} = tokenMemo;
+  console.log(token);
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
@@ -34,12 +37,12 @@ export default function Popular({navigation}) {
       // const url = envVar.LOCAL_URL + 'active-podcasts';
       const res = await axiosInstance.get(url);
       setLoading(false);
+      console.log(res.data);
 
       if (res.data.podcast.length) {
+        dispatch(setPodcasts(res.data.podcast));
         setData(res.data.podcast);
       }
-      // dispatch(setPodcast(res.data))
-      console.log(res.data);
     } catch (error) {
       setLoading(false);
 
@@ -61,13 +64,13 @@ export default function Popular({navigation}) {
       setLoading(false);
 
       setUser(res.data.user);
+      dispatch(setPodcast(item));
+      navigation.navigate('GoLive');
     } catch (error) {
       setLoading(false);
 
       console.log(error);
       // console.log(item);
-      dispatch(setPodcast(item));
-      navigation.navigate('GoLive');
     }
   };
 
@@ -83,11 +86,11 @@ export default function Popular({navigation}) {
         </View>
         <TouchableOpacity onPress={getPodcast}>
           <Text style={{marginVertical: 20, color: colors.complimentary}}>
-            GetPodcastsc
+            GetPodcasts
           </Text>
         </TouchableOpacity>
         <FlatList
-          data={data}
+          data={podcasts}
           keyExtractor={(item: any) => item.id?.toString()}
           numColumns={2}
           renderItem={({item}: any) => (

@@ -2,37 +2,38 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   StyleSheet,
   Platform,
   Image,
 } from 'react-native';
+
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
 import React from 'react';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useSelector} from 'react-redux';
 
 interface HeaderProps {
   user: any;
   onLive: boolean;
-  getActiveUsers: any;
   navigation: any;
   token: string;
   envVar: any;
   leavePodcast: any;
   connected: boolean;
-  // getActiveUsers
 }
 export default function Header({
   user,
   onLive,
-  getActiveUsers,
   navigation,
   token,
   envVar,
   leavePodcast,
   connected,
 }: HeaderProps) {
+  const {loading} = useSelector((state: any) => state.podcast);
   return (
     <View style={styles.header}>
       <View style={styles.userInfo}>
@@ -57,10 +58,15 @@ export default function Header({
             LV:1
           </Text>
         </View>
-        <TouchableOpacity onPress={getActiveUsers} style={styles.addBtn}>
+        <TouchableOpacity style={styles.addBtn}>
           <Icon name="plus" color="#fff" size={20} />
         </TouchableOpacity>
       </View>
+      <ActivityIndicator
+        animating={loading}
+        size={'small'}
+        color={colors.accent}
+      />
       <View
         style={{
           flexDirection: 'row',

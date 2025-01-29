@@ -16,7 +16,7 @@ export default function LiveBattle({navigation}) {
     <View style={styles.container}>
       <View
         style={{
-          marginTop: Platform.OS == 'ios' ? 60 : 40,
+          marginTop: Platform.OS == 'ios' ? 60 : 10,
           flexDirection: 'row',
           alignItems: 'center',
           borderRadius: 3,

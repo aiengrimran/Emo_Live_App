@@ -48,24 +48,14 @@ export default function HomeB() {
 
   useEffect(() => {
     let initializedOnce = false; // Prevents duplicate initialization
-    const unsubscribe = NetInfo.addEventListener(state => {
-      if (state.isConnected && !connected) {
-        if (!initialized && !initializedOnce) {
-          initializedOnce = true;
-          console.log('Network available, initializing chat SDK...Home');
-          // Initialize the chat SDK here
-          initializedAgoraChat();
-        }
-      } else {
-        console.log('No network connection.');
-        Alert.alert('Network Error', 'Please check your internet connection.');
-      }
-    });
 
-    return () => {
-      console.log('Cleaning up network listener...');
-      unsubscribe(); // Unsubscribe from NetInfo listener
-    };
+    if (!initialized && !initializedOnce && !connected) {
+      console.log('Network available, initializing chat SDK...Home');
+      // Initialize the chat SDK here
+      initializedOnce = true;
+
+      initializedAgoraChat();
+    }
   }, [initialized, chatManagerRef.current, chatClientRef.current]);
 
   const initializedAgoraChat = () => {

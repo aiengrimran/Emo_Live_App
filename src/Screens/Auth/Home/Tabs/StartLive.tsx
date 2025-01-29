@@ -30,9 +30,12 @@ export default function StartLive({navigation}) {
   });
 
   const startLiveTransmission = async () => {
+    console.log(user);
+    navigation.navigate('LiveStreaming');
+    return;
     if (!validations()) return;
     // const valid = validations();
-    console.log('starting live...');
+    // console.log('starting live...');
     // return;
 
     if (form.liveType == 'video') {
@@ -77,7 +80,7 @@ export default function StartLive({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <View style={{marginTop: Platform.OS == 'ios' ? 40 : 30}}>
+      <View style={{marginTop: Platform.OS == 'ios' ? 40 : 0}}>
         <Text style={styles.heading}>Start Live</Text>
       </View>
 

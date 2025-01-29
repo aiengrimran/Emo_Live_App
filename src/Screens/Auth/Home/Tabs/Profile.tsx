@@ -25,7 +25,7 @@ import envVar from '../../../../config/envVar';
 
 export default function Search({navigation}) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
-  const {user} = userAuthInfo;
+  const {user, setUser} = userAuthInfo;
   const chatClient = ChatClient.getInstance();
   const {token} = tokenMemo;
   const [error, setError] = useState(null);
@@ -58,6 +58,9 @@ export default function Search({navigation}) {
     } catch (error) {
       console.log(error);
     }
+  };
+  const temp = async () => {
+    console.log(user);
   };
   const logout = async () => {
     try {
@@ -297,7 +300,7 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Ranking</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity style={styles.iconBtn} onPress={temp}>
                   <View style={styles.icon}>
                     <Icon
                       name="book-open-page-variant-outline"

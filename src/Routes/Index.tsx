@@ -48,16 +48,14 @@ import EditProfile from '../Screens/Auth/Home/Profile/EditProfile';
 
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {isSearchBarAvailableForCurrentPlatform} from 'react-native-screens';
+import {colors} from '../styles/colors';
 // const Navigation = createStaticNavigation(RootStack);
 const Stack = createNativeStackNavigator();
 
 export default function Index() {
   const [loader, setLoader] = useState(true);
-  const [chatClientInstance, setChatClientInstance] = useState(null);
-  const [chatManager, setChatManager] = useState(null);
   const [user, setUser] = useState<string | null>(null);
-  const [connection, setConnection] = useState<boolean | null>(true);
-  // const [connection, setConnection] = useState<boolean | null>(null);
+  const [connection, setConnection] = useState<boolean | null>(false);
   const [token, setToken] = useState<String | null>(null);
 
   useEffect(() => {
@@ -65,36 +63,30 @@ export default function Index() {
     hideLoader();
   }, []);
 
-  // useEffect(() => {
-  //   const unsubscribe = NetInfo.addEventListener(state => {
-  //     console.log('Is connected?', state.isConnected);
-  //     if (state.isConnected) {
-  //       setConnection(true);
-  //     } else {
-  //       setConnection(false);
-  //     }
-  //   });
+  useEffect(() => {
+    let initializedOnce = false; // Prevents duplicate initialization
 
-  //   return () => {
-  //     unsubscribe();
-  //   };
-  // }, []);
+    const handleNetworkChange = state => {
+      console.log('Is connected?', state.isConnected);
+      if (state.isConnected) {
+        if (!initializedOnce) {
+          initializedOnce = true;
+          setConnection(true);
+        }
+      } else {
+        setConnection(false);
+      }
+    };
 
-  // const initializeChat = async () => {
-  //   const client = new ChatClient();
-  //   const options = new ChatOptions({
-  //     autoLogin: true,
-  //     appKey: AGORA_CHAT_KEY,
-  //   });
+    // Add the NetInfo listener
+    const unsubscribe = NetInfo.addEventListener(handleNetworkChange);
 
-  //   try {
-  //     await client.init(options);
-  //     setChatClient(client);
-  //     setChatManager(client.chatManager);
-  //   } catch (error) {
-  //     console.error('Failed to initialize chat SDK:', error);
-  //   }
-  // };
+    // Cleanup function
+    return () => {
+      console.log('Cleaning up network listener...');
+      unsubscribe(); // Unsubscribe from NetInfo listener
+    };
+  }, []);
 
   const checkUser = async () => {
     const loggedUser = await AsyncStorage.getItem('user');
@@ -124,6 +116,7 @@ export default function Index() {
   const valueToContext = {
     userAuthInfo,
     tokenMemo,
+    netConnection,
   };
   return (
     <Context.Provider value={valueToContext}>
@@ -236,7 +229,14 @@ export default function Index() {
           ) : (
             <Stack.Screen
               name="ConnectionError"
-              options={{headerTitle: 'Connection Error'}}
+              options={{
+                headerTitle: 'Connection Error',
+                headerStyle: {
+                  backgroundColor: colors.LG,
+                },
+                headerTintColor: colors.complimentary,
+                // statusBarStyle: 'dark',
+              }}
               component={ConnectionError}
             />
           )}

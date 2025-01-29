@@ -129,8 +129,8 @@ export default function Home({navigation}) {
           <Text style={styles.heading} onPress={getNotifications}>
             Emo Live
           </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Notifications')}>
+          <TouchableOpacity onPress={() => navigation.navigate('GoLive')}>
+            {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
           </TouchableOpacity>
         </View>
@@ -196,7 +196,7 @@ export default function Home({navigation}) {
           {tab == 1 ? (
             <Popular navigation={navigation} />
           ) : tab == 2 ? (
-            <Live />
+            <Live navigation={navigation} />
           ) : tab == 3 ? (
             <NewHost />
           ) : tab == 4 ? (

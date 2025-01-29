@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   Platform,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 
@@ -26,61 +27,57 @@ import {
   setGuests,
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive2({navigation}) {
   const {guests} = useSelector((state: any) => state.streaming);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const dispatch = useDispatch();
-  const createChannelToken = async () => {
-    try {
-      const res = await axiosInstance.get('/agora/create-channel-token');
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
-  const [room, setRoom] = useState(null);
-  const localToken = user.id == 1 ? envVar.IMRAN_TOKEN : envVar.ZALKIP_TOKEN;
-  const [btnColor, setBtnColor] = useState(colors.body_text);
 
   const startLive = async () => {
     try {
       // setUser
+
       if (!guests) {
-        Alert.alert('error', 'select seat');
+        Alert.alert('error', 'please select seat number');
         return;
       }
-      // navigation.navigate('LiveStreaming');
-      // return;
-      const url = envVar.LOCAL_URL + 'stream/start';
-      // const url = envVar + 'podcast/start';
+      setLoading(true);
+      const url = envVar.API_URL + 'stream/start';
       const data = {
-        title: 'Start View',
+        title: 'Start Live View',
         duration: 10,
         listeners: guests,
         type: 'PUBLIC',
       };
-      const res = await axios.post(url, data, {
-        headers: {
-          Authorization: `Bearer ${localToken}`,
-        },
-      });
-      // JSON.stringify('')
+
+      const res = await axiosInstance.post(url, data);
       if (res.status == 201) {
         setUser((user: any) => ({
           ...user,
           agora_rtc_token: res.data.user.agora_rtc_token,
         }));
+        await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
         dispatch(setGuests(guests));
         dispatch(updateStreamListeners(guests));
+        setLoading(false);
+
+        navigation.navigate('LiveStreaming');
       }
-      // const res = await axiosInstance.post(url, JSON.stringify(data));
       console.log(res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      setLoading(false);
+      if (error.response) {
+        setError(error.response.data.message);
+        return;
+      }
+      setError('Please check internet connection');
     }
   };
   return (
@@ -110,129 +107,144 @@ export default function GoLive2({navigation}) {
           </Text>
         </View>
         <TouchableOpacity
+          // onPress={() => setLoading(false)}
           onPress={() => navigation.navigate('HomeB')}
           style={styles.closeBtn}>
           <Icon name="close" color={colors.complimentary} size={25} />
         </TouchableOpacity>
       </View>
-      <View style={{marginTop: 40, width: '100%', overflow: 'scroll'}}>
-        <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-          Add Tags
-        </Text>
-        <View style={styles.row}>
-          <View style={styles.tag}>
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              #InstaTravel
+      {loading ? (
+        <ActivityIndicator
+          style={{marginTop: 140}}
+          animating={loading}
+          size={'large'}
+          color={colors.accent}
+        />
+      ) : (
+        <>
+          <View style={{marginTop: 40, width: '100%', overflow: 'scroll'}}>
+            <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
+              Add Tags
             </Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              #Wanderlust
-            </Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              #Roam
-            </Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              #Roam
-            </Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              #Roam
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.room}>
-        <TouchableOpacity onPress={() => dispatch(setGuests(1))}>
-          <View
-            style={[
-              styles.singleRoom,
-              {
-                backgroundColor: guests == 1 ? colors.accent : colors.body_text,
-              },
-            ]}></View>
-          <Text style={styles.seatTxt}>1 Seat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => dispatch(setGuests(4))}>
-          <View
-            style={{
-              width: 33,
-              height: 33,
-            }}>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <View
-                style={[
-                  styles.room4,
-                  {
-                    backgroundColor:
-                      guests == 4 ? colors.accent : colors.body_text,
-                  },
-                ]}></View>
-              <View
-                style={[
-                  styles.room4,
-                  {
-                    backgroundColor:
-                      guests == 4 ? colors.accent : colors.body_text,
-                  },
-                ]}></View>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginTop: 2,
-              }}>
-              <View
-                style={[
-                  styles.room4,
-                  {
-                    backgroundColor:
-                      guests == 4 ? colors.accent : colors.body_text,
-                  },
-                ]}></View>
-              <View
-                style={[
-                  styles.room4,
-                  {
-                    backgroundColor:
-                      guests == 4 ? colors.accent : colors.body_text,
-                  },
-                ]}></View>
+            <View style={styles.row}>
+              <View style={styles.tag}>
+                <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+                  #InstaTravel
+                </Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+                  #Wanderlust
+                </Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+                  #Roam
+                </Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+                  #Roam
+                </Text>
+              </View>
             </View>
           </View>
-          <Text style={styles.seatTxt}>4 Seat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => dispatch(setGuests(6))}>
-          {guests == 6 ? (
-            <Room6On width={32} height={32} />
-          ) : (
-            <Room6 width={32} height={32} />
+          <View style={styles.room}>
+            <TouchableOpacity onPress={() => dispatch(setGuests(1))}>
+              <View
+                style={[
+                  styles.singleRoom,
+                  {
+                    backgroundColor:
+                      guests == 1 ? colors.accent : colors.body_text,
+                  },
+                ]}></View>
+              <Text style={styles.seatTxt}>1 Seat</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => dispatch(setGuests(4))}>
+              <View
+                style={{
+                  width: 33,
+                  height: 33,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View
+                    style={[
+                      styles.room4,
+                      {
+                        backgroundColor:
+                          guests == 4 ? colors.accent : colors.body_text,
+                      },
+                    ]}></View>
+                  <View
+                    style={[
+                      styles.room4,
+                      {
+                        backgroundColor:
+                          guests == 4 ? colors.accent : colors.body_text,
+                      },
+                    ]}></View>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: 2,
+                  }}>
+                  <View
+                    style={[
+                      styles.room4,
+                      {
+                        backgroundColor:
+                          guests == 4 ? colors.accent : colors.body_text,
+                      },
+                    ]}></View>
+                  <View
+                    style={[
+                      styles.room4,
+                      {
+                        backgroundColor:
+                          guests == 4 ? colors.accent : colors.body_text,
+                      },
+                    ]}></View>
+                </View>
+              </View>
+              <Text style={styles.seatTxt}>4 Seat</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => dispatch(setGuests(6))}>
+              {guests == 6 ? (
+                <Room6On width={32} height={32} />
+              ) : (
+                <Room6 width={32} height={32} />
+              )}
+
+              <Text style={styles.seatTxt}>6 Seat</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => dispatch(setGuests(9))}>
+              {guests == 9 ? (
+                <Room9On width={32} height={32} />
+              ) : (
+                <Room9 width={32} height={32} />
+              )}
+              <Text style={styles.seatTxt}>9 Seat</Text>
+            </TouchableOpacity>
+          </View>
+
+          {error && (
+            <Text style={[appStyles.errorText, {marginTop: 90}]}>{error}</Text>
           )}
 
-          <Text style={styles.seatTxt}>6 Seat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => dispatch(setGuests(9))}>
-          {guests == 9 ? (
-            <Room9On width={32} height={32} />
-          ) : (
-            <Room9 width={32} height={32} />
-          )}
-          <Text style={styles.seatTxt}>9 Seat</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.btn} onPress={startLive}>
-        <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-          Go Live
-        </Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.btn} onPress={startLive}>
+            <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
+              Go Live
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
