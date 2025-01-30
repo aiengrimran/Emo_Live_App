@@ -19,7 +19,7 @@ const streamingSlice = createSlice({
       updated_at: '2025-01-29T11:26:26.000000Z',
     },
     // stream: '',
-    streamListeners: [],
+    streamListeners: [Array.from({length: 2}, (_, i) => i + 1)],
     streams: [],
   },
   reducers: {

@@ -101,9 +101,9 @@ export default function Header({
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: Platform.OS == 'ios' ? 50 : 20,
+    marginTop: Platform.OS == 'ios' ? 40 : 0,
     flexDirection: 'row',
-    width: '90%',
+    width: '98%',
     justifyContent: 'space-between',
   },
   userInfo: {

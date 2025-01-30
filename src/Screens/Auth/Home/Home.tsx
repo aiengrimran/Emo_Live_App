@@ -34,6 +34,7 @@ import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
 import Context from '../../../Context/Context';
+import axiosInstance from '../../../Api/axiosConfig';
 const token = `34|wpjSAN9CJShZCXoxV7l6F52zp4VkTj9w6ka1UObvfebe0ec1`;
 
 export default function Home({navigation}) {
@@ -47,12 +48,8 @@ export default function Home({navigation}) {
 
   const getNotifications = async () => {
     try {
-      const url = envVar.LOCAL_URL + 'notifications/unread';
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const url = envVar.API_URL + 'notifications/unread';
+      const res = await axiosInstance.get(url);
       const count = res.data.notifications.length;
       if (count > 0) {
         dispatch(setUnreadCount(count));
@@ -64,7 +61,6 @@ export default function Home({navigation}) {
     }
   };
   const updateTab = (direction: string) => {
-    console.log(direction);
     let newTab = tab;
     if (direction === 'right') {
       if (tab < 5) {

@@ -99,12 +99,12 @@ export const checkCamPermission = () => {
   return new Promise(async (resolve, reject) => {
     try {
       if (Platform.OS === 'ios') {
-        const photoPermission = await check(PERMISSIONS.IOS.PHOTO_LIBRARY);
+        const photoPermission = await check(PERMISSIONS.IOS.CAMERA);
         if (photoPermission === RESULTS.GRANTED) {
           return resolve(true);
         }
         if (photoPermission === RESULTS.DENIED) {
-          const PermissionResult = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
+          const PermissionResult = await request(PERMISSIONS.IOS.CAMERA);
           return resolve(PermissionResult === RESULTS.GRANTED);
         }
       } else {
@@ -114,6 +114,34 @@ export const checkCamPermission = () => {
         }
         if (cameraPermission === RESULTS.DENIED) {
           const result = await request(PERMISSIONS.ANDROID.CAMERA);
+          return resolve(result === RESULTS.GRANTED);
+        }
+      }
+      resolve(false); // If no condition matches, return false
+    } catch (error) {
+      reject(error); // Reject the Promise on error
+    }
+  });
+};
+export const checkMicrophonePermission = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (Platform.OS === 'ios') {
+        const photoPermission = await check(PERMISSIONS.IOS.MICROPHONE);
+        if (photoPermission === RESULTS.GRANTED) {
+          return resolve(true);
+        }
+        if (photoPermission === RESULTS.DENIED) {
+          const PermissionResult = await request(PERMISSIONS.IOS.MICROPHONE);
+          return resolve(PermissionResult === RESULTS.GRANTED);
+        }
+      } else {
+        const cameraPermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
+        if (cameraPermission === RESULTS.GRANTED) {
+          return resolve(true);
+        }
+        if (cameraPermission === RESULTS.DENIED) {
+          const result = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
           return resolve(result === RESULTS.GRANTED);
         }
       }

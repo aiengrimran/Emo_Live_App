@@ -4,11 +4,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ImageBackground,
   ActivityIndicator,
   Platform,
+  Image,
+  Alert,
+  TextInput,
 } from 'react-native';
-import React, {useRef, useEffect, useState, useContext} from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useContext,
+} from 'react';
 import appStyles from '../../../../../styles/styles';
+import IconM from 'react-native-vector-icons/MaterialIcons';
+import BottomSection from '../Components/BottomSection';
+import AvatarSheet from '../Components/AvatarSheet';
+import liveStyles from '../styles/liveStyles';
 import {
   createAgoraRtcEngine,
   ChannelProfileType,
@@ -23,6 +37,7 @@ import {
   VideoSourceType,
 } from 'react-native-agora';
 import Context from '../../../../../Context/Context';
+import Header from '../Podcast/Header';
 import envVar from '../../../../../config/envVar';
 import {setLeaveModal} from '../../../../../store/slice/podcastSlice';
 import {ChatClient} from 'react-native-agora-chat';
@@ -38,11 +53,15 @@ import {useSelector, useDispatch} from 'react-redux';
 import EndLive from '../Podcast/EndLive';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../../../../styles/colors';
+import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {
   renewRTCToken,
   renewRTMToken,
   checkCamPermission,
 } from '../../../../../scripts';
+import Gifts from '../Podcast/Gifts';
+import Users from '../Podcast/Users';
+import Tools from '../Podcast/Tools';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   setRTCTokenRenewed,
@@ -52,9 +71,13 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 
 export default function LiveStreaming({navigation}) {
   const chatClient = ChatClient.getInstance();
+  const bottomSheetRef = useRef<BottomSheet>(null);
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
+  const {token} = tokenMemo;
+  const [sheet, setSheet] = useState<boolean>(false);
+  const [sheetType, setSheetType] = useState<string | null>('');
   const dispatch = useDispatch();
 
   const [isJoined, setIsJoined] = useState(false);
@@ -89,17 +112,21 @@ export default function LiveStreaming({navigation}) {
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           console.log('Successfully joined channel: ' + elapsed);
+          previewHostStream();
           if (stream.host == user.id) {
             createUserChatRoom();
           }
-          // showMessage('Successfully joined channel: ' + channelName);
           setIsJoined(true);
           setOnLive(true);
-          setIsJoined(true);
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
-          console.log('Remote user ' + uid + ' joined');
-          getUserInfoFromAPI(uid);
+          console.log(
+            'Remote user ' + uid + ' joined',
+            Platform.OS == 'ios' ? 'IOS' : 'Android',
+          );
+          if (uid !== stream.host) {
+            getUserInfoFromAPI(uid);
+          }
           // setRemoteUid(uid);
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
@@ -137,7 +164,7 @@ export default function LiveStreaming({navigation}) {
   };
 
   const hostEndedPodcast = async () => {
-    dispatch(setHostLeftPodcast(true));
+    // dispatch(setHostLeftPodcast(true));
     dispatch(setLeaveModal(true));
   };
 
@@ -164,7 +191,16 @@ export default function LiveStreaming({navigation}) {
         break;
     }
   };
-
+  const previewHostStream = () => {
+    console.log('previewHostStream');
+    const host = {
+      id: stream.host,
+      name: 'imran',
+    };
+    let updateArray = [host];
+    console.log(updateArray);
+    dispatch(setStreamListeners(updateArray));
+  };
   const handleRenewRtcToken = async () => {
     try {
       setLoading(true);
@@ -282,8 +318,11 @@ export default function LiveStreaming({navigation}) {
       // setRoomId(roomId);
       userJoinChatRoom(roomId);
       console.log(roomId, 'Sss');
-    } catch (error) {
+    } catch (error: any) {
       console.log(error, 'ss');
+      if (error.code == 300) {
+        Alert.alert('Network error', error.description);
+      }
       console.log(error, 'creating host');
     }
   };
@@ -397,15 +436,37 @@ export default function LiveStreaming({navigation}) {
 
   const toggleMute = (id: any) => {
     try {
+      console.log(id);
       if (agoraEngineRef.current) {
         // Toggle mute/unmute for the remote user
         agoraEngineRef.current.muteRemoteAudioStream(id, !isMuted);
+        agoraEngineRef.current.muteLocalAudioStream(true);
         setIsMuted(!isMuted); // Update the state
         console.log(`User ${id} is ${isMuted ? 'unmuted' : 'muted'}`);
       }
     } catch (error) {
       console.error('Error toggling mute:', error);
     }
+  };
+  const endPodcastForUser = async () => {
+    try {
+      console.log('i am called ...');
+      if (stream.chat_room_id) {
+        if (stream.host == user.id) {
+          chatClient.roomManager.destroyChatRoom(stream.chat_room_id || roomId);
+        } else {
+          await chatClient.roomManager.leaveChatRoom(stream.chat_room_id);
+        }
+      }
+      dispatch(setLeaveModal(false));
+      const res = agoraEngineRef.current?.leaveChannel();
+      agoraEngineRef.current?.release();
+
+      dispatch(setLeaveModal(false));
+
+      // await chatClient.roomManager.leaveChatRoom(podcast.roomId);
+      navigation.navigate('HomeB');
+    } catch (error) {}
   };
   const toggleCamera = () => {
     try {
@@ -472,18 +533,43 @@ export default function LiveStreaming({navigation}) {
       console.log(error);
     }
   };
+  const leaveStream = () => {
+    if (!onLive || !isJoined) {
+      navigation.navigate('HomeB');
+      return;
+    }
+    dispatch(setLeaveModal(true));
+  };
+
+  // Function to handle open Bottom Sheet
+  const handleOpenSheet = useCallback((type: string) => {
+    setSheet(true);
+    setSheetType(type);
+    bottomSheetRef.current?.expand();
+  }, []);
+  const handleOpenSheet2 = useCallback(() => {
+    setSheet(true);
+    setSheetType('avatar');
+    bottomSheetRef.current?.expand();
+  }, []);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index < 0) setSheet(false);
+  }, []);
   // Render a single host view
   const renderHost = ({item, index}) => (
     <View style={styles.hostView}>
       {item.id ? (
         <>
-          <RtcSurfaceView
-            canvas={{
-              uid: item.id,
-              sourceType: VideoSourceType.VideoSourceRemote,
-            }}
-            style={styles.videoView}
-          />
+          <React.Fragment key={item.id}>
+            <RtcSurfaceView
+              canvas={{
+                uid: item.id,
+                sourceType: VideoSourceType.VideoSourceRemote,
+              }}
+              style={styles.videoView}
+            />
+          </React.Fragment>
           <Text>{item.id}</Text>
         </>
       ) : (
@@ -493,124 +579,149 @@ export default function LiveStreaming({navigation}) {
   );
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          marginTop: Platform.OS == 'ios' ? 40 : 0,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}>
-        <View style={{width: '23%'}}>
-          <ActivityIndicator
-            // animating={true}
-            animating={loading}
-            color={colors.accent}
-            size={'small'}
-          />
-        </View>
+      <ImageBackground
+        style={styles.image}
+        source={require('../../../../../assets/images/LiveBg.png')}>
+        <Header
+          user={user}
+          onLive={onLive}
+          navigation={navigation}
+          token={token}
+          envVar={envVar}
+          leavePodcast={leaveStream}
+          connected={connected}
+        />
+        <TouchableOpacity onPress={loginUser}>
+          <Text style={{color: '#fff'}}>"ss" {JSON.stringify(connected)}</Text>
+        </TouchableOpacity>
         <View
           style={{
-            width: '62%',
             flexDirection: 'row',
+            width: '80%',
             justifyContent: 'space-between',
           }}>
-          <Text style={styles.heading}>Start Live</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="close" size={25} color={colors.complimentary} />
+          <TouchableOpacity onPress={enableLocalVideo}>
+            <Text style={{color: '#fff'}}>enableLocalVideo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              previewHostStream();
+            }}>
+            <Text style={{color: '#fff'}}>preview</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        <Text
+          style={{marginTop: 20, color: '#fff'}}
+          onPress={() => console.log(streamListeners)}>
+          sss
+        </Text>
 
-      <TouchableOpacity onPress={loginUser}>
-        <Text style={{color: '#fff'}}>"ss" {JSON.stringify(connected)}</Text>
-      </TouchableOpacity>
+        <Text style={{color: '#fff', marginTop: 10}} onPress={userJoinChannel}>
+          join
+        </Text>
 
-      <TouchableOpacity
-        onPress={() => {
-          dispatch(updateStreamListeners(1));
-        }}>
-        <Text style={{color: '#fff'}}>updateStreamListeners</Text>
-      </TouchableOpacity>
-      <Text style={{color: '#fff', marginTop: 10}} onPress={userJoinChannel}>
-        join
-      </Text>
-      <TouchableOpacity onPress={enableLocalVideo}>
-        <Text style={{color: '#fff'}}>enableLocalVideo</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={{marginTop: 20}} onPress={leaveAgoraChannel}>
-        <Text style={{color: '#fff'}}>leave channel</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={createUserChatRoom}>
-        <Text style={{color: '#fff'}}>createUserChatRoom</Text>
-      </TouchableOpacity>
-      <View style={{flexDirection: 'row', marginTop: 30}}>
-        {/* Local View (50% of the screen) */}
-        <View style={styles.localView}>
-          {onLive ? (
-            <>
-              <React.Fragment key={0}>
-                {/* Create a local view using RtcSurfaceView */}
-                <RtcSurfaceView canvas={{uid: 0}} style={styles.videoView} />
-                <Text>Local user uid: {0}</Text>
-              </React.Fragment>
-              {/* <RtcSurfaceView
+        <TouchableOpacity style={{marginTop: 20}} onPress={leaveAgoraChannel}>
+          <Text style={{color: '#fff'}}>leave channel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={createUserChatRoom}>
+          <Text style={{color: '#fff'}}>createUserChatRoom</Text>
+        </TouchableOpacity>
+        <View style={{flexDirection: 'row', marginTop: 30}}>
+          {/* Local View (50% of the screen) */}
+          <View style={styles.localView}>
+            {onLive ? (
+              <>
+                <React.Fragment key={user.id}>
+                  {/* Create a local view using RtcSurfaceView */}
+                  <RtcSurfaceView canvas={{uid: 0}} style={styles.videoView} />
+                  <Text>Local user uid: {0}</Text>
+                </React.Fragment>
+                {/* <RtcSurfaceView
                 canvas={{
                   uid: 0,
                   // uid: user.id,
                 }}
               /> */}
-              <Text>{user.id}</Text>
-              <TouchableOpacity
-                onPress={() => toggleMute(user.id)}
-                style={styles.muteButton}>
-                <Icon
-                  name={isMuted ? 'volume-off' : 'volume-high'}
-                  size={20}
-                  color={colors.complimentary}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => toggleCamera()}
-                style={styles.CamButton}>
-                <Icon
-                  name={'camera-off'}
-                  size={20}
-                  color={colors.complimentary}
-                />
-              </TouchableOpacity>
-            </>
+                <Text>{user.id}</Text>
+                <TouchableOpacity
+                  onPress={() => toggleMute(user.id)}
+                  style={styles.muteButton}>
+                  <Icon
+                    name={isMuted ? 'volume-off' : 'volume-high'}
+                    size={20}
+                    color={colors.complimentary}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => toggleCamera()}
+                  style={styles.CamButton}>
+                  <Icon
+                    name={'camera-flip'}
+                    size={20}
+                    color={colors.complimentary}
+                  />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <Text>connecting to server</Text>
+            )}
+            {/* <Text>Local View</Text> */}
+          </View>
+          <View style={styles.gridContainer}>
+            <FlatList
+              data={streamListeners}
+              renderItem={renderHost}
+              keyExtractor={(item, index) => index.toString()}
+              // keyExtractor={item => item.id.toString()}
+              numColumns={cols}
+              contentContainerStyle={styles.grid}
+            />
+          </View>
+        </View>
+
+        <EndLive
+          user={user}
+          endPodcastForUser={endPodcastForUser}
+          navigation={navigation}
+          id={stream.id}
+          live={true}
+        />
+      </ImageBackground>
+      <BottomSheet
+        index={-1}
+        enablePanDownToClose={true}
+        // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
+        snapPoints={['60%']}
+        ref={bottomSheetRef}
+        handleStyle={{
+          backgroundColor: colors.LG,
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: colors.complimentary,
+        }}
+        onChange={handleSheetChanges}>
+        <BottomSheetView style={styles.contentContainer}>
+          {sheetType == 'gifts' ? (
+            <Gifts />
+          ) : sheetType == 'avatar' ? (
+            <AvatarSheet
+              navigation={navigation}
+              token={token}
+              envVar={envVar}
+            />
+          ) : sheetType == 'users' ? (
+            <Users />
           ) : (
-            <Text>connecting to server</Text>
+            <Tools />
           )}
-          {/* <Text>Local View</Text> */}
-        </View>
-        <View style={styles.gridContainer}>
-          <FlatList
-            data={streamListeners}
-            renderItem={renderHost}
-            keyExtractor={(item, index) => index.toString()}
-            // keyExtractor={item => item.id.toString()}
-            numColumns={cols}
-            contentContainerStyle={styles.grid}
-          />
-        </View>
-      </View>
+        </BottomSheetView>
+      </BottomSheet>
+      {!sheet && <BottomSection handleOpenSheet={handleOpenSheet} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.LG,
-    padding: 10,
-  },
-  heading: {
-    ...appStyles.headline,
-    color: colors.complimentary,
-    textAlign: 'center',
-    alignSelf: 'center',
-  },
   localView: {
     flex: 1, // Takes 50% of the screen
     justifyContent: 'center',
@@ -642,7 +753,7 @@ const styles = StyleSheet.create({
   //   aspectRatio: 1,
   // },
   videoView: {width: '90%', height: 200, backgroundColor: 'red'},
-
+  ...liveStyles,
   muteButton: {
     position: 'absolute',
     top: 10,

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
+import liveStyles from './styles/liveStyles';
 import React, {
   useRef,
   useContext,
@@ -45,6 +46,8 @@ import {
 } from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
+import AvatarSheet from './Components/AvatarSheet';
+import BottomSection from './Components/BottomSection';
 // import Header
 import Header from './Podcast/Header';
 
@@ -68,7 +71,7 @@ import {
   setLeaveModal,
 } from '../../../../store/slice/podcastSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
-import {renewRTCToken} from '../../../../scripts';
+import {renewRTCToken, checkMicrophonePermission} from '../../../../scripts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive({navigation}: any) {
@@ -317,7 +320,10 @@ export default function GoLive({navigation}: any) {
     agoraEngineRef.current?.release();
   };
 
-  const join = async () => {
+  const joinChannel = async () => {
+    if (!checkPermission()) {
+      Alert.alert('Permission Required ...');
+    }
     console.log('Connecting...', isJoined, user.id, podcast.host);
     // return;
 
@@ -377,6 +383,13 @@ export default function GoLive({navigation}: any) {
     } catch (error: any) {
       console.error('Failed to join the channel:', error.message);
       throw new Error('Unable to connect to the channel. Please try again.');
+    }
+  };
+
+  const checkPermission = async () => {
+    const cam = await checkMicrophonePermission();
+    if (cam) {
+      return true;
     }
   };
   const endPodcastForUser = async () => {
@@ -494,6 +507,10 @@ export default function GoLive({navigation}: any) {
     dispatch(setPodcastListeners(updatedData)); // Assuming podcastListeners is state
   };
   const leavePodcast = () => {
+    if (!onLive || !isJoined) {
+      navigation.navigate('HomeB');
+      return;
+    }
     dispatch(setLeaveModal(true));
   };
   return (
@@ -591,7 +608,7 @@ export default function GoLive({navigation}: any) {
         {/* ************ second row ************ */}
 
         <TouchableOpacity style={{marginVertical: 10}}>
-          <Text onPress={join}>Join Chanel</Text>
+          <Text onPress={joinChannel}>Join Chanel</Text>
         </TouchableOpacity>
         <Text onPress={leaveChannel}>Leave Channel</Text>
         <View>
@@ -663,6 +680,7 @@ export default function GoLive({navigation}: any) {
           endPodcastForUser={endPodcastForUser}
           navigation={navigation}
           id={podcast.id}
+          live={false}
         />
         {/* <View
           style={{
@@ -743,324 +761,5 @@ export default function GoLive({navigation}: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  heading: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-  },
-  image: {
-    flex: 1,
-    padding: 10,
-  },
-  reportBtn: {
-    borderRadius: 25,
-    paddingHorizontal: 10,
-    borderColor: colors.body_text,
-    borderWidth: 1,
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    top: 30,
-    left: 30,
-    paddingVertical: 5,
-  },
-  users: {
-    flexDirection: 'row',
-    width: '99%',
-    justifyContent: 'space-around',
-  },
-  btn1: {
-    position: 'relative',
-    flexDirection: 'row',
-    width: '99%',
-    marginTop: 20,
-    alignSelf: 'center',
-    borderRadius: 15,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  usersList: {
-    flexDirection: 'row',
-    width: '99%',
-    justifyContent: 'space-around',
-  },
-  chatAvatar: {width: 60, height: 60, borderRadius: 35},
-  sofa: {
-    width: 60,
-    height: 60,
-    borderRadius: 35,
-    backgroundColor: '#874975',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inputBox: {
-    backgroundColor: '#11132c',
-    color: colors.complimentary,
-    borderWidth: 1,
-    width: '50%',
-    borderStartEndRadius: 48,
-    borderRadius: 50,
-    alignSelf: 'flex-start',
-    borderStartStartRadius: 48,
-  },
-  action: {
-    flexDirection: 'row',
-    width: '40%',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: colors.LG,
-  },
-  sheetAvatar: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    borderWidth: 1,
-    borderColor: colors.lines,
-  },
-  sheetUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '60%',
-    marginVertical: 20,
-  },
-  followBtn: {
-    width: '45%',
-    borderRadius: 25,
-    padding: 20,
-    borderColor: colors.complimentary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sheetStatus: {
-    flexDirection: 'row',
-    width: '70%',
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  points: {
-    flexDirection: 'row',
-    backgroundColor: colors.semantic,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 60,
-    height: 30,
-  },
-  sheetAction: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 30,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  sheetBtnTxt: {
-    ...appStyles.regularTxtMd,
-    color: colors.body_text,
-    textAlign: 'center',
-  },
+  ...liveStyles,
 });
-
-interface BottomSectionProps {
-  handleOpenSheet: any;
-}
-
-const BottomSection = ({handleOpenSheet}: BottomSectionProps) => {
-  return (
-    <View style={{position: 'absolute', bottom: '5%'}}>
-      <View style={{flexDirection: 'row', width: '80%'}}>
-        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-          Emo Live :{' '}
-        </Text>
-        <Text
-          style={[
-            appStyles.bodyRg,
-            {color: colors.complimentary, textAlign: 'left'},
-          ]}>
-          {' '}
-          Great to see you here. Please don’t use abusive language, enjoy the
-          stream, Have fun😊
-        </Text>
-      </View>
-      <View style={styles.btn1}>
-        <TextInput
-          style={styles.inputBox}
-          placeholder="Say hello ...."
-          placeholderTextColor={'grey'}
-        />
-        <View style={styles.action}>
-          <TouchableOpacity>
-            <Icon
-              name="dots-horizontal"
-              color={colors.complimentary}
-              size={24}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon
-              name="microphone-off"
-              color={colors.complimentary}
-              size={24}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleOpenSheet('tools')}>
-            <IconM
-              name="emoji-emotions"
-              color={colors.complimentary}
-              size={24}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleOpenSheet('gifts')}>
-            <Image
-              source={require('../../../../assets/images/bag.png')}
-              style={{height: 30, width: 30}}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* <Icon name="dots-horizontal" color={colors.complimentary} size={24} /> */}
-        <Text style={{color: '#fff', fontWeight: '600', fontSize: 17}}></Text>
-      </View>
-    </View>
-  );
-};
-
-interface AvatarSheetProps {
-  navigation: any;
-  selectedUser: any;
-  token: string;
-  envVar: any;
-  dispatch: any;
-}
-const AvatarSheet = ({
-  navigation,
-  selectedUser,
-  token,
-  envVar,
-  dispatch,
-}: AvatarSheetProps) => {
-  useDispatch;
-  const followUser = async (item: any) => {
-    try {
-      const url = item.is_followed
-        ? '/user/un-follow-user/' + item.id
-        : '/user/follow-user/' + item.id;
-      // setLoading(true);
-      const res = await axiosInstance.get(url);
-      // setLoading(false);
-      dispatch(updateUsers(res.data.users));
-    } catch (error: any) {
-      console.log(error);
-      // clearError();
-      // setError(error.message);
-    }
-  };
-  return (
-    <View style={{position: 'relative', paddingTop: 30}}>
-      <TouchableOpacity style={styles.reportBtn}>
-        <IconM name="warning" size={25} color={colors.body_text} />
-        <Text style={[appStyles.bodyMd, {color: colors.body_text}]}>
-          Report
-        </Text>
-      </TouchableOpacity>
-      <View style={{width: '99%', alignItems: 'center'}}>
-        <Image
-          style={styles.sheetAvatar}
-          source={
-            selectedUser.avatar
-              ? {
-                  uri: envVar.API_URL + 'display-avatar/' + selectedUser.id,
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              : require('../../../../assets/images/place.jpg')
-          }
-        />
-        <Text
-          style={[
-            appStyles.paragraph1,
-            {color: colors.complimentary, marginTop: 10},
-          ]}>
-          {selectedUser.first_name + ' ' + selectedUser.last_name}
-        </Text>
-        <View style={styles.sheetUser}>
-          <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-            ID:{selectedUser.id}
-          </Text>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="google-maps" size={23} color={colors.semantic} />
-            <Text
-              style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-              {selectedUser.address ? selectedUser.address : 'Please Provide '}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.sheetStatus}>
-          <View>
-            <Text style={[appStyles.headline2, {color: colors.complimentary}]}>
-              1.54k
-            </Text>
-            <Text
-              style={[
-                appStyles.bodyMd,
-                {color: colors.body_text, marginTop: 5},
-              ]}>
-              Fans
-            </Text>
-          </View>
-          <View>
-            <Text style={[appStyles.headline2, {color: colors.complimentary}]}>
-              19.4k
-            </Text>
-            <Text
-              style={[
-                appStyles.bodyMd,
-                {color: colors.body_text, marginTop: 5},
-              ]}>
-              Sending
-            </Text>
-          </View>
-          <View>
-            <Text style={[appStyles.headline2, {color: colors.complimentary}]}>
-              205.7k
-            </Text>
-            <Text
-              style={[
-                appStyles.bodyMd,
-                {color: colors.body_text, marginTop: 5},
-              ]}>
-              Beans
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.sheetAction}>
-        <TouchableOpacity
-          style={[styles.followBtn, {backgroundColor: colors.accent}]}>
-          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-            Follow
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.followBtn, {borderWidth: 1}]}
-          onPress={() =>
-            navigation.navigate('Chat', {receiverUser: selectedUser})
-          }>
-          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-            Chat
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};

@@ -1,4 +1,11 @@
-import {View, Text, Modal, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import React, {useState} from 'react';
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
@@ -18,12 +25,14 @@ interface EndLiveProps {
   endPodcastForUser: any;
   navigation: any;
   id: any;
+  live: boolean;
 }
 export default function EndLive({
   user,
   endPodcastForUser,
   navigation,
   id,
+  live = false,
 }: EndLiveProps) {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
@@ -31,10 +40,11 @@ export default function EndLive({
   const {leaveModal, hostLeftPodcast, modalInfo, podcast} = useSelector(
     (state: any) => state.podcast,
   );
+  const {stream} = useSelector((state: any) => state.streaming);
   const endPodcast = () => {
     try {
       setDisabled(true);
-      if (user.id == podcast.host) {
+      if (user.id == podcast.host || user.id == stream.host) {
         apiCall();
         return;
       }
@@ -48,8 +58,9 @@ export default function EndLive({
   };
   const apiCall = async () => {
     try {
-      console.log('ending podcast');
-      const url = envVar.API_URL + 'podcast/end/' + id;
+      console.log('ending', live ? 'live' : 'podcast');
+      const url = envVar.API_URL + live ? 'stream' : 'podcast' + '/end/' + id;
+      // const url = envVar.API_URL + 'podcast/end/' + id;
       const res = await axiosInstance.get(url);
       console.log(res.data);
       setDisabled(false);
@@ -74,39 +85,60 @@ export default function EndLive({
         {/* Backdrop */}
         <View style={styles.backdrop}>
           {/* Modal Content */}
-          <View style={styles.modalView}>
-            <Text style={[appStyles.title1, {color: colors.complimentary}]}>
-              Podcast End
-            </Text>
-            <View style={{marginVertical: 20}}>
-              <Text style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
-                {hostLeftPodcast
-                  ? 'Host Has Left PodCast'
-                  : user.id == podcast.id
-                  ? 'Are you sure to end this podcast Host'
-                  : 'Are you sure to left this Podcast.'}
+          {disabled ? (
+            <ActivityIndicator
+              animating={disabled}
+              size={'large'}
+              color={colors.complimentary}
+            />
+          ) : (
+            <View style={styles.modalView}>
+              <Text style={[appStyles.title1, {color: colors.complimentary}]}>
+                {live ? 'Live Streaming' : 'Podcast'} End
               </Text>
-            </View>
+              <View style={{marginVertical: 20}}>
+                {live ? (
+                  <Text
+                    style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                    {hostLeftPodcast
+                      ? 'Host Has Left Stream'
+                      : user.id == podcast.id
+                      ? 'Are you sure to end this podcast Host'
+                      : 'Are you sure to left this Stream.'}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                    {hostLeftPodcast
+                      ? 'Host Has Left PodCast'
+                      : user.id == podcast.id
+                      ? 'Are you sure to end this podcast Host'
+                      : 'Are you sure to left this Podcast.'}
+                  </Text>
+                )}
+              </View>
 
-            <TouchableOpacity
-              disabled={disabled}
-              onPress={endPodcast}
-              style={[styles.deleteButton]}>
-              <Text style={styles.deleteText}>
-                {hostLeftPodcast ? 'Ok' : 'Confirm'}
-              </Text>
-            </TouchableOpacity>
-            {!hostLeftPodcast && (
               <TouchableOpacity
                 disabled={disabled}
-                onPress={cancelLeave}
-                style={styles.cancelButton}>
-                <Text style={[appStyles.paragraph1, {color: colors.unknown2}]}>
-                  Cancel
+                onPress={endPodcast}
+                style={[styles.deleteButton]}>
+                <Text style={styles.deleteText}>
+                  {hostLeftPodcast ? 'Ok' : 'Confirm'}
                 </Text>
               </TouchableOpacity>
-            )}
-          </View>
+              {!hostLeftPodcast && (
+                <TouchableOpacity
+                  disabled={disabled}
+                  onPress={cancelLeave}
+                  style={styles.cancelButton}>
+                  <Text
+                    style={[appStyles.paragraph1, {color: colors.unknown2}]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </Modal>
       {/* <Text>EndLive</Text> */}

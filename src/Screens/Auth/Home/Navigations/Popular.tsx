@@ -24,7 +24,6 @@ export default function Popular({navigation}) {
   const {podcasts} = useSelector((state: any) => state.podcast);
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {token} = tokenMemo;
-  console.log(token);
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
   const [data, setData] = useState([]);

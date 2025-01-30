@@ -56,7 +56,7 @@ export default function HomeB() {
 
       initializedAgoraChat();
     }
-  }, [initialized, chatManagerRef.current, chatClientRef.current]);
+  }, [initialized, chatManagerRef.current, chatClientRef.current, connected]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -188,8 +188,9 @@ export default function HomeB() {
 
   const callApiForRenewToken = async () => {
     try {
+      console.log('calling.api.for chat token renew');
+
       const res = await axiosInstance.get('/renew-agora-token');
-      console.log(res.data.user);
       dispatch(setTokenRenewed(true));
       setUser(res.data.user);
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
