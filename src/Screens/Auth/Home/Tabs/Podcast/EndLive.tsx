@@ -34,7 +34,6 @@ export default function EndLive({
   id,
   live = false,
 }: EndLiveProps) {
-  const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const [disabled, setDisabled] = useState(false);
   const {leaveModal, hostLeftPodcast, modalInfo, podcast} = useSelector(

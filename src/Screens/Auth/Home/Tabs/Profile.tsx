@@ -5,12 +5,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Alert,
   ScrollView,
   Image,
+  LayoutAnimation,
   Platform,
+  Modal,
 } from 'react-native';
 import React, {useContext, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import hotUpdate from 'react-native-ota-hot-update';
+
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
@@ -24,6 +29,8 @@ import envVar from '../../../../config/envVar';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
+  const [progress, setProgress] = useState(100);
+  const [updateModal, setUpdateModal] = useState(false);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
   const chatClient = ChatClient.getInstance();
@@ -35,6 +42,73 @@ export default function Search({navigation}) {
   useEffect(() => {
     // getUnreadMessages();
   }, []);
+
+  const onCheckGitVersion = () => {
+    setProgress(0);
+    setUpdateModal(true);
+    hotUpdate.git.checkForGitUpdate({
+      restartAfterInstall: true,
+      branch: Platform.OS === 'ios' ? 'iOS' : 'android',
+      bundlePath:
+        Platform.OS === 'ios'
+          ? 'output/main.jsbundle'
+          : 'output/index.android.bundle',
+      url: 'https://github.com/aiengrimran/OTA-bundlep.git',
+      // url: 'https://github.com/aiengrimran/OTA-bundle.git',
+      onCloneFailed(msg: string) {
+        Alert.alert('Clone project failed!', msg, [
+          {
+            text: 'Cancel',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ]);
+      },
+      // onCloneSuccess() {
+      //   Alert.alert('Clone project success!', 'Restart to apply the changing', [
+      //     {
+      //       text: 'ok',
+      //       onPress: () => hotUpdate.resetApp(),
+      //     },
+      //     {
+      //       text: 'Cancel',
+      //       onPress: () => {},
+      //       style: 'cancel',
+      //     },
+      //   ]);
+      // },
+      onPullFailed(msg: string) {
+        Alert.alert('Pull project failed!', msg, [
+          {
+            text: 'Cancel',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ]);
+      },
+      onPullSuccess() {
+        Alert.alert('Pull project success!', 'Restart to apply the changing', [
+          {
+            text: 'ok',
+            onPress: () => hotUpdate.resetApp(),
+          },
+          {
+            text: 'Cancel',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ]);
+      },
+      onProgress(received: number, total: number) {
+        const percent = (+received / +total) * 100;
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setProgress(percent);
+      },
+      onFinishProgress() {
+        setUpdateModal(false);
+      },
+    });
+  };
   const createAgoraChatToken = async () => {
     try {
       setLoading(true);
@@ -344,21 +418,56 @@ export default function Search({navigation}) {
                   </View>
                   <Text style={styles.actionTxr}>Terms</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={onCheckGitVersion}>
                   <View style={styles.icon}>
                     <Icon
-                      name="logout"
+                      name="cloud-download-outline"
                       size={33}
                       color={colors.complimentary}
                     />
                   </View>
-                  <Text style={styles.actionTxr}>Add </Text>
+                  <Text style={styles.actionTxr}>Check For Updates</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
         </>
       )}
+      <Modal visible={updateModal} transparent={true} animationType="slide">
+        {/* Backdrop */}
+        <View style={styles.backdrop}>
+          {/* Modal Content */}
+
+          <View style={styles.modalView}>
+            <Text style={[appStyles.title1, {color: colors.complimentary}]}>
+              Update Available
+            </Text>
+            <View style={{marginVertical: 20}}>
+              <Text
+                style={[
+                  appStyles.regularTxtMd,
+                  {color: colors.body_text, textAlign: 'center'},
+                ]}>
+                Please Wait new update is being downloading...
+              </Text>
+              {!!progress && (
+                <View style={styles.progress}>
+                  <View
+                    style={[
+                      styles.process,
+                      {
+                        width: `${progress}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -393,8 +502,47 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '70%',
   },
+
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Custom RGBA backdrop color
+    justifyContent: 'center',
+    alignItems: 'center',
+    // alignSelf: 'center',
+  },
+  modalView: {
+    // width: 300,
+    padding: 20,
+    backgroundColor: colors.LG,
+    alignSelf: 'center',
+    width: '90%',
+    // minWidth
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderRadius: 26,
+  },
   info: {
     width: '25%',
+  },
+  progress: {
+    height: 10,
+    width: '80%',
+    marginTop: 20,
+    borderRadius: 8,
+    borderColor: 'grey',
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  process: {
+    height: 10,
+    backgroundColor: 'blue',
   },
   levelTxt: {
     color: colors.dominant,

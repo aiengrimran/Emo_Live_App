@@ -36,11 +36,6 @@ export default function StartLive({navigation}: StartLiveProps) {
 
   const startLiveTransmission = async () => {
     if (!validations()) return;
-    // const valid = validations();
-
-    // console.log('starting live...');
-    // return;
-
     if (form.liveType == 'video') {
       navigation.navigate('GoLive2');
       return;

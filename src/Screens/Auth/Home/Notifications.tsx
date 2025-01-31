@@ -4,11 +4,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Alert,
+  LayoutAnimation,
   FlatList,
   Image,
 } from 'react-native';
 import React, {useContext, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 import appStyles from '../../../styles/styles';
 import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
@@ -87,7 +90,8 @@ export default function Notifications({navigation}) {
         <View style={{width: '30%'}}></View>
         <View style={styles.headerRight}>
           <Text style={styles.heading}>Notifications</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity>
+            {/* <TouchableOpacity onPress={() => navigation.goBack()}> */}
             <Text style={[appStyles.bodyRg, {color: colors.complimentary}]}>
               Clear
             </Text>

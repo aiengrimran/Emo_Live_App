@@ -94,7 +94,12 @@ export default function Landing({navigation}: any) {
       setToken(res.data.access_token);
       setLoading(false);
     } catch (error: any) {
-      setError(error.message);
+      if (error.request) {
+        setError('please check internet connection');
+      }
+      if (error.response) {
+        setError(error.message);
+      }
       clearError();
     }
   };
