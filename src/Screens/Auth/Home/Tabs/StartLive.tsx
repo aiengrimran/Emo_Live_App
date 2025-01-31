@@ -35,9 +35,6 @@ export default function StartLive({navigation}: StartLiveProps) {
   });
 
   const startLiveTransmission = async () => {
-    navigation.navigate('GoLive');
-    // navigation.navigate('LiveStreaming');
-    return;
     if (!validations()) return;
     // const valid = validations();
 
@@ -84,7 +81,8 @@ export default function StartLive({navigation}: StartLiveProps) {
   };
   const validations = () => {
     let valid = false;
-    if (!form.liveType) return Alert.alert('error', 'live type is required..');
+    if (!form.liveType)
+      return Alert.alert('error', 'Please click live type is required..');
     if (!form.title) return Alert.alert('error', 'Title is required');
     if (!form.duration) return Alert.alert('error', 'Duration is required');
     if (!form.listeners) return Alert.alert('error', 'Listeners is required');

@@ -59,7 +59,9 @@ export default function EndLive({
   const apiCall = async () => {
     try {
       console.log('ending', live ? 'live' : 'podcast');
-      const url = envVar.API_URL + live ? 'stream' : 'podcast' + '/end/' + id;
+      const url = envVar.API_URL + (live ? 'stream' : 'podcast') + '/end/' + id;
+
+      // const url = envVar.API_URL + live ? 'stream' : 'podcast' + '/end/' + id;
       // const url = envVar.API_URL + 'podcast/end/' + id;
       const res = await axiosInstance.get(url);
       console.log(res.data);

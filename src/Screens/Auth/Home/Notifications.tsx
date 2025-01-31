@@ -14,33 +14,22 @@ import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
 import axiosInstance from '../../../Api/axiosConfig';
 import axios from 'axios';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Context from '../../../Context/Context';
-
+import {setUnreadNotification} from '../../../store/slice/notificationSlice';
 export default function Notifications({navigation}) {
+  const dispatch = useDispatch();
   const {tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {unreadNotification} = useSelector((state: any) => state.notification);
   console.log(unreadNotification, 'Sss');
   useEffect(() => {}, []);
-  // Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-  // Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-  // Route::delete('/notifications/{id}', [NotificationController::class, 'deleteNotification']);
-  // Route::delete('/notifications', [NotificationController::class, 'deleteAllNotifications']);
 
   const fetchNotifications = async () => {
     try {
-      const url = 'http://localhost:8000/api/test1';
-      const response = await axios.get(url);
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const fetchNotificationsx = async () => {
-    try {
       const url = 'notifications';
       const response = await axiosInstance.get(url);
+      dispatch(setUnreadNotification(response.data.notifications));
       console.log(response.data.notifications);
     } catch (error) {
       console.error(error);

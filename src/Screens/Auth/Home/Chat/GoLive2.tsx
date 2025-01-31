@@ -25,6 +25,7 @@ import axios from 'axios';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   setGuests,
+  setStream,
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +38,9 @@ export default function GoLive2({navigation}) {
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
+  const [form, setForm] = useState({
+    title: '',
+  });
   const {token} = tokenMemo;
 
   const startLive = async () => {
@@ -50,13 +54,15 @@ export default function GoLive2({navigation}) {
       setLoading(true);
       const url = envVar.API_URL + 'stream/start';
       const data = {
-        title: 'Start Live View',
+        title: 'Some title',
         duration: 10,
         listeners: guests,
         type: 'PUBLIC',
       };
 
       const res = await axiosInstance.post(url, data);
+      console.log(res.data);
+
       if (res.status == 201) {
         setUser((user: any) => ({
           ...user,
@@ -65,6 +71,7 @@ export default function GoLive2({navigation}) {
         await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
         dispatch(setGuests(guests));
         dispatch(updateStreamListeners(guests));
+        dispatch(setStream(res.data.stream));
         setLoading(false);
 
         navigation.navigate('LiveStreaming');

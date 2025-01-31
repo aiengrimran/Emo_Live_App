@@ -73,6 +73,7 @@ import {
 import {setConnected} from '../../../../store/slice/chatSlice';
 import {renewRTCToken, checkMicrophonePermission} from '../../../../scripts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+const MAX_RETRIES = 5;
 
 export default function GoLive({navigation}: any) {
   const chatClient = ChatClient.getInstance();
@@ -132,13 +133,19 @@ export default function GoLive({navigation}: any) {
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           console.log('Remote user ' + uid + ' joined');
-          getUserInfoFromAPI(uid);
+          if (uid !== podcast.host) {
+            getUserInfoFromAPI(uid);
+          }
           // setRemoteUid(uid);
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
           if (uid === hostId) {
             hostEndedPodcast();
+            return;
           }
+          let users = [...podcastListeners];
+          let filter = users.filter((item: any) => item.id !== uid);
+          setPodcastListeners(filter);
 
           console.log('Remote user ' + uid + ' left the channel');
           // setRemoteUid(0);
@@ -162,12 +169,13 @@ export default function GoLive({navigation}: any) {
       agoraEngine.initialize({
         appId: envVar.AGORA_APP_ID,
       });
-      // agoraEngine.enableLocalAudio(true);
+
+      agoraEngine.enableLocalAudio(true);
+      userJoinChannel();
     } catch (e) {
       console.log(e);
     }
   };
-
   const handelConnection = (reason: any, state: number) => {
     switch (reason) {
       case 9:
@@ -237,12 +245,41 @@ export default function GoLive({navigation}: any) {
     }
   };
 
-  const createUserChatRoom = async () => {
+  // const createUserChatRoom = async () => {
+  //   try {
+  //     if (!connected) {
+  //       loginUser();
+  //       return;
+  //     }
+  //     const chatRoom = await chatClient.roomManager.createChatRoom(
+  //       'Podcast',
+  //       'Hi',
+  //       'welcome',
+  //       [],
+  //       5,
+  //     );
+  //     const roomId = chatRoom.roomId;
+
+  //     saveChatRoomId(roomId);
+  //     dispatch(setRoomId(roomId));
+  //     userJoinChatRoom(roomId);
+  //     console.log(roomId, 'Sss');
+  //   } catch (error: any) {
+  //     if (error.code == 2 || error.code == 300) {
+  //       Alert.alert('Network error', error.description);
+  //     }
+  //     console.log(error, 'error in creating room');
+  //   }
+  // };
+  const createUserChatRoom = async (retryCount = 0) => {
     try {
       if (!connected) {
+        console.log('Not connected, logging in first...');
         loginUser();
         return;
       }
+
+      console.log('Creating chat room...');
       const chatRoom = await chatClient.roomManager.createChatRoom(
         'Podcast',
         'Hi',
@@ -250,14 +287,27 @@ export default function GoLive({navigation}: any) {
         [],
         5,
       );
-      const roomId = chatRoom.roomId;
 
+      const roomId = chatRoom.roomId;
       saveChatRoomId(roomId);
       dispatch(setRoomId(roomId));
       userJoinChatRoom(roomId);
-      console.log(roomId, 'Sss');
-    } catch (error) {
-      console.log(error, 'error in creating room');
+      console.log(roomId, 'Chat room created successfully');
+    } catch (error: any) {
+      console.log('Error creating chat room:', error);
+
+      if (error.code === 2 || error.code === 300) {
+        if (retryCount < MAX_RETRIES) {
+          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+          console.log(`Retrying in ${delay / 1000} seconds...`);
+          setTimeout(() => createUserChatRoom(retryCount + 1), delay);
+        } else {
+          Alert.alert(
+            'Network Error',
+            'Failed to create chat room after multiple attempts.',
+          );
+        }
+      }
     }
   };
 
@@ -320,9 +370,9 @@ export default function GoLive({navigation}: any) {
     agoraEngineRef.current?.release();
   };
 
-  const joinChannel = async () => {
+  const userJoinChannel = async () => {
     if (!checkPermission()) {
-      Alert.alert('Permission Required ...');
+      Alert.alert('Error', 'Permission Required ...');
     }
     console.log('Connecting...', isJoined, user.id, podcast.host);
     // return;
@@ -595,22 +645,45 @@ export default function GoLive({navigation}: any) {
           </View>
         </View>
 
-        <View>
-          <Text
-            onPress={createUserChatRoom}
-            style={{color: '#fff', marginVertical: 10}}>
-            createUserChatRoom
-          </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            width: '90%',
+            justifyContent: 'space-around',
+          }}>
+          {/* <TouchableOpacity style={styles.tempBtn}>
+            <Text style={styles.tempBtnTxt} onPress={loginUser}>
+              login chat
+            </Text>
+          </TouchableOpacity> */}
+          {/* <TouchableOpacity style={styles.tempBtn}>
+            <Text style={styles.tempBtnTxt} onPress={joinChannel}>
+              Join Chanel
+            </Text>
+          </TouchableOpacity> */}
         </View>
-
-        <Text onPress={loginUser}>login chat</Text>
+        <View>
+          {/* <TouchableOpacity style={styles.tempBtn}>
+            <Text style={styles.tempBtnTxt} onPress={destroyEngine}>
+              destroyEngine
+            </Text>
+          </TouchableOpacity> */}
+        </View>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{marginLeft: 10}}>
+            <Text style={{color: '#fff'}}>Chat Room Idb :{roomId}</Text>
+          </View>
+          <View>
+            <Text
+              onPress={createUserChatRoom}
+              style={{color: '#fff', marginVertical: 10}}>
+              createUserChatRoom
+            </Text>
+          </View>
+        </View>
 
         {/* ************ second row ************ */}
 
-        <TouchableOpacity style={{marginVertical: 10}}>
-          <Text onPress={joinChannel}>Join Chanel</Text>
-        </TouchableOpacity>
-        <Text onPress={leaveChannel}>Leave Channel</Text>
         <View>
           <FlatList
             data={podcastListeners}
@@ -667,11 +740,7 @@ export default function GoLive({navigation}: any) {
         <View>
           <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
         </View>
-        <View style={{marginTop: 30}}>
-          <Text onPress={() => setIsJoined(false)} style={{color: '#fff'}}>
-            Chat Room Idb :{roomId}
-          </Text>
-        </View>
+
         {/* <Text style={{marginTop: 10}} onPress={() => getUserInfoFromAPI(2)}>
           getUserInfoFromAPI
         </Text> */}
@@ -720,9 +789,7 @@ export default function GoLive({navigation}: any) {
             </View>
           </TouchableOpacity>
         </View> */}
-        <Text style={{color: '#fff'}} onPress={destroyEngine}>
-          destroyEngine
-        </Text>
+
         <BottomSheet
           index={-1}
           enablePanDownToClose={true}
@@ -741,11 +808,9 @@ export default function GoLive({navigation}: any) {
               <Gifts />
             ) : sheetType == 'avatar' ? (
               <AvatarSheet
-                selectedUser={selectedUser}
                 navigation={navigation}
                 token={token}
                 envVar={envVar}
-                dispatch={dispatch}
               />
             ) : sheetType == 'users' ? (
               <Users />
@@ -762,4 +827,8 @@ export default function GoLive({navigation}: any) {
 
 const styles = StyleSheet.create({
   ...liveStyles,
+  tempBtn: {marginLeft: 10, padding: 10, backgroundColor: colors.accent},
+  tempBtnTxt: {
+    color: colors.complimentary,
+  },
 });

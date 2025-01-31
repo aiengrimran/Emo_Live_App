@@ -26,21 +26,22 @@ export default function Popular({navigation}) {
   const {token} = tokenMemo;
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
-  const [data, setData] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    getPodcast();
+  }, []);
 
   const getPodcast = async () => {
     try {
       setLoading(true);
       const url = envVar.API_URL + 'podcast/active';
-      // const url = envVar.LOCAL_URL + 'active-podcasts';
       const res = await axiosInstance.get(url);
       setLoading(false);
       console.log(res.data);
 
       if (res.data.podcast.length) {
         dispatch(setPodcasts(res.data.podcast));
-        setData(res.data.podcast);
       }
     } catch (error) {
       setLoading(false);
@@ -52,7 +53,6 @@ export default function Popular({navigation}) {
   const joinPodcast = async (item: any) => {
     try {
       setLoading(true);
-
       const url = envVar.API_URL + 'podcast/join';
       const data = {
         channel: item.channel,
@@ -61,13 +61,11 @@ export default function Popular({navigation}) {
       const res = await axiosInstance.post(url, data);
       console.log(res.data);
       setLoading(false);
-
       setUser(res.data.user);
       dispatch(setPodcast(item));
       navigation.navigate('GoLive');
     } catch (error) {
       setLoading(false);
-
       console.log(error);
       // console.log(item);
     }

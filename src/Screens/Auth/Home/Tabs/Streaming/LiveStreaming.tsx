@@ -68,6 +68,7 @@ import {
   setLoading,
 } from '../../../../../store/slice/usersSlice';
 import axiosInstance from '../../../../../Api/axiosConfig';
+const MAX_RETRIES = 5;
 
 export default function LiveStreaming({navigation}) {
   const chatClient = ChatClient.getInstance();
@@ -124,16 +125,19 @@ export default function LiveStreaming({navigation}) {
             'Remote user ' + uid + ' joined',
             Platform.OS == 'ios' ? 'IOS' : 'Android',
           );
-          if (uid !== stream.host) {
+          if (uid !== user.id) {
             getUserInfoFromAPI(uid);
           }
           // setRemoteUid(uid);
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
-          if (uid === hostId) {
+          if (uid === user.id) {
             hostEndedPodcast();
+            return;
           }
-
+          let users = [...streamListeners];
+          let filter = users.filter((item: any) => item.id !== uid);
+          setStreamListeners(filter);
           console.log('Remote user ' + uid + ' left the channel');
           // setRemoteUid(0);
         },
@@ -158,6 +162,7 @@ export default function LiveStreaming({navigation}) {
       });
       agoraEngine.enableLocalAudio(true);
       agoraEngine.enableLocalVideo(true);
+      userJoinChannel();
     } catch (e) {
       console.log(e);
     }
@@ -209,6 +214,7 @@ export default function LiveStreaming({navigation}) {
       setUser(updateUser);
       dispatch(setRTCTokenRenewed(true));
       await AsyncStorage.setItem('user', JSON.stringify(updateUser));
+      userJoinChannel();
     } catch (error) {
       console.log(error);
     }
@@ -304,26 +310,65 @@ export default function LiveStreaming({navigation}) {
     }
   };
 
-  const createUserChatRoom = async () => {
+  // const createUserChatRoom = async () => {
+  //   try {
+  //     const chatRoom = await chatClient.roomManager.createChatRoom(
+  //       'Stream',
+  //       'Hi',
+  //       'welcome',
+  //       [],
+  //       3,
+  //     );
+  //     const roomId = chatRoom.roomId;
+  //     saveChatRoomId(roomId);
+  //     // setRoomId(roomId);
+  //     userJoinChatRoom(roomId);
+  //     console.log(roomId, 'Sss');
+  //   } catch (error: any) {
+  //     console.log(error, 'ss');
+  //     if (error.code == 300) {
+  //       Alert.alert('Network error', error.description);
+  //     }
+  //     console.log(error, 'creating host');
+  //   }
+  // };
+  const createUserChatRoom = async (retryCount = 0) => {
     try {
+      if (!connected) {
+        console.log('Not connected, logging in first...');
+        loginUser();
+        return;
+      }
+
+      console.log('Creating chat room...');
       const chatRoom = await chatClient.roomManager.createChatRoom(
-        'Stream',
+        'Podcast',
         'Hi',
         'welcome',
         [],
-        3,
+        5,
       );
+
       const roomId = chatRoom.roomId;
       saveChatRoomId(roomId);
-      // setRoomId(roomId);
+      // dispatch(setRoomId(roomId));
       userJoinChatRoom(roomId);
-      console.log(roomId, 'Sss');
+      console.log(roomId, 'Chat room created successfully');
     } catch (error: any) {
-      console.log(error, 'ss');
-      if (error.code == 300) {
-        Alert.alert('Network error', error.description);
+      console.log('Error creating chat room:', error);
+
+      if (error.code === 2 || error.code === 300) {
+        if (retryCount < MAX_RETRIES) {
+          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+          console.log(`Retrying in ${delay / 1000} seconds...`);
+          setTimeout(() => createUserChatRoom(retryCount + 1), delay);
+        } else {
+          Alert.alert(
+            'Network Error',
+            'Failed to create chat room after multiple attempts.',
+          );
+        }
       }
-      console.log(error, 'creating host');
     }
   };
 
@@ -395,19 +440,12 @@ export default function LiveStreaming({navigation}) {
       console.log('API Response:', res.data);
 
       if (res.data.users.length > 0) {
-        const users = res.data.users;
-        // Create a new array without mutating the original state directly
+        const userJoin = res.data.users[0];
         const updatedUsers = [...streamListeners];
-        // Replace the first element with the new user data
-        // updatedUsers[0] = users[0];
-        updatedUsers.unshift(users[0]);
-        // currentUser.shift();
-        // if (stream.listeners > 2) {
-        updatedUsers.pop();
-        // }
-
-        console.log('Updated Users:', updatedUsers);
-
+        if (!updatedUsers.some(user => user.id === userJoin.id)) {
+          updatedUsers.pop(); // Remove the last element
+          updatedUsers.unshift(userJoin); // Add new user at the start
+        }
         // Dispatch the updated array to the state
         dispatch(setStreamListeners(updatedUsers));
       }
@@ -422,14 +460,14 @@ export default function LiveStreaming({navigation}) {
   };
   // Calculate the number of rows and columns based on the number of hosts
   const getGridLayout = () => {
-    if (guests <= 1) {
+    if (stream.listeners <= 1) {
       return {rows: 1, cols: 1};
-    } else if (guests <= 4) {
+    } else if (stream.listeners <= 4) {
       return {rows: 2, cols: 2};
-    } else if (guests <= 6) {
+    } else if (stream.listeners <= 6) {
       return {rows: 3, cols: 2};
     } else {
-      return {rows: Math.ceil(guests / 2), cols: 2};
+      return {rows: Math.ceil(stream.listeners / 2), cols: 2};
     }
   };
   const {rows, cols} = getGridLayout();
@@ -534,10 +572,6 @@ export default function LiveStreaming({navigation}) {
     }
   };
   const leaveStream = () => {
-    if (!onLive || !isJoined) {
-      navigation.navigate('HomeB');
-      return;
-    }
     dispatch(setLeaveModal(true));
   };
 
@@ -591,9 +625,6 @@ export default function LiveStreaming({navigation}) {
           leavePodcast={leaveStream}
           connected={connected}
         />
-        <TouchableOpacity onPress={loginUser}>
-          <Text style={{color: '#fff'}}>"ss" {JSON.stringify(connected)}</Text>
-        </TouchableOpacity>
         <View
           style={{
             flexDirection: 'row',
@@ -601,7 +632,9 @@ export default function LiveStreaming({navigation}) {
             justifyContent: 'space-between',
           }}>
           <TouchableOpacity onPress={enableLocalVideo}>
-            <Text style={{color: '#fff'}}>enableLocalVideo</Text>
+            <Text style={{color: '#fff'}}>
+              enableLocalVideo ss {stream.host}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -609,16 +642,18 @@ export default function LiveStreaming({navigation}) {
             }}>
             <Text style={{color: '#fff'}}>preview</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              userJoinChannel();
+            }}>
+            <Text style={{color: '#fff', marginTop: 10}}>join</Text>
+          </TouchableOpacity>
         </View>
-        <Text
+        {/* <Text
           style={{marginTop: 20, color: '#fff'}}
           onPress={() => console.log(streamListeners)}>
           sss
-        </Text>
-
-        <Text style={{color: '#fff', marginTop: 10}} onPress={userJoinChannel}>
-          join
-        </Text>
+        </Text> */}
 
         <TouchableOpacity style={{marginTop: 20}} onPress={leaveAgoraChannel}>
           <Text style={{color: '#fff'}}>leave channel</Text>
@@ -735,11 +770,9 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexGrow: 1,
-    // height: 340,
   },
   hostView: {
     flex: 1,
-    // height: 340,
     aspectRatio: 1, // Ensure each host view is square
     justifyContent: 'center',
     alignItems: 'center',
@@ -748,10 +781,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     margin: 5,
   },
-  // videoView: {
-  //   flex: 1,
-  //   aspectRatio: 1,
-  // },
   videoView: {width: '90%', height: 200, backgroundColor: 'red'},
   ...liveStyles,
   muteButton: {
@@ -770,5 +799,8 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 50,
   },
-  // videoView: {width: '90%', height: 200, backgroundColor: 'red'},
+  tempBtn: {marginLeft: 10, padding: 10, backgroundColor: colors.accent},
+  tempBtnTxt: {
+    color: colors.complimentary,
+  },
 });

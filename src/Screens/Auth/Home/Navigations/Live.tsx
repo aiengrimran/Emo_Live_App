@@ -25,9 +25,11 @@ export default function Popular({navigation}) {
   const {token} = tokenMemo;
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
-  const [data, setData] = useState([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  useEffect(() => {
+    getStream();
+  }, []);
   const getStream = async () => {
     try {
       console.log('sss');
@@ -37,7 +39,6 @@ export default function Popular({navigation}) {
       setLoading(false);
 
       if (res.data.stream.length) {
-        setData(res.data.streams);
         dispatch(setStreams(res.data.stream));
       }
     } catch (error) {
@@ -58,7 +59,6 @@ export default function Popular({navigation}) {
       const res = await axiosInstance.post(url, data);
       setLoading(false);
       console.log(res.data);
-      return;
       dispatch(setStream(item));
       setUser(res.data.user);
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
