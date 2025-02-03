@@ -22,11 +22,14 @@ import {
 import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
 
-export default function Search({navigation}) {
+interface SearchScreenProps {
+  navigation: any;
+}
+export default function Search({navigation}: SearchScreenProps) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const dispatch = useDispatch();
-  const users = useSelector((state: any) => state.usersReducer.users);
+  const users = useSelector((state: any) => state.user.users);
   // const valetRating = useSelector((state: any) => state.valetReducer.rating);
 
   // const [users, setUsers] = useState([]);

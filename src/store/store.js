@@ -7,7 +7,7 @@ import streamingReducer from './slice/streamingSlice';
 
 export const store = configureStore({
   reducer: {
-    usersReducer,
+    user: usersReducer,
     chat: chatReducer,
     notification: notificationReducer,
     podcast: podcastReducer,

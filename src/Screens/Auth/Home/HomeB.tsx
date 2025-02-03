@@ -87,7 +87,7 @@ export default function HomeB() {
           },
           onDisconnected() {
             dispatch(setConnected(false));
-            Alert.alert('Disconnected', 'Disconnected from agora');
+            // Alert.alert('Disconnected', 'Disconnected from agora');
             console.log('onDisconnected:x');
           },
           onUserAuthenticationFailed() {

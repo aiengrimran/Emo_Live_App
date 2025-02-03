@@ -16,6 +16,7 @@ import {
   setUnreadCount,
   setUnreadNotification,
 } from '../../../store/slice/notificationSlice';
+import {updateStreamListeners} from '../../../store/slice/streamingSlice';
 import axios from 'axios';
 import Animated, {
   useSharedValue,
@@ -125,7 +126,12 @@ export default function Home({navigation}) {
           <Text style={styles.heading} onPress={getNotifications}>
             Emo Live
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('GoLive')}>
+          <TouchableOpacity
+            onPress={() => {
+              dispatch(updateStreamListeners(6));
+              navigation.navigate('LiveStreaming');
+            }}>
+            {/* <TouchableOpacity onPress={() => navigation.navigate('GoLive')}> */}
             {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
           </TouchableOpacity>

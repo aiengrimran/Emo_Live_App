@@ -24,6 +24,7 @@ export default function Popular({navigation}) {
   const {podcasts} = useSelector((state: any) => state.podcast);
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {token} = tokenMemo;
+  const [error, setError] = useState('');
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
   const [loading, setLoading] = useState<boolean>(false);
@@ -34,6 +35,7 @@ export default function Popular({navigation}) {
 
   const getPodcast = async () => {
     try {
+      dispatch(setPodcasts([]));
       setLoading(true);
       const url = envVar.API_URL + 'podcast/active';
       const res = await axiosInstance.get(url);
@@ -43,10 +45,11 @@ export default function Popular({navigation}) {
       if (res.data.podcast.length) {
         dispatch(setPodcasts(res.data.podcast));
       }
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
-
-      console.log(error);
+      if (error._response) {
+        setError('Network error');
+      }
     }
   };
 
@@ -75,17 +78,25 @@ export default function Popular({navigation}) {
     <View>
       <View style={{marginTop: 20}}>
         <View style={{alignSelf: 'center'}}>
-          <ActivityIndicator
-            animating={loading}
-            color={colors.accent}
-            size={'small'}
-          />
+          {loading ? (
+            <>
+              <ActivityIndicator
+                // animating={true}
+                animating={loading}
+                color={colors.accent}
+                size={'small'}
+              />
+            </>
+          ) : (
+            <Text>hello</Text>
+          )}
         </View>
         <TouchableOpacity onPress={getPodcast}>
           <Text style={{marginVertical: 20, color: colors.complimentary}}>
             GetPodcasts
           </Text>
         </TouchableOpacity>
+        {error && <Text style={[appStyles.errorText]}>{error}</Text>}
         <FlatList
           data={podcasts}
           keyExtractor={(item: any) => item.id?.toString()}

@@ -15,6 +15,7 @@ import {colors} from '../../../../styles/colors';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {useSelector, useDispatch} from 'react-redux';
 import {
+  setChatUser,
   updateUsers,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
@@ -27,9 +28,7 @@ export default function UserProfile({navigation}) {
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
   const [error, setError] = useState('');
-  const visitProfile = useSelector(
-    (state: any) => state.usersReducer.visitProfile,
-  );
+  const {visitProfile} = useSelector((state: any) => state.user);
 
   const [loading, setLoading] = useState(false);
   const followUser = async () => {
@@ -144,9 +143,10 @@ export default function UserProfile({navigation}) {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('Chat', {receiverUser: visitProfile})
-              }
+              onPress={() => {
+                dispatch(setChatUser(visitProfile));
+                navigation.navigate('Chat');
+              }}
               style={styles.chatBtn}>
               <Text style={styles.btnTxt}>Chat</Text>
             </TouchableOpacity>

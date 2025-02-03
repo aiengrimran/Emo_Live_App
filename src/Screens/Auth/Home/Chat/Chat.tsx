@@ -44,13 +44,11 @@ export default function Chat({navigation, route}: ChatProps) {
   const {initialized, connected, error} = useSelector(
     (state: any) => state.chat,
   );
-  const visitProfile = useSelector(
-    (state: any) => state.usersReducer.visitProfile,
-  );
+  const {chatUser} = useSelector((state: any) => state.user);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
-  const receiverUser = route.params.receiverUser;
+  const receiverUser = chatUser;
 
   const [status, setStatus] = useState({
     connected: false,

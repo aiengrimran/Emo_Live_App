@@ -10,38 +10,50 @@ import {
 
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
-import React from 'react';
+import React, {useState} from 'react';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {setLoading} from '../../../../../store/slice/usersSlice';
 import {useSelector} from 'react-redux';
+import axiosInstance from '../../../../../Api/axiosConfig';
 
 interface HeaderProps {
   user: any;
-  onLive: boolean;
   navigation: any;
   token: string;
+  liveEvent: any;
   envVar: any;
   leavePodcast: any;
   connected: boolean;
 }
 export default function Header({
   user,
-  onLive,
   navigation,
   token,
+  liveEvent,
   envVar,
   leavePodcast,
   connected,
 }: HeaderProps) {
-  const {loading} = useSelector((state: any) => state.podcast);
+  // const {podcast} = useSelector((state: any) => state.podcast);
+  // const {stream} = useSelector((state: any) => state.streaming);
+  const {loading, isJoined} = useSelector((state: any) => state.user);
+
+  const [host, setHost] = useState(
+    liveEvent.host == user.id ? user : liveEvent.user,
+  );
+  const followUser = () => {
+    try {
+    } catch (error) {}
+  };
   return (
     <View style={styles.header}>
       <View style={styles.userInfo}>
         <Image
           source={
-            user.avatar
+            host.avatar
               ? {
-                  uri: envVar.API_URL + 'display-avatar/' + user.id,
+                  uri: envVar.API_URL + 'display-avatar/' + host.id,
                   headers: {
                     Authorization: `Bearer ${token}`,
                   },
@@ -51,16 +63,19 @@ export default function Header({
           style={{width: 28, height: 28, borderRadius: 15}}
         />
         <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-          {user.last_name}
+          {host.first_name}
+          {/* {user.last_name} */}
         </Text>
         <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
           <Text style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
             LV:1
           </Text>
         </View>
-        <TouchableOpacity style={styles.addBtn}>
-          <Icon name="plus" color="#fff" size={20} />
-        </TouchableOpacity>
+        {host.id != user.id && (
+          <TouchableOpacity style={styles.addBtn}>
+            <Icon name="plus" color="#fff" size={20} />
+          </TouchableOpacity>
+        )}
       </View>
       <ActivityIndicator
         animating={loading}
@@ -81,7 +96,7 @@ export default function Header({
           <Icon
             name="eye"
             size={25}
-            color={onLive ? '#F0DF00' : colors.accent}
+            color={isJoined ? '#F0DF00' : colors.accent}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={leavePodcast}>

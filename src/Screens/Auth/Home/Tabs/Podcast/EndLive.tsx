@@ -16,6 +16,8 @@ import {
   setHostLeftPodcast,
   setLeaveModal,
 } from '../../../../../store/slice/podcastSlice';
+import {setLiveStatus} from '../../../../../store/slice/usersSlice';
+
 import axios from 'axios';
 import envVar from '../../../../../config/envVar';
 import axiosInstance from '../../../../../Api/axiosConfig';
@@ -42,6 +44,7 @@ export default function EndLive({
   const {stream} = useSelector((state: any) => state.streaming);
   const endPodcast = () => {
     try {
+      dispatch(setLiveStatus('IDLE'));
       setDisabled(true);
       if (user.id == podcast.host || user.id == stream.host) {
         apiCall();
@@ -59,11 +62,8 @@ export default function EndLive({
     try {
       console.log('ending', live ? 'live' : 'podcast');
       const url = envVar.API_URL + (live ? 'stream' : 'podcast') + '/end/' + id;
-
-      // const url = envVar.API_URL + live ? 'stream' : 'podcast' + '/end/' + id;
-      // const url = envVar.API_URL + 'podcast/end/' + id;
       const res = await axiosInstance.get(url);
-      console.log(res.data);
+      // console.log(res.data);
       setDisabled(false);
 
       endPodcastForUser();

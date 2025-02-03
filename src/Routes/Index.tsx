@@ -36,7 +36,7 @@ import Privacy from '../Screens/Auth/Home/Profile/Settings/Privacy';
 import Level from '../Screens/Auth/Home/Profile/Level/Level';
 import LiveBattle from '../Screens/Auth/Home/PK/LiveBattle';
 import LiveStreaming from '../Screens/Auth/Home/Tabs/Streaming/LiveStreaming';
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, {NetInfoState} from '@react-native-community/netinfo';
 import GoLive2 from '../Screens/Auth/Home/Chat/GoLive2';
 import Inbox from '../Screens/Auth/Home/Chat/Inbox';
 // import Notifications from '../Screens/Auth/Home/Notifications';
@@ -55,7 +55,7 @@ const Stack = createNativeStackNavigator();
 export default function Index() {
   const [loader, setLoader] = useState(true);
   const [user, setUser] = useState<string | null>(null);
-  const [connection, setConnection] = useState<boolean | null>(false);
+  const [connection, setConnection] = useState<boolean | null>(true);
   const [token, setToken] = useState<String | null>(null);
 
   useEffect(() => {
@@ -63,30 +63,30 @@ export default function Index() {
     hideLoader();
   }, []);
 
-  useEffect(() => {
-    let initializedOnce = false; // Prevents duplicate initialization
+  // useEffect(() => {
+  //   let initializedOnce = false; // Prevents duplicate initialization
 
-    const handleNetworkChange = state => {
-      console.log('Is connected?', state.isConnected);
-      if (state.isConnected) {
-        if (!initializedOnce) {
-          initializedOnce = true;
-          setConnection(true);
-        }
-      } else {
-        setConnection(false);
-      }
-    };
+  //   const handleNetworkChange = (state: NetInfoState) => {
+  //     console.log('Is connected?', state.isConnected);
+  //     if (state.isConnected) {
+  //       if (!initializedOnce) {
+  //         initializedOnce = true;
+  //         setConnection(true);
+  //       }
+  //     } else {
+  //       setConnection(false);
+  //     }
+  //   };
 
-    // Add the NetInfo listener
-    const unsubscribe = NetInfo.addEventListener(handleNetworkChange);
+  //   // Add the NetInfo listener
+  //   const unsubscribe = NetInfo.addEventListener(handleNetworkChange);
 
-    // Cleanup function
-    return () => {
-      console.log('Cleaning up network listener...');
-      unsubscribe(); // Unsubscribe from NetInfo listener
-    };
-  }, []);
+  //   // Cleanup function
+  //   return () => {
+  //     console.log('Cleaning up network listener...');
+  //     unsubscribe(); // Unsubscribe from NetInfo listener
+  //   };
+  // }, []);
 
   const checkUser = async () => {
     const loggedUser = await AsyncStorage.getItem('user');

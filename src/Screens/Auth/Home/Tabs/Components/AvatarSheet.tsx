@@ -1,8 +1,8 @@
 import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import React from 'react';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import axiosInstance from '../../../../../Api/axiosConfig';
-import {updateUsers} from '../../../../../store/slice/usersSlice';
+import {setChatUser, updateUsers} from '../../../../../store/slice/usersSlice';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import liveStyles from '../styles/liveStyles';
@@ -21,9 +21,12 @@ export default function AvatarSheet({
   envVar,
 }: AvatarSheetProps) {
   const dispatch = useDispatch();
+  const {selectedGuest} = useSelector((state: any) => state.user);
 
-  const followUser = async (item: any) => {
+  const followUser = async () => {
     try {
+      console.log(selectedGuest);
+      return;
       const url = item.is_followed
         ? `/user/un-follow-user/${item.id}`
         : `/user/follow-user/${item.id}`;
@@ -36,7 +39,7 @@ export default function AvatarSheet({
 
   return (
     <View style={{position: 'relative', paddingTop: 30}}>
-      <TouchableOpacity style={styles.reportBtn}>
+      <TouchableOpacity style={styles.reportBtn} onPress={followUser}>
         <IconM name="warning" size={25} color={colors.body_text} />
         <Text style={[appStyles.bodyMd, {color: colors.body_text}]}>
           Report
@@ -46,9 +49,9 @@ export default function AvatarSheet({
         <Image
           style={liveStyles.sheetAvatar}
           source={
-            selectedUser.avatar
+            selectedGuest.avatar
               ? {
-                  uri: `${envVar.API_URL}display-avatar/${selectedUser.id}`,
+                  uri: `${envVar.API_URL}display-avatar/${selectedGuest.id}`,
                   headers: {Authorization: `Bearer ${token}`},
                 }
               : require('../../../../../assets/images/place.jpg')
@@ -59,17 +62,19 @@ export default function AvatarSheet({
             appStyles.paragraph1,
             {color: colors.complimentary, marginTop: 10},
           ]}>
-          {selectedUser.first_name + ' ' + selectedUser.last_name}
+          {selectedGuest.first_name + ' ' + selectedGuest.last_name}
         </Text>
         <View style={liveStyles.sheetUser}>
           <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-            ID: {selectedUser.id}
+            ID: {selectedGuest.id}
           </Text>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <Icon name="google-maps" size={23} color={colors.semantic} />
             <Text
               style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-              {selectedUser.address ? selectedUser.address : 'Please Provide '}
+              {selectedGuest.address
+                ? selectedGuest.address
+                : 'Please Provide '}
             </Text>
           </View>
         </View>
@@ -122,9 +127,10 @@ export default function AvatarSheet({
         </TouchableOpacity>
         <TouchableOpacity
           style={[liveStyles.followBtn, {borderWidth: 1}]}
-          onPress={() =>
-            navigation.navigate('Chat', {receiverUser: selectedUser})
-          }>
+          onPress={() => {
+            dispatch(setChatUser(selectedGuest));
+            navigation.navigate('Chat');
+          }}>
           <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
             Chat
           </Text>

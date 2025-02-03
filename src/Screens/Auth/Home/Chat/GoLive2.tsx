@@ -69,7 +69,7 @@ export default function GoLive2({navigation}) {
           agora_rtc_token: res.data.user.agora_rtc_token,
         }));
         await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
-        dispatch(setGuests(guests));
+        // dispatch(setGuests(guests));
         dispatch(updateStreamListeners(guests));
         dispatch(setStream(res.data.stream));
         setLoading(false);

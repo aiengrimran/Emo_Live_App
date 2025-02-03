@@ -32,8 +32,9 @@ export default function Popular({navigation}) {
   }, []);
   const getStream = async () => {
     try {
-      console.log('sss');
       setLoading(true);
+      dispatch(setStreams([]));
+
       const url = envVar.API_URL + 'stream/active';
       const res = await axiosInstance.get(url);
       setLoading(false);

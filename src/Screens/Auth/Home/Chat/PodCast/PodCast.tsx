@@ -199,6 +199,7 @@ const App = () => {
         result1 = agoraEngineRef.current.joinChannel(token, channelName, uid, {
           // channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
           clientRoleType: ClientRoleType.ClientRoleAudience,
+          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
           publishMicrophoneTrack: false, // Audience shouldn't publish microphone
           autoSubscribeAudio: true,
           audienceLatencyLevel:

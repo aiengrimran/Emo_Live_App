@@ -16,6 +16,7 @@ import axiosInstance from '../../../../Api/axiosConfig';
 import Context from '../../../../Context/Context';
 import {useDispatch} from 'react-redux';
 import {setPodcast} from '../../../../store/slice/podcastSlice';
+import {resetPodcastState} from './scripts/liveScripts';
 
 interface StartLiveProps {
   navigation: any;
@@ -46,6 +47,7 @@ export default function StartLive({navigation}: StartLiveProps) {
   const startPodCast = async () => {
     try {
       // setUser
+      resetPodcastState(dispatch);
       setLoading(true);
 
       console.log('starting podcast');
@@ -71,7 +73,7 @@ export default function StartLive({navigation}: StartLiveProps) {
     } catch (error: any) {
       setLoading(false);
       setError('please check internet connection');
-      console.log(error.response.data.message);
+      // console.log(error.response.data.message);
     }
   };
   const validations = () => {
