@@ -13,6 +13,14 @@ export const store = configureStore({
     podcast: podcastReducer,
     streaming: streamingReducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['chat/setMessages'],
+        ignoredPaths: ['chat.messages'], // Ignore this path in the state
+      },
+    }),
+  // middleware:(getDefaultMiddleware) =>
 });
 export default store;
 

@@ -38,34 +38,21 @@ export default function EndLive({
 }: EndLiveProps) {
   const dispatch = useDispatch();
   const [disabled, setDisabled] = useState(false);
-  const {leaveModal, hostLeftPodcast, modalInfo, podcast} = useSelector(
+  const {leaveModal, hostLeftPodcast, podcast} = useSelector(
     (state: any) => state.podcast,
   );
   const {stream} = useSelector((state: any) => state.streaming);
-  const endPodcast = () => {
+
+  const endPodcast = async () => {
     try {
       dispatch(setLiveStatus('IDLE'));
       setDisabled(true);
-      if (user.id == podcast.host || user.id == stream.host) {
-        apiCall();
-        return;
+      let url = envVar.API_URL + (live ? 'stream' : 'podcast') + '/end/' + id;
+      if (user.id !== podcast.host || user.id !== stream.host) {
+        url = url + '/guest';
       }
+      await axiosInstance.get(url);
       setDisabled(false);
-      endPodcastForUser();
-
-      // dispatch(setHostLeftPodcast(false));
-    } catch (error: any) {
-      console.log(error.response);
-    }
-  };
-  const apiCall = async () => {
-    try {
-      console.log('ending', live ? 'live' : 'podcast');
-      const url = envVar.API_URL + (live ? 'stream' : 'podcast') + '/end/' + id;
-      const res = await axiosInstance.get(url);
-      // console.log(res.data);
-      setDisabled(false);
-
       endPodcastForUser();
     } catch (error) {
       console.log(error);

@@ -62,6 +62,7 @@ export default function Popular({navigation}) {
       console.log(res.data);
       dispatch(setStream(item));
       setUser(res.data.user);
+
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
       navigation.navigate('LiveStreaming');
     } catch (error) {

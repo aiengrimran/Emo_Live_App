@@ -14,9 +14,10 @@ import {colors} from '../../../../styles/colors';
 import envVar from '../../../../config/envVar';
 import axiosInstance from '../../../../Api/axiosConfig';
 import Context from '../../../../Context/Context';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {setPodcast} from '../../../../store/slice/podcastSlice';
 import {resetPodcastState} from './scripts/liveScripts';
+import {setLiveForm} from '../../../../store/slice/usersSlice';
 
 interface StartLiveProps {
   navigation: any;
@@ -24,65 +25,28 @@ interface StartLiveProps {
 export default function StartLive({navigation}: StartLiveProps) {
   const dispatch = useDispatch();
   const {userAuthInfo} = useContext(Context);
+  const {liveForm} = useSelector((state: any) => state.user);
   const {user, setUser} = userAuthInfo;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({
-    liveType: '',
-    title: 'test 122',
-    duration: '20',
-    listeners: [],
-    type: '',
-  });
 
   const startLiveTransmission = async () => {
     if (!validations()) return;
-    if (form.liveType == 'video') {
-      navigation.navigate('GoLive2');
-      return;
-    }
-    startPodCast();
+    // if (liveForm.liveType == 'video') {
+    navigation.navigate('GoLive2');
+    // return;
+    // }
+    // startPodCast();
   };
 
-  const startPodCast = async () => {
-    try {
-      // setUser
-      resetPodcastState(dispatch);
-      setLoading(true);
-
-      console.log('starting podcast');
-
-      const data = {
-        title: form.title,
-        duration: form.duration,
-        listeners: form.listeners,
-        type: 'public',
-      };
-      const url = envVar.API_URL + 'podcast/start';
-
-      const res = await axiosInstance.post(url, data);
-      setLoading(false);
-
-      if (res.status == 201) {
-        setUser(() => res.data.user);
-        dispatch(setPodcast(res.data.podcast));
-        navigation.navigate('GoLive');
-      }
-      // const res = await axiosInstance.post(url, JSON.stringify(data));
-      console.log(res.data);
-    } catch (error: any) {
-      setLoading(false);
-      setError('please check internet connection');
-      // console.log(error.response.data.message);
-    }
-  };
   const validations = () => {
     let valid = false;
-    if (!form.liveType)
+    if (!liveForm.liveType)
       return Alert.alert('error', 'Please click live type is required..');
-    if (!form.title) return Alert.alert('error', 'Title is required');
-    if (!form.duration) return Alert.alert('error', 'Duration is required');
-    if (!form.listeners) return Alert.alert('error', 'Listeners is required');
+    if (!liveForm.title) return Alert.alert('error', 'Title is required');
+    if (!liveForm.duration) return Alert.alert('error', 'Duration is required');
+    if (!liveForm.listeners)
+      return Alert.alert('error', 'Listeners is required');
     return true;
   };
   return (
@@ -107,9 +71,7 @@ export default function StartLive({navigation}: StartLiveProps) {
               justifyContent: 'space-around',
             }}>
             <TouchableOpacity
-              onPress={() =>
-                setForm((prevState: any) => ({...form, liveType: 'podcast'}))
-              }
+              onPress={() => dispatch(setLiveForm({liveType: 'podcast'}))}
               style={{
                 width: '40%',
                 alignItems: 'center',
@@ -123,9 +85,7 @@ export default function StartLive({navigation}: StartLiveProps) {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() =>
-                setForm((prevState: any) => ({...form, liveType: 'video'}))
-              }
+              onPress={() => dispatch(setLiveForm({liveType: 'video'}))}
               style={{
                 width: '40%',
                 alignItems: 'center',
@@ -145,12 +105,10 @@ export default function StartLive({navigation}: StartLiveProps) {
               <Text style={styles.label}>Title:</Text>
               <TextInput
                 style={styles.inputBox}
-                value={form.title}
+                value={liveForm.title}
                 autoCapitalize="none"
                 keyboardType="default"
-                onChangeText={(e: any) =>
-                  setForm(prevState => ({...prevState, title: e}))
-                }
+                onChangeText={(e: any) => dispatch(setLiveForm({title: e}))}
                 placeholder="title of live ...."
                 placeholderTextColor={colors.body_text}
               />
@@ -159,13 +117,11 @@ export default function StartLive({navigation}: StartLiveProps) {
               <Text style={styles.label}>Duration:</Text>
               <TextInput
                 style={styles.inputBox}
-                value={form.duration}
+                value={liveForm.duration}
                 autoCapitalize="none"
                 maxLength={2}
                 keyboardType="default"
-                onChangeText={(e: any) =>
-                  setForm(prevState => ({...prevState, duration: e}))
-                }
+                onChangeText={(e: any) => dispatch(setLiveForm({duration: e}))}
                 placeholder="duration in minutes ...."
                 placeholderTextColor={colors.body_text}
               />
@@ -181,15 +137,10 @@ export default function StartLive({navigation}: StartLiveProps) {
                   alignItems: 'center',
                 }}>
                 <TouchableOpacity
-                  onPress={() =>
-                    setForm(prevState => ({
-                      ...prevState,
-                      type: 'private',
-                    }))
-                  }
+                  onPress={() => dispatch(setLiveForm({type: 'private'}))}
                   style={[
                     styles.genderBtn,
-                    form.type == 'private' && {
+                    liveForm.type == 'private' && {
                       backgroundColor: '#64566e',
                     },
                     styles.leftBtn,
@@ -197,15 +148,10 @@ export default function StartLive({navigation}: StartLiveProps) {
                   <Text style={styles.genderTxt}>private</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() =>
-                    setForm(prevState => ({
-                      ...prevState,
-                      type: 'public',
-                    }))
-                  }
+                  onPress={() => dispatch(setLiveForm({type: 'public'}))}
                   style={[
                     styles.genderBtn,
-                    form.type == 'public' && {
+                    liveForm.type == 'public' && {
                       backgroundColor: '#64566e',
                     },
                     styles.rightBtn,

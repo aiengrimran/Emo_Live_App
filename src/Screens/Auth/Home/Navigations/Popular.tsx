@@ -30,7 +30,7 @@ export default function Popular({navigation}) {
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    getPodcast();
+    // getPodcast();
   }, []);
 
   const getPodcast = async () => {

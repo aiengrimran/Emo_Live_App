@@ -1,5 +1,5 @@
 import {colors} from '../../../../../styles/colors';
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 import appStyles from '../../../../../styles/styles';
 const liveStyles = StyleSheet.create({
   chatAvatar: {width: 60, height: 60, borderRadius: 35},
@@ -12,10 +12,11 @@ const liveStyles = StyleSheet.create({
     alignItems: 'center',
   },
   inputBox: {
+    padding: 10,
     backgroundColor: '#11132c',
     color: colors.complimentary,
     borderWidth: 1,
-    width: '50%',
+    width: '60%',
     borderStartEndRadius: 48,
     borderRadius: 50,
     alignSelf: 'flex-start',
@@ -23,7 +24,7 @@ const liveStyles = StyleSheet.create({
   },
   action: {
     flexDirection: 'row',
-    width: '40%',
+    width: '38%',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -77,19 +78,32 @@ const liveStyles = StyleSheet.create({
     alignSelf: 'center',
   },
   btn1: {
-    position: 'relative',
+    position: 'absolute',
     flexDirection: 'row',
+    bottom: Platform.OS == 'android' ? 30 : 40,
     width: '99%',
-    marginTop: 20,
     alignSelf: 'center',
     borderRadius: 15,
     justifyContent: 'space-between',
-    alignItems: 'center',
+    // alignItems: 'center',
   },
   usersList: {
-    flexDirection: 'row',
-    width: '99%',
-    justifyContent: 'space-around',
+    marginTop: 20,
+
+    // width: '20%',
+    // marginLeft: 10,
+    // alignItems: 'center',
+    // flexDirection: 'row',
+    // width: '90%',
+    // justifyContent: 'space-around',
+  },
+  emptySeat: {
+    width: 60,
+    height: 60,
+    borderRadius: 35,
+    backgroundColor: '#874975',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   sheetBtnTxt: {

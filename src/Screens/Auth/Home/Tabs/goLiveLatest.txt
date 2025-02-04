@@ -35,12 +35,21 @@ import {
   ConnectionStateType,
   ConnectionChangedReasonType,
 } from 'react-native-agora';
-import {ChatClient} from 'react-native-agora-chat';
+import {
+  ChatClient,
+  ChatMessageType,
+  ChatOptions,
+  ChatConversationType,
+  ChatMessageChatType,
+  ChatSearchDirection,
+  ChatMessage,
+} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 import AvatarSheet from './Components/AvatarSheet';
 import BottomSection from './Components/BottomSection';
-import {resetPodcastState, getLiveUsers} from './scripts/liveScripts';
+import {resetPodcastState} from './scripts/liveScripts';
+// import Header
 import Header from './Podcast/Header';
 
 import Context from '../../../../Context/Context';
@@ -67,7 +76,8 @@ import {
   setIsJoined,
 } from '../../../../store/slice/usersSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
-import {checkMicrophonePermission} from '../../../../scripts';
+import {renewRTCToken, checkMicrophonePermission} from '../../../../scripts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LiveLoading from './Components/LiveLoading';
 const MAX_RETRIES = 5;
 
@@ -95,7 +105,7 @@ export default function GoLive({navigation}: any) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    // setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -120,13 +130,16 @@ export default function GoLive({navigation}: any) {
             'podcast host',
             podcast.host,
           );
-          if (podcast.host == user.id) {
-            createUserChatRoom();
-          }
-          addCurrentToListeners();
-          if (_connection.localUid !== podcast.host) {
-            getPodcastActive();
-          }
+          // if (podcast.host == user.id) {
+          //   createUserChatRoom();
+          // }
+          // if (podcast.host !== user.id) {
+          //   getUserInfoFromAPI(user.id);
+          // }
+          // userJoinChatRoom(podcast.chat_room_id)
+
+          // showMessage('Successfully joined channel: ' + channelName);
+          // dispatch(setIsJoined(true));
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           console.log(
@@ -189,6 +202,7 @@ export default function GoLive({navigation}: any) {
       // Initialize the engine
       agoraEngine.initialize({
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+        // channelProfile: ChannelProfileType.ChannelProfileCommunication,
         appId: envVar.AGORA_APP_ID,
       });
 
@@ -198,75 +212,15 @@ export default function GoLive({navigation}: any) {
       console.log(e);
     }
   };
-  const getPodcastActive = async () => {
-    try {
-      const users = await getLiveUsers(podcast.id, 'podcast');
-      const currentUsers = podcastListeners.map((item: any) => {
-        const userKey = users.find(
-          (user: any) => user.id === item.user.id && !item.occupied,
-        );
-
-        return userKey
-          ? {
-              ...item,
-              user: userKey,
-              occupied: true,
-            }
-          : item;
-      });
-
-      dispatch(setPodcastListeners(currentUsers));
-    } catch (error) {
-      console.error('Error getting active podcast:', error);
-    }
-  };
-  const addCurrentToListeners = async () => {
-    try {
-      let currentUsers = [...podcastListeners];
-      let joined = currentUsers.find((item: any) => item.user?.id == user.id);
-      if (joined) return;
-      // Find an empty room
-      const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
-      if (emptyRoomIndex !== -1) {
-        // Assign user to empty room
-        currentUsers[emptyRoomIndex] = {
-          ...currentUsers[emptyRoomIndex],
-          user,
-          occupied: true,
-        };
-      } else {
-        console.warn('No empty rooms available');
+  const filterOutUser = (uid: any) => {
+    if (uid !== user.id) {
+      let users = [...podcastListeners];
+      let filter = users.filter((item: any) => item.id !== uid);
+      let leaveUser = users.find((item: any) => item.id == uid);
+      dispatch(setPodcastListeners(filter));
+      if (leaveUser) {
+        Alert.alert('User Leaved: ', leaveUser.first_name);
       }
-      dispatch(setPodcastListeners(currentUsers));
-    } catch (error: any) {
-      console.log(error['_response']);
-      dispatch(setLoading(false));
-    }
-  };
-  const filterOutUser = async (uid: number | undefined) => {
-    try {
-      let currentUsers = [...podcastListeners];
-      const emptyRoomIndex = currentUsers.findIndex(
-        item => item.occupied && item.user.id == uid,
-      );
-      if (emptyRoomIndex !== -1) {
-        let leaveUser = currentUsers.find((item: any) => item.user.id == uid);
-
-        // Assign user to empty room
-        currentUsers[emptyRoomIndex] = {
-          ...currentUsers[emptyRoomIndex],
-          user: null,
-          occupied: false,
-        };
-        dispatch(setPodcastListeners(currentUsers));
-        if (leaveUser) {
-          Alert.alert('User Leaved: ', leaveUser.first_name);
-        }
-      } else {
-        console.warn('user not found in listener');
-      }
-    } catch (error) {
-      console.log(error);
     }
   };
   const handelConnection = (reason: any, state: number) => {
@@ -287,9 +241,19 @@ export default function GoLive({navigation}: any) {
         break;
     }
   };
-  const testListners = () => {
+  const handleRenewRtcToken = async () => {
     try {
-      console.log(podcastListeners);
+      const role = user.id == podcast.host ? 1 : 2;
+      const updateUser = await renewRTCToken(podcast.channel, role);
+      setUser(updateUser);
+      dispatch(setRTCTokenRenewed(true));
+      await AsyncStorage.setItem('user', JSON.stringify(updateUser));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const muteUser = () => {
+    try {
     } catch (error) {}
   };
 
@@ -332,6 +296,33 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
+
+  // const createUserChatRoom = async () => {
+  //   try {
+  //     if (!connected) {
+  //       loginUser();
+  //       return;
+  //     }
+  //     const chatRoom = await chatClient.roomManager.createChatRoom(
+  //       'Podcast',
+  //       'Hi',
+  //       'welcome',
+  //       [],
+  //       5,
+  //     );
+  //     const roomId = chatRoom.roomId;
+
+  //     saveChatRoomId(roomId);
+  //     dispatch(setRoomId(roomId));
+  //     userJoinChatRoom(roomId);
+  //     console.log(roomId, 'Sss');
+  //   } catch (error: any) {
+  //     if (error.code == 2 || error.code == 300) {
+  //       Alert.alert('Network error', error.description);
+  //     }
+  //     console.log(error, 'error in creating room');
+  //   }
+  // };
   const createUserChatRoom = async (retryCount = 0) => {
     try {
       if (!connected) {
@@ -386,33 +377,31 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
-  const getUserInfoFromAPI = async (id: number) => {
+  const getUserInfoFromAPI = async (id: any) => {
     try {
-      const currentUsers = [...podcastListeners];
-      if (currentUsers.some(item => item.user?.id === id)) return;
+      let currentUser = [...podcastListeners];
+      let joined = currentUser.find(user => user.id == id);
+      if (joined) return;
 
       dispatch(setLoading(true));
-      const {data} = await axiosInstance.post('users-info', {users: [id]});
-
-      if (data.users?.[0]) {
-        const emptyRoomIndex = currentUsers.findIndex(
-          item => !item.occupied && !item.user,
-        );
-
-        if (emptyRoomIndex !== -1) {
-          currentUsers[emptyRoomIndex] = {
-            ...currentUsers[emptyRoomIndex],
-            user: data.users[0],
-            occupied: true,
-          };
-          dispatch(setPodcastListeners(currentUsers));
-        } else {
-          console.warn('No empty rooms available');
-        }
+      const idsArray = [id];
+      let data = {
+        users: idsArray,
+      };
+      const url = 'users-info';
+      const res = await axiosInstance.post(url, data);
+      // const res = await axiosInstance.post(url, JSON.stringify(data));
+      // console.log(res.data);
+      dispatch(setLoading(false));
+      if (res.data.users.length > 0) {
+        const users = res.data.users;
+        let updatedUsers = [...currentUser, ...users];
+        // console.log(updatedUsers);
+        dispatch(setPodcastListeners(updatedUsers));
       }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    } finally {
+    } catch (error: any) {
+      // setError('error occurred: please check internet connection(API)');
+      console.log(error['_response']);
       dispatch(setLoading(false));
     }
   };
@@ -631,10 +620,8 @@ export default function GoLive({navigation}: any) {
 
     const updatedData = update.map((obj: any) => {
       if (obj.id === item.id) {
-        agoraEngineRef.current?.muteRemoteAudioStream(
-          item.user.id,
-          !item.muted,
-        );
+        agoraEngineRef.current?.muteRemoteAudioStream(item.id, true);
+        // agoraEngineRef.current?.muteRemoteAudioStream(item.id, !item.muted);
         return {...obj, muted: !item.muted};
       }
       return obj;
@@ -656,7 +643,7 @@ export default function GoLive({navigation}: any) {
         style={styles.image}
         source={require('../../../../assets/images/LiveBg.png')}>
         {/* ************ Header Start ************ */}
-        <Header
+        {/* <Header
           user={user}
           navigation={navigation}
           token={token}
@@ -664,7 +651,7 @@ export default function GoLive({navigation}: any) {
           envVar={envVar}
           leavePodcast={leavePodcast}
           connected={connected}
-        />
+        /> */}
 
         {/* ************ Header end ************ */}
 
@@ -758,9 +745,7 @@ export default function GoLive({navigation}: any) {
         </View>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <View style={{marginLeft: 10}}>
-            <Text style={{color: '#fff'}} onPress={testListners}>
-              Chat Room Idb :{roomId}
-            </Text>
+            <Text style={{color: '#fff'}}>Chat Room Idb :{roomId}</Text>
           </View>
           {/* <View>
             <Text
@@ -777,53 +762,88 @@ export default function GoLive({navigation}: any) {
 
         {/* ************ second row ************ */}
 
-        <View
-          style={{
-            width: '99%',
-            // backgroundColor: 'red',
-            justifyContent: 'space-around',
-            // justifyContent:"space-arro"
-            // height: 400,
-            // alignItems: 'center',
-          }}>
+        <View style={{width: '80%', backgroundColor: 'red', height: 400}}>
           <FlatList
             data={podcastListeners}
-            numColumns={5}
+            horizontal
+            // contentContainerStyle={{paddingHorizontal: 20}}
             keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={{
-              alignItems: 'center',
-              alignSelf: 'center',
-              justifyContent: 'space-between',
-            }}
             // keyExtractor={(item,index) => item?.id.toString()}
-            renderItem={({item, index}) => (
+            renderItem={({item}: any) => (
               // <View>
-              <View
-                style={[styles.usersList, index > 0 ? {marginLeft: 15} : {}]}>
+              <View style={styles.usersList}>
                 {item.occupied ? (
-                  <PodcastHost
-                    muteUnmuteUser={muteUnmuteUser}
-                    token={token}
-                    handleOpenSheet2={handleOpenSheet2}
-                    item={item}
-                    dispatch={dispatch}
-                  />
+                  <TouchableOpacity
+                    style={{
+                      alignItems: 'center',
+                    }}
+                    onPress={() => {
+                      dispatch(setSelectedGuest(item));
+                      handleOpenSheet2();
+                    }}>
+                    <Image
+                      source={
+                        item.avatar
+                          ? {
+                              uri: envVar.API_URL + 'display-avatar/' + item.id,
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            }
+                          : require('../../../../assets/images/place.jpg')
+                      }
+                      style={styles.chatAvatar}
+                    />
+                    <Text
+                      style={[
+                        appStyles.paragraph1,
+                        {color: colors.complimentary},
+                      ]}>
+                      {item.first_name + ' ' + item.last_name}
+                    </Text>
+                    <View style={styles.points}>
+                      <Icon
+                        name="star-four-points"
+                        size={20}
+                        color={colors.dominant}
+                      />
+                      <Text style={[appStyles.small, {color: colors.dominant}]}>
+                        3754
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => muteUnmuteUser(item)}
+                      style={{
+                        position: 'absolute',
+                        right: 10,
+                      }}>
+                      <Icon
+                        name={item.muted ? 'microphone-off' : 'microphone'}
+                        // name="microphone" microphone-off
+
+                        size={25}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
                 ) : (
-                  <View style={{alignItems: 'center'}}>
-                    <View style={styles.emptySeat}>
+                  <View>
+                    <View
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 35,
+                        backgroundColor: '#874975',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}>
                       <Image
                         source={require('../../../../assets/images/icons/sofa.png')}
                         style={{width: 25, height: 25, borderRadius: 25}}
                       />
                     </View>
 
-                    <Text
-                      style={[
-                        appStyles.paragraph1,
-                        {color: colors.complimentary},
-                      ]}>
-                      {item.seatNo}
-                    </Text>
+                    <Text>{item.seatNo}</Text>
                   </View>
                 )}
               </View>
@@ -877,7 +897,6 @@ export default function GoLive({navigation}: any) {
             )}
           </BottomSheetView>
         </BottomSheet>
-
         {!sheet && (
           <BottomSection
             roomId={podcast.chat_room_id}
@@ -897,62 +916,3 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
   },
 });
-interface PodcastHost {
-  item: any;
-  token: string;
-  dispatch: any;
-  handleOpenSheet2: any;
-  muteUnmuteUser: any;
-}
-
-const PodcastHost = ({
-  item,
-  token,
-  dispatch,
-  handleOpenSheet2,
-  muteUnmuteUser,
-}: PodcastHost) => (
-  <TouchableOpacity
-    style={{
-      alignItems: 'center',
-    }}
-    onPress={() => {
-      dispatch(setSelectedGuest(item));
-      handleOpenSheet2();
-    }}>
-    <Image
-      source={
-        item.user.avatar
-          ? {
-              uri: envVar.API_URL + 'display-avatar/' + item.user.id,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          : require('../../../../assets/images/place.jpg')
-      }
-      style={styles.chatAvatar}
-    />
-    <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-      {item.user.first_name + ' ' + item.user.last_name}
-    </Text>
-    <View style={styles.points}>
-      <Icon name="star-four-points" size={20} color={colors.dominant} />
-      <Text style={[appStyles.small, {color: colors.dominant}]}>3754</Text>
-    </View>
-    <TouchableOpacity
-      onPress={() => muteUnmuteUser(item)}
-      style={{
-        position: 'absolute',
-        right: 10,
-      }}>
-      <Icon
-        name={item.muted ? 'microphone-off' : 'microphone'}
-        // name="microphone" microphone-off
-
-        size={25}
-        color={colors.complimentary}
-      />
-    </TouchableOpacity>
-  </TouchableOpacity>
-);

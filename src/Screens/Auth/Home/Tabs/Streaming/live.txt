@@ -37,9 +37,11 @@ import {
   VideoSourceType,
 } from 'react-native-agora';
 import Context from '../../../../../Context/Context';
+import LiveLoading from '../Components/LiveLoading';
 import Header from '../Podcast/Header';
 import envVar from '../../../../../config/envVar';
 import {setLeaveModal} from '../../../../../store/slice/podcastSlice';
+import {setLiveStatus} from '../../../../../store/slice/usersSlice';
 import {ChatClient} from 'react-native-agora-chat';
 import {setHostLeftPodcast} from '../../../../../store/slice/podcastSlice';
 import axios from 'axios';
@@ -47,8 +49,8 @@ import {
   setStreamListeners,
   updateStreamListeners,
 } from '../../../../../store/slice/streamingSlice';
+import {resetLiveStreaming} from '../scripts/liveScripts';
 import {setConnected} from '../../../../../store/slice/chatSlice';
-
 import {useSelector, useDispatch} from 'react-redux';
 import EndLive from '../Podcast/EndLive';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -58,6 +60,7 @@ import {
   renewRTCToken,
   renewRTMToken,
   checkCamPermission,
+  checkMicrophonePermission,
 } from '../../../../../scripts';
 import Gifts from '../Podcast/Gifts';
 import Users from '../Podcast/Users';
@@ -66,27 +69,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   setRTCTokenRenewed,
   setLoading,
+  setIsJoined,
 } from '../../../../../store/slice/usersSlice';
 import axiosInstance from '../../../../../Api/axiosConfig';
 const MAX_RETRIES = 5;
 
 export default function LiveStreaming({navigation}) {
-  const chatClient = ChatClient.getInstance();
+  const chatClient = '';
+  // const chatClient = ChatClient.getInstance();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
   const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {stream, streamListeners, roomId} = useSelector(
+    (state: any) => state.streaming,
+  );
+  const {isJoined, loading, liveStatus} = useSelector(
+    (state: any) => state.user,
+  );
+
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
   const [sheet, setSheet] = useState<boolean>(false);
   const [sheetType, setSheetType] = useState<string | null>('');
   const dispatch = useDispatch();
 
-  const [isJoined, setIsJoined] = useState(false);
-  const [onLive, setOnLive] = useState(false);
-  const {hostId, guests, stream, streamListeners, rtcTokenRenewed, roomId} =
-    useSelector((state: any) => state.streaming);
-  const {loading} = useSelector((state: any) => state.usersReducer);
-  const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const {connected} = useSelector((state: any) => state.chat);
   const [isMuted, setIsMuted] = useState(false); // State to track mute/unmute status
 
@@ -94,7 +101,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    // setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -108,36 +115,36 @@ export default function LiveStreaming({navigation}) {
       // Create RtcEngine after obtaining device permissions
 
       console.log('initializing engine');
+      dispatch(setIsJoined(false));
       agoraEngineRef.current = createAgoraRtcEngine();
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           console.log('Successfully joined channel: ' + elapsed);
-          previewHostStream();
+          // previewHostStream();
           if (stream.host == user.id) {
-            createUserChatRoom();
+            // createUserChatRoom();
           }
-          setIsJoined(true);
-          setOnLive(true);
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           console.log(
             'Remote user ' + uid + ' joined',
             Platform.OS == 'ios' ? 'IOS' : 'Android',
           );
-          // if (uid !== stream.host) {
+          if (uid !== user.id) {
             getUserInfoFromAPI(uid);
-          // }
+          }
           // setRemoteUid(uid);
         },
+
         onUserOffline: (_connection: RtcConnection, uid: number) => {
-          if (uid === hostId) {
+          if (uid === user.id) {
             hostEndedPodcast();
             return;
           }
           let users = [...streamListeners];
           let filter = users.filter((item: any) => item.id !== uid);
-          setStreamListeners(filter);
+          dispatch(setStreamListeners(filter));
           console.log('Remote user ' + uid + ' left the channel');
           // setRemoteUid(0);
         },
@@ -147,10 +154,10 @@ export default function LiveStreaming({navigation}) {
           reason: ConnectionChangedReasonType,
         ) => {
           console.log('state', state, 'reason', reason);
-          // setOnLive(true);
           // console.log('Connection state changed:', state, _connection);
           // console.log('reason state changed:', reason);
-          handelConnection(reason, state);
+          handelConnection(state);
+          // handelConnection(reason, state);
         },
       };
 
@@ -158,6 +165,7 @@ export default function LiveStreaming({navigation}) {
       agoraEngine.registerEventHandler(eventHandler.current);
       // Initialize the engine
       agoraEngine.initialize({
+        channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
         appId: envVar.AGORA_APP_ID,
       });
       agoraEngine.enableLocalAudio(true);
@@ -172,40 +180,34 @@ export default function LiveStreaming({navigation}) {
     // dispatch(setHostLeftPodcast(true));
     dispatch(setLeaveModal(true));
   };
-
-  const handelConnection = (reason: any, state: number) => {
-    switch (reason) {
-      case 9:
-        handleRenewRtcToken();
-        break;
-
-      default:
-        break;
-    }
+  const handelConnection = (state: number) => {
     switch (state) {
       case 3:
-        console.log('connected on agora');
+        dispatch(setLiveStatus('CONNECTED'));
+        dispatch(setIsJoined(true));
         break;
       case 5:
         leaveAgoraChannel();
         break;
       case 1:
+        dispatch(setLiveStatus('IDLE'));
+        dispatch(setIsJoined(false));
         console.log('disconnected');
         break;
       default:
         break;
     }
   };
-  const previewHostStream = () => {
-    console.log('previewHostStream');
-    const host = {
-      id: stream.host,
-      name: 'imran',
-    };
-    let updateArray = [host];
-    console.log(updateArray);
-    dispatch(setStreamListeners(updateArray));
-  };
+  // const previewHostStream = () => {
+  //   console.log('previewHostStream');
+  //   const host = {
+  //     id: stream.host,
+  //     name: 'imran',
+  //   };
+  //   let updateArray = [host];
+  //   console.log(updateArray);
+  //   dispatch(setStreamListeners(updateArray));
+  // };
   const handleRenewRtcToken = async () => {
     try {
       setLoading(true);
@@ -224,7 +226,7 @@ export default function LiveStreaming({navigation}) {
     try {
       if (agoraEngineRef.current) {
         agoraEngineRef.current.leaveChannel(); // Leave the channel
-        setIsJoined(false);
+        dispatch(setIsJoined(false));
         console.log('Left the Agora channel successfully');
       } else {
         console.log('Agora engine is not initialized');
@@ -267,9 +269,9 @@ export default function LiveStreaming({navigation}) {
           String(stream.channel),
           user.id,
           {
-            channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
             clientRoleType: ClientRoleType.ClientRoleBroadcaster,
             publishMicrophoneTrack: true,
+            // publishCameraTrack:true,
             autoSubscribeAudio: true,
           },
         );
@@ -280,7 +282,8 @@ export default function LiveStreaming({navigation}) {
           String(stream.channel),
           user.id,
           {
-            clientRoleType: ClientRoleType.ClientRoleAudience,
+            clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+            // clientRoleType: ClientRoleType.ClientRoleAudience,
             publishMicrophoneTrack: false,
             publishCameraTrack: true,
             autoSubscribeAudio: true,
@@ -305,9 +308,11 @@ export default function LiveStreaming({navigation}) {
 
   const checkPermission = async () => {
     const cam = await checkCamPermission();
-    if (cam) {
+    const microphone = await checkMicrophonePermission();
+    if (cam || microphone) {
       return true;
     }
+    Alert.alert('Permission Required', 'Unable to start Live');
   };
 
   // const createUserChatRoom = async () => {
@@ -426,47 +431,33 @@ export default function LiveStreaming({navigation}) {
       console.log(error);
     }
   };
-  const getUserInfoFromAPI = async (id: string | number) => {
+  const getUserInfoFromAPI = async (id: any) => {
     try {
-      const idsArray = [id];
-      const data = {
-        users: idsArray,
-      };
-      console.log('Request Data:', data);
-
-      const url = 'users-info';
-      const res = await axiosInstance.post(url, data);
-
-      console.log('API Response:', res.data);
-
+      let currentUsers = [...streamListeners];
+      let joined = currentUsers.find((item: any) => item.user?.id === id);
+      if (joined) return;
+      dispatch(setLoading(true));
+      const res = await axiosInstance.post('users-info', {users: [id]});
+      dispatch(setLoading(false));
       if (res.data.users.length > 0) {
-        const userJoin = res.data.users[0];
-        // Create a new array without mutating the original state directly
-        const updatedUsers = [...streamListeners];
-        // Replace the first element with the new user data
-        // updatedUsers[0] = users[0];
-        // updatedUsers.unshift(users[0]);
-        // currentUser.shift();
-        // if (stream.listeners > 2) {
-        // updatedUsers.pop();
-        // }
-        if (!updatedUsers.some(user => user.id === userJoin.id)) {
-          updatedUsers.pop(); // Remove the last element
-          updatedUsers.unshift(userJoin); // Add new user at the start
+        const user = res.data.users[0];
+        // Find an empty room
+        const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
+        if (emptyRoomIndex !== -1) {
+          // Assign user to empty room
+          currentUsers[emptyRoomIndex] = {
+            ...currentUsers[emptyRoomIndex],
+            user,
+            occupied: true,
+          };
+        } else {
+          console.warn('No empty rooms available');
         }
-
-        // console.log('Updated Users:', updatedUsers);
-
-        // Dispatch the updated array to the state
-        dispatch(setStreamListeners(updatedUsers));
+        dispatch(setStreamListeners(currentUsers));
       }
     } catch (error: any) {
-      console.error(
-        'API Error:',
-        error.response ? error.response.data : error.message,
-      );
-      // Optionally, set an error state or display a user-friendly message
-      // dispatch(setError('An error occurred. Please check your internet connection.'));
+      console.log(error['_response']);
+      dispatch(setLoading(false));
     }
   };
   // Calculate the number of rows and columns based on the number of hosts
@@ -507,12 +498,9 @@ export default function LiveStreaming({navigation}) {
           await chatClient.roomManager.leaveChatRoom(stream.chat_room_id);
         }
       }
-      dispatch(setLeaveModal(false));
       const res = agoraEngineRef.current?.leaveChannel();
       agoraEngineRef.current?.release();
-
-      dispatch(setLeaveModal(false));
-
+      resetLiveStreaming(dispatch);
       // await chatClient.roomManager.leaveChatRoom(podcast.roomId);
       navigation.navigate('HomeB');
     } catch (error) {}
@@ -610,7 +598,7 @@ export default function LiveStreaming({navigation}) {
             <RtcSurfaceView
               canvas={{
                 uid: item.id,
-                sourceType: VideoSourceType.VideoSourceRemote,
+                // sourceType: VideoSourceType.VideoSourceRemote,
               }}
               style={styles.videoView}
             />
@@ -618,7 +606,11 @@ export default function LiveStreaming({navigation}) {
           <Text>{item.id}</Text>
         </>
       ) : (
-        <Text>Waiting for user {index} to join </Text>
+        <TouchableOpacity style={{backgroundColor: colors.accent}}>
+          <Icon name="plus" color={colors.complimentary} size={40} />
+          {/* <Text>{item}</Text> */}
+        </TouchableOpacity>
+        // <Text>Waiting for user {index} to join </Text>
       )}
     </View>
   );
@@ -629,9 +621,9 @@ export default function LiveStreaming({navigation}) {
         source={require('../../../../../assets/images/LiveBg.png')}>
         <Header
           user={user}
-          onLive={onLive}
           navigation={navigation}
           token={token}
+          liveEvent={stream}
           envVar={envVar}
           leavePodcast={leaveStream}
           connected={connected}
@@ -669,13 +661,13 @@ export default function LiveStreaming({navigation}) {
         <TouchableOpacity style={{marginTop: 20}} onPress={leaveAgoraChannel}>
           <Text style={{color: '#fff'}}>leave channel</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={createUserChatRoom}>
+        {/* <TouchableOpacity onPress={createUserChatRoom}>
           <Text style={{color: '#fff'}}>createUserChatRoom</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={{flexDirection: 'row', marginTop: 30}}>
           {/* Local View (50% of the screen) */}
           <View style={styles.localView}>
-            {onLive ? (
+            {isJoined ? (
               <>
                 <React.Fragment key={user.id}>
                   {/* Create a local view using RtcSurfaceView */}
@@ -762,7 +754,13 @@ export default function LiveStreaming({navigation}) {
           )}
         </BottomSheetView>
       </BottomSheet>
-      {!sheet && <BottomSection handleOpenSheet={handleOpenSheet} />}
+      {!sheet && (
+        <BottomSection
+          roomId={stream.chat_room_id}
+          handleOpenSheet={handleOpenSheet}
+        />
+      )}
+      {liveStatus == 'LOADING' && <LiveLoading />}
     </View>
   );
 }

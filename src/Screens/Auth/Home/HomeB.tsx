@@ -110,8 +110,9 @@ export default function HomeB() {
       console.log('run message listener ...');
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
-          let currentMessages = [...messages]; // Clone current messages to avoid mutation
+          console.log('message recived ...');
 
+          let currentMessages = [...messages]; // Clone current messages to avoid mutation
           messagesReceived.forEach((message: ChatMessage) => {
             const existingConversation = currentMessages.find(
               item => item.conversationId === message.conversationId,

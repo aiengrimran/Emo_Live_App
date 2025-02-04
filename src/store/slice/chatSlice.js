@@ -44,7 +44,6 @@ const chatSlice = createSlice({
     error: null,
     tokenRenewed: false,
     messages: [],
-    chatScreenMessages: [],
   },
   reducers: {
     setConnectionStatus(state, action) {
@@ -64,9 +63,6 @@ const chatSlice = createSlice({
     setMessages(state, action) {
       state.messages = action.payload;
     },
-    setChatMessages(state, action) {
-      state.chatScreenMessages = action.payload;
-    },
     setInitialized(state, action) {
       state.initialized = action.payload;
     },
@@ -80,7 +76,6 @@ export const {
   setConnectionStatus,
   setTokenRenewed,
   setMessages,
-  setChatMessages,
   setInitialized,
   setConnected,
 } = chatSlice.actions;

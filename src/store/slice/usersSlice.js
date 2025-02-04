@@ -11,6 +11,14 @@ const initialState = {
   selectedGuest: '',
   chatConnected: false,
   chatUser: '',
+  roomId: '',
+  liveForm: {
+    liveType: '',
+    title: 'test 122',
+    duration: '20',
+    listeners: [],
+    type: '',
+  },
 };
 
 export const managerSlice = createSlice({
@@ -22,6 +30,12 @@ export const managerSlice = createSlice({
     },
     setSelectedGuest: (state, action) => {
       state.selectedGuest = action.payload;
+    },
+    setLiveForm: (state, action) => {
+      state.liveForm = {...state.liveForm, ...action.payload};
+    },
+    setRoomId: (state, action) => {
+      state.roomId = action.payload;
     },
     setChatUser: (state, action) => {
       state.chatUser = action.payload;
@@ -50,10 +64,12 @@ export const managerSlice = createSlice({
 // Action creators are generated for each case reducer function
 export const {
   updateUsers,
+  setRoomId,
   updateVisitProfile,
   setRTCTokenRenewed,
   setIsJoined,
   setSelectedGuest,
+  setLiveForm,
   setChatConnected,
   setChatUser,
   setLoading,

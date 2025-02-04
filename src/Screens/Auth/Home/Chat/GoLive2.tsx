@@ -21,7 +21,11 @@ import Room9On from '../../../../assets/svg/room9.svg';
 import axiosInstance from '../../../../Api/axiosConfig';
 import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
-import axios from 'axios';
+import {resetPodcastState} from '../Tabs/scripts/liveScripts';
+import {
+  setPodcast,
+  updatePodcastListeners,
+} from '../../../../store/slice/podcastSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   setGuests,
@@ -32,26 +36,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive2({navigation}) {
   const {guests} = useSelector((state: any) => state.streaming);
+  const {liveForm} = useSelector((state: any) => state.user);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useDispatch();
 
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
-  const [form, setForm] = useState({
-    title: '',
-  });
+
   const {token} = tokenMemo;
 
   const startLive = async () => {
     try {
-      // setUser
-
       if (!guests) {
         Alert.alert('error', 'please select seat number');
         return;
       }
       setLoading(true);
+      console.log(liveForm);
+      if (liveForm.liveType == 'podcast') {
+        startPodCast();
+        return;
+      }
+      // setLoading(true);
       const url = envVar.API_URL + 'stream/start';
       const data = {
         title: 'Some title',
@@ -60,6 +67,8 @@ export default function GoLive2({navigation}) {
         type: 'PUBLIC',
       };
 
+      // dispatch(updateStreamListeners(guests));
+      // dispatch(setGuests(guests));
       const res = await axiosInstance.post(url, data);
       console.log(res.data);
 
@@ -73,7 +82,6 @@ export default function GoLive2({navigation}) {
         dispatch(updateStreamListeners(guests));
         dispatch(setStream(res.data.stream));
         setLoading(false);
-
         navigation.navigate('LiveStreaming');
       }
       console.log(res.data);
@@ -85,6 +93,46 @@ export default function GoLive2({navigation}) {
         return;
       }
       setError('Please check internet connection');
+    }
+  };
+
+  const startPodCast = async () => {
+    try {
+      // setUser
+      resetPodcastState(dispatch);
+      // setLoading(true);
+
+      console.log('starting podcast');
+
+      const data = {
+        title: liveForm.title,
+        duration: liveForm.duration,
+        listeners: liveForm.listeners,
+        type: 'PUBLIC',
+      };
+      // dispatch(updatePodcastListeners(guests));
+      // navigation.navigate('GoLive');
+      // return;
+      // dispatch(setPodcast(res.data.podcast));
+
+      const url = envVar.API_URL + 'podcast/start';
+
+      const res = await axiosInstance.post(url, data);
+      setLoading(false);
+
+      if (res.status == 201) {
+        setUser(() => res.data.user);
+        dispatch(updatePodcastListeners(guests));
+        dispatch(setPodcast(res.data.podcast));
+
+        navigation.navigate('GoLive');
+      }
+      // const res = await axiosInstance.post(url, JSON.stringify(data));
+      console.log(res.data);
+    } catch (error: any) {
+      setLoading(false);
+      setError('please check internet connection');
+      // console.log(error.response.data.message);
     }
   };
   return (
@@ -156,6 +204,15 @@ export default function GoLive2({navigation}) {
               </View>
             </View>
           </View>
+
+          <Text
+            style={[
+              appStyles.regularTxtMd,
+              {color: colors.complimentary, textAlign: 'center', marginTop: 40},
+            ]}>
+            Please Select Seat for{' '}
+            {liveForm.type == 'video' ? 'Video' : 'Podcast'} Streaming
+          </Text>
           <View style={styles.room}>
             <TouchableOpacity onPress={() => dispatch(setGuests(1))}>
               <View
