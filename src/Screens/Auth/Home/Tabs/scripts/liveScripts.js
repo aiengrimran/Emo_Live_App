@@ -23,9 +23,11 @@ export const resetPodcastState = dispatch => {
 };
 
 export const getPodcastUsers = async id => {
+  console.log(id, 'from live file');
   return new Promise(async (resolve, reject) => {
     try {
-      const url = axiosInstance + 'podcast/users/' + id;
+      const url = envVar.API_URL + 'podcast/users/' + id;
+      console.log(url);
       const res = await axiosInstance.get(url);
       resolve(res.data.users);
     } catch (error) {
@@ -36,9 +38,11 @@ export const getPodcastUsers = async id => {
 };
 
 export const getLiveUsers = (id, type) => {
+  console.log(type, id);
   return new Promise(async (resolve, reject) => {
     try {
-      const url = axiosInstance + type + '/users/' + id;
+      const url = envVar.API_URL + type + '/users/' + id;
+      console.log(url);
       const res = await axiosInstance.get(url);
       resolve(res.data.users);
     } catch (error) {
@@ -49,7 +53,6 @@ export const getLiveUsers = (id, type) => {
 };
 export const resetLiveStreaming = dispatch => {
   console.log('function run');
-  dispatch(setLeaveModal(false));
   dispatch(setIsJoined(false));
   dispatch(setStreamListeners([]));
   dispatch(setStream(''));

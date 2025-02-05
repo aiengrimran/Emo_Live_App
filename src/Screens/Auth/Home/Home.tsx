@@ -136,10 +136,10 @@ export default function Home({navigation}) {
     ];
 
     console.log('hii');
-    dispatch(updatePodcastListeners(6));
-    // dispatch(updateStreamListeners(5));
-    // navigation.navigate('LiveStreaming');
-    navigation.navigate('GoLive');
+    // dispatch(updatePodcastListeners(6));
+    dispatch(updateStreamListeners(5));
+    navigation.navigate('LiveStreaming');
+    // navigation.navigate('GoLive');
   };
   return (
     // <ReanimatedSwipeable>

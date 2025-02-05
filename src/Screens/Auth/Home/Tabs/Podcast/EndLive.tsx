@@ -51,7 +51,8 @@ export default function EndLive({
       if (user.id !== podcast.host || user.id !== stream.host) {
         url = url + '/guest';
       }
-      await axiosInstance.get(url);
+      console.log(url);
+      // await axiosInstance.get(url);
       setDisabled(false);
       endPodcastForUser();
     } catch (error) {

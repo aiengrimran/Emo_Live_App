@@ -80,7 +80,7 @@ const liveStyles = StyleSheet.create({
   btn1: {
     position: 'absolute',
     flexDirection: 'row',
-    bottom: Platform.OS == 'android' ? 30 : 40,
+    bottom: Platform.OS == 'android' ? 0 : 20,
     width: '99%',
     alignSelf: 'center',
     borderRadius: 15,

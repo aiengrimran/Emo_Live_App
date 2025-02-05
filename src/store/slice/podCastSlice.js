@@ -1,47 +1,13 @@
 import {createSlice} from '@reduxjs/toolkit';
+import {Alert} from 'react-native';
 
 const podcastSlice = createSlice({
   name: 'podcast',
   initialState: {
-    podcast: {
-      channel: 'ch_26390_4b9f',
-      created_at: '2025-02-02T19:59:50.000000Z',
-      duration: '20',
-      host: 2,
-      id: 1,
-      listeners_added: 'null',
-      status: 'STARTED',
-      title: 'test 122',
-      type: 'public',
-      updated_at: '2025-02-02T19:59:50.000000Z',
-      user: {
-        account_verified: 0,
-        address: 'buner kpk',
-        agora_chat_token:
-          '007eJxTYOCp36dep/BO+u8DD9Eft8wdvT8t4mLJPDfRritg88JDR00UGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSm+7Wpxv9rk9P/vyPkZGBlYERCEF8IAkA20sh0g==',
-        agora_chat_uid: null,
-        agora_rtc_token:
-          '007eJxTYHATlnp6aJNrRo7Mdsm8GTvPTvy15EJL4xr2+J+v7nQLXnivwJCcZGhuYWFqmZZmYGhiYJBiYZCSbGKQkmpobp6WmpKUbKE9P70hkJEhm8WJkZGBkYEFiEGACUwyg0kWMMnLkJwRb2FiamwWb5BkYcrIYAQAESchvA==',
-        avatar: 'users/avatars/1736177116.jpg',
-        bio: 'something should happen special',
-        can_create_chat_room: 1,
-        created_at: '2024-12-28T09:50:57.000000Z',
-        dob: '1997-03-15',
-        email: 'zalkip@gmail.com',
-        first_name: 'zalkip',
-        gender: 'male',
-        id: 2,
-        last_name: 'khan',
-        phone: null,
-        provider: null,
-        provider_id: null,
-        updated_at: '2025-02-02T08:22:16.000000Z',
-        user_name: null,
-      },
-    },
+    // podcast: ,
     podcasts: [],
 
-    // podcast: '',
+    podcast: '',
     podcastListeners: [],
     loading: false,
     hostId: null,
@@ -81,6 +47,7 @@ const podcastSlice = createSlice({
       state.leaveModal = action.payload;
     },
     setPodcastListeners: (state, action) => {
+      console.log('i updated array ....');
       state.podcastListeners = action.payload;
     },
     setHostLeftPodcast: (state, action) => {

@@ -63,7 +63,8 @@ export default function GoLive2({navigation}) {
       const data = {
         title: 'Some title',
         duration: 10,
-        listeners: guests,
+        listeners: guests + 1,
+        listeners_can_add: [],
         type: 'PUBLIC',
       };
 
@@ -84,7 +85,7 @@ export default function GoLive2({navigation}) {
         setLoading(false);
         navigation.navigate('LiveStreaming');
       }
-      console.log(res.data);
+      // console.log(res.data);
     } catch (error: any) {
       console.log(error);
       setLoading(false);
@@ -102,18 +103,14 @@ export default function GoLive2({navigation}) {
       resetPodcastState(dispatch);
       // setLoading(true);
 
-      console.log('starting podcast');
-
       const data = {
         title: liveForm.title,
         duration: liveForm.duration,
-        listeners: liveForm.listeners,
+        listeners: guests + 1,
+        listeners_can_add: [],
         type: 'PUBLIC',
       };
-      // dispatch(updatePodcastListeners(guests));
-      // navigation.navigate('GoLive');
-      // return;
-      // dispatch(setPodcast(res.data.podcast));
+      console.log('starting podcast', data);
 
       const url = envVar.API_URL + 'podcast/start';
 
@@ -122,15 +119,14 @@ export default function GoLive2({navigation}) {
 
       if (res.status == 201) {
         setUser(() => res.data.user);
-        dispatch(updatePodcastListeners(guests));
+        dispatch(updatePodcastListeners(guests + 1));
         dispatch(setPodcast(res.data.podcast));
-
         navigation.navigate('GoLive');
       }
       // const res = await axiosInstance.post(url, JSON.stringify(data));
-      console.log(res.data);
     } catch (error: any) {
       setLoading(false);
+      console.log(error);
       setError('please check internet connection');
       // console.log(error.response.data.message);
     }

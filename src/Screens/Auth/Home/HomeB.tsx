@@ -8,7 +8,10 @@ import GoLive2 from './Chat/GoLive2';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import StartLive from './Tabs/StartLive';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {setTokenRenewed} from '../../../store/slice/chatSlice';
+import {
+  setChatRoomMessages,
+  setTokenRenewed,
+} from '../../../store/slice/chatSlice';
 import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
 import axiosInstance from '../../../Api/axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +23,7 @@ import {
   ChatConnectEventListener,
   ChatMessage,
   ChatMessageEventListener,
+  ChatMessageChatType,
 } from 'react-native-agora-chat';
 import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
@@ -41,9 +45,8 @@ export default function HomeB() {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
-  const {initialized, messages, connected, error} = useSelector(
-    (state: any) => state.chat,
-  );
+  const {initialized, messages, chatRoomMessage, connected, error} =
+    useSelector((state: any) => state.chat);
   const {unread} = useSelector((state: any) => state.notification);
 
   useEffect(() => {
@@ -110,7 +113,12 @@ export default function HomeB() {
       console.log('run message listener ...');
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
-          console.log('message recived ...');
+          console.log('message recived ...', messagesReceived);
+          if (messagesReceived[0].chatType == ChatMessageChatType.ChatRoom) {
+            let roomMessage = [...chatRoomMessage, ...messagesReceived]; // Clone current messages to avoid mutation
+            dispatch(setChatRoomMessages(roomMessage));
+            return;
+          }
 
           let currentMessages = [...messages]; // Clone current messages to avoid mutation
           messagesReceived.forEach((message: ChatMessage) => {

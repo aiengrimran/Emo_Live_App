@@ -12,7 +12,11 @@ import React, {useContext, useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
-import {setStream, setStreams} from '../../../../store/slice/streamingSlice';
+import {
+  setStream,
+  setStreams,
+  updateStreamListeners,
+} from '../../../../store/slice/streamingSlice';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
 import {useDispatch, useSelector} from 'react-redux';
@@ -38,6 +42,7 @@ export default function Popular({navigation}) {
       const url = envVar.API_URL + 'stream/active';
       const res = await axiosInstance.get(url);
       setLoading(false);
+      console.log(res.data);
 
       if (res.data.stream.length) {
         dispatch(setStreams(res.data.stream));
@@ -59,11 +64,12 @@ export default function Popular({navigation}) {
       };
       const res = await axiosInstance.post(url, data);
       setLoading(false);
-      console.log(res.data);
-      dispatch(setStream(item));
+      // console.log(res.data);
       setUser(res.data.user);
-
-      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+      dispatch(updateStreamListeners(item.listeners));
+      // dispatch(updateStreamListeners(res.data.listeners + 1));
+      dispatch(setStream(item));
+      // await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
       navigation.navigate('LiveStreaming');
     } catch (error) {
       setLoading(false);

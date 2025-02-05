@@ -13,7 +13,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
 import axios from 'axios';
-import {setPodcast} from '../../../../store/slice/podcastSlice';
+import {
+  setPodcast,
+  updatePodcastListeners,
+} from '../../../../store/slice/podcastSlice';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
 import {useDispatch, useSelector} from 'react-redux';
@@ -62,8 +65,9 @@ export default function Popular({navigation}) {
         id: item.id,
       };
       const res = await axiosInstance.post(url, data);
-      console.log(res.data);
+      // console.log(res.data);
       setLoading(false);
+      dispatch(updatePodcastListeners(item.listeners));
       setUser(res.data.user);
       dispatch(setPodcast(item));
       navigation.navigate('GoLive');
@@ -75,7 +79,7 @@ export default function Popular({navigation}) {
   };
 
   return (
-    <View>
+    <View style={{flex: 1}}>
       <View style={{marginTop: 20}}>
         <View style={{alignSelf: 'center'}}>
           {loading ? (
@@ -92,56 +96,72 @@ export default function Popular({navigation}) {
           )}
         </View>
         <TouchableOpacity onPress={getPodcast}>
-          <Text style={{marginVertical: 20, color: colors.complimentary}}>
+          <Text style={{marginVertical: 10, color: colors.complimentary}}>
             GetPodcasts
           </Text>
         </TouchableOpacity>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
-        <FlatList
-          data={podcasts}
-          keyExtractor={(item: any) => item.id?.toString()}
-          numColumns={2}
-          renderItem={({item}: any) => (
-            <TouchableOpacity
-              style={styles.PodcastUser}
-              onPress={() => joinPodcast(item)}>
-              <View
-                style={{
-                  width: '100%',
-                  height: 180,
-                }}>
-                <Image
-                  style={styles.userImage}
-                  source={
-                    item.user.avatar
-                      ? {
-                          uri:
-                            envVar.API_URL + 'display-avatar/' + item.user.id,
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }
-                      : require('../../../../assets/images/parts/placeBlack.png')
-                  }
-                />
-                <TouchableOpacity style={styles.waveform}>
-                  <Icon
-                    name="waveform"
-                    color={colors.complimentary}
-                    size={30}
+        <View
+          style={
+            {
+              // height: '90%',
+              // flex: 1,
+            }
+          }>
+          <FlatList
+            data={podcasts}
+            keyExtractor={(item: any) => item.id?.toString()}
+            numColumns={2}
+            contentContainerStyle={{
+              flexGrow: 1,
+            }}
+            renderItem={({item}: any) => (
+              <TouchableOpacity
+                style={styles.PodcastUser}
+                onPress={() => joinPodcast(item)}>
+                <View
+                  style={{
+                    width: '100%',
+                    height: 180,
+                  }}>
+                  <Image
+                    style={styles.userImage}
+                    source={
+                      item.user.avatar
+                        ? {
+                            uri:
+                              envVar.API_URL + 'display-avatar/' + item.user.id,
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
+                        : require('../../../../assets/images/parts/placeBlack.png')
+                    }
                   />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.userStats}>
-                  <Icon name="diamond" color={colors.complimentary} size={20} />
-                  <Text style={styles.userFollower}>10.51K</Text>
-                </TouchableOpacity>
-                <Text style={styles.userTxt}>
-                  {item.user.first_name + ' ' + item.user.last_name} : {item.id}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
+                  <TouchableOpacity style={styles.waveform}>
+                    <Icon
+                      name="waveform"
+                      color={colors.complimentary}
+                      size={30}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.userStats}>
+                    <Icon
+                      name="diamond"
+                      color={colors.complimentary}
+                      size={20}
+                    />
+                    <Text style={styles.userFollower}>10.51K</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.userTxt}>
+                    {item.user.first_name + ' ' + item.user.last_name} :{' '}
+                    {item.id}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       </View>
     </View>
   );

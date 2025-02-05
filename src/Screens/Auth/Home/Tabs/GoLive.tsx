@@ -29,7 +29,6 @@ import {
   ClientRoleType,
   IRtcEngine,
   AudienceLatencyLevelType,
-  RtcSurfaceView,
   RtcConnection,
   IRtcEngineEventHandler,
   ConnectionStateType,
@@ -103,29 +102,33 @@ export default function GoLive({navigation}: any) {
     };
   }, []);
 
+  // useEffect(() => {
+  //   const latestUser = podcastListeners.find(
+  //     (item: any) => item.occupied && item.user,
+  //   );
+  //   if (latestUser) {
+  //     getUserInfoFromAPI(latestUser.user.id);
+  //   }
+  // }, [podcastListeners]);
   // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
     try {
       // Create RtcEngine after obtaining device permissions
-      dispatch(setIsJoined(false));
+      // dispatch(setIsJoined(false));
 
       console.log('initializing engine ....');
       agoraEngineRef.current = createAgoraRtcEngine();
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
-          console.log(
-            'Successfully joined channel: ',
-            user.id,
-            'podcast host',
-            podcast.host,
-          );
           if (podcast.host == user.id) {
             createUserChatRoom();
+          } else {
+            userJoinChatRoom(podcast.chat_room_id);
           }
-          addCurrentToListeners();
+          addUserToState();
           if (_connection.localUid !== podcast.host) {
-            getPodcastActive();
+            // getPodcastUsers();
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
@@ -135,6 +138,7 @@ export default function GoLive({navigation}: any) {
             user.id,
           );
           if (uid !== podcast.host) {
+            console.log(podcastListeners);
             getUserInfoFromAPI(uid);
           }
           // setRemoteUid(uid);
@@ -166,21 +170,9 @@ export default function GoLive({navigation}: any) {
           state: ConnectionStateType,
           reason: ConnectionChangedReasonType,
         ) => {
-          // console.log(
-          //   'state',
-          //   state,
-          //   'reason',
-          //   reason,
-          //   'user =>',
-          //   user.id,
-          //   'host =>',
-          //   podcast.host,
-          // );
-          // console.log('Connection state changed:', state, _connection);
-          // console.log('reason state changed:', reason);
-          console.log('Clraring ......', _connection.localUid);
-          console.log('state', state, 'user.id', _connection.localUid);
-          handelConnection(reason, state);
+          // console.log('Clraring ......', _connection.localUid);
+          // console.log('state', state, 'user.id', _connection.localUid);
+          handelConnection(state);
         },
       };
 
@@ -198,46 +190,58 @@ export default function GoLive({navigation}: any) {
       console.log(e);
     }
   };
-  const getPodcastActive = async () => {
+  const getPodcastUsers = async () => {
     try {
+      // console.log(podcast.id, 'getting podcast users ....');
       const users = await getLiveUsers(podcast.id, 'podcast');
-      const currentUsers = podcastListeners.map((item: any) => {
-        const userKey = users.find(
-          (user: any) => user.id === item.user.id && !item.occupied,
-        );
+      // console.log(users);
 
-        return userKey
-          ? {
-              ...item,
-              user: userKey,
-              occupied: true,
-            }
-          : item;
-      });
+      // Create a copy of current state to avoid direct mutation
+      const currentUsers = [...podcastListeners];
 
-      dispatch(setPodcastListeners(currentUsers));
+      // Create a Set of existing user IDs for quick lookup
+      const existingUserIds = new Set(
+        currentUsers.map((item: any) => item.user?.id),
+      );
+
+      // Filter new users that are not in the local state
+      const newUsers = users
+        .filter((user: any) => !existingUserIds.has(user.id))
+        .map((user: any) => ({
+          user,
+          occupied: true,
+          seatNo: null, // Default value (or set based on logic)
+          muted: false, // Default value (or set based on logic)
+        }));
+
+      // Update Redux state immutably
+      dispatch(setPodcastListeners([...currentUsers, ...newUsers]));
     } catch (error) {
       console.error('Error getting active podcast:', error);
     }
   };
-  const addCurrentToListeners = async () => {
+  const addUserToState = async () => {
     try {
       let currentUsers = [...podcastListeners];
+
+      // Check if user already exists in the list
       let joined = currentUsers.find((item: any) => item.user?.id == user.id);
       if (joined) return;
-      // Find an empty room
+
+      // Find an empty room (unoccupied slot)
       const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
+      console.log(emptyRoomIndex, 'emptyRoomIndex', 'i am adding myself');
+
       if (emptyRoomIndex !== -1) {
-        // Assign user to empty room
-        currentUsers[emptyRoomIndex] = {
-          ...currentUsers[emptyRoomIndex],
-          user,
-          occupied: true,
-        };
+        // Create a new array with the updated user (immutable update)
+        const updatedUsers = currentUsers.map((item, index) =>
+          index === emptyRoomIndex ? {...item, user, occupied: true} : item,
+        );
+
+        dispatch(setPodcastListeners(updatedUsers));
       } else {
         console.warn('No empty rooms available');
       }
-      dispatch(setPodcastListeners(currentUsers));
     } catch (error: any) {
       console.log(error['_response']);
       dispatch(setLoading(false));
@@ -246,12 +250,13 @@ export default function GoLive({navigation}: any) {
   const filterOutUser = async (uid: number | undefined) => {
     try {
       let currentUsers = [...podcastListeners];
-      const emptyRoomIndex = currentUsers.findIndex(
-        item => item.occupied && item.user.id == uid,
-      );
+      const emptyRoomIndex = currentUsers.findIndex(function (item) {
+        if (item.occupied && item.user?.id == uid) {
+          return true;
+        }
+      });
       if (emptyRoomIndex !== -1) {
         let leaveUser = currentUsers.find((item: any) => item.user.id == uid);
-
         // Assign user to empty room
         currentUsers[emptyRoomIndex] = {
           ...currentUsers[emptyRoomIndex],
@@ -269,7 +274,7 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
-  const handelConnection = (reason: any, state: number) => {
+  const handelConnection = (state: number) => {
     switch (state) {
       case 3:
         dispatch(setLiveStatus('CONNECTED'));
@@ -386,26 +391,35 @@ export default function GoLive({navigation}: any) {
       console.log(error);
     }
   };
+
   const getUserInfoFromAPI = async (id: number) => {
     try {
-      const currentUsers = [...podcastListeners];
+      console.log('i should have latest data, ', podcastListeners);
+      const currentUsers = [...podcastListeners]; // Copy state to avoid mutation
+
+      // Check if user already exists in the list
       if (currentUsers.some(item => item.user?.id === id)) return;
 
+      console.log(currentUsers, 'getUserInfoFromAPI');
       dispatch(setLoading(true));
+
+      // Fetch user data from API
       const {data} = await axiosInstance.post('users-info', {users: [id]});
 
       if (data.users?.[0]) {
+        // Find an empty slot where `occupied` is false and `user` is not assigned
         const emptyRoomIndex = currentUsers.findIndex(
           item => !item.occupied && !item.user,
         );
+        console.log(emptyRoomIndex, 'sss', currentUsers);
 
         if (emptyRoomIndex !== -1) {
-          currentUsers[emptyRoomIndex] = {
-            ...currentUsers[emptyRoomIndex],
-            user: data.users[0],
-            occupied: true,
-          };
-          dispatch(setPodcastListeners(currentUsers));
+          // Create a new array with updated user information (immutably)
+          const updatedUsers = currentUsers.map((item, index) =>
+            index === 1 ? {...item, user: data.users[0], occupied: true} : item,
+          );
+
+          dispatch(setPodcastListeners(updatedUsers));
         } else {
           console.warn('No empty rooms available');
         }
@@ -416,11 +430,51 @@ export default function GoLive({navigation}: any) {
       dispatch(setLoading(false));
     }
   };
+  const getUserInfoFromAPIx = async (id: number) => {
+    try {
+      const currentUsers = [...podcastListeners]; // Copy state to avoid mutation
+
+      // Check if user already exists in the list
+      if (currentUsers.some(item => item.user?.id === id)) return;
+
+      console.log(currentUsers, 'getUserInfoFromAPI');
+      dispatch(setLoading(true));
+
+      // Fetch user data from API
+      const {data} = await axiosInstance.post('users-info', {users: [id]});
+
+      if (data.users?.[0]) {
+        // Find an empty slot where `occupied` is false and `user` is not assigned
+        const emptyRoomIndex = currentUsers.findIndex(
+          item => !item.occupied && !item.user,
+        );
+        console.log(emptyRoomIndex, 'sss', currentUsers);
+
+        if (emptyRoomIndex !== -1) {
+          // Create a new array with updated user information (immutably)
+          const updatedUsers = currentUsers.map((item, index) =>
+            index === emptyRoomIndex
+              ? {...item, user: data.users[0], occupied: true}
+              : item,
+          );
+
+          dispatch(setPodcastListeners(updatedUsers));
+        } else {
+          console.warn('No empty rooms available');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
   const userJoinChatRoom = async (roomId: any) => {
     try {
       await chatClient.roomManager.joinChatRoom(roomId);
     } catch (error) {
-      console.log(error);
+      console.log(error, 'error in joining chat room');
     }
   };
 
@@ -495,80 +549,12 @@ export default function GoLive({navigation}: any) {
       if (result1 == 0) {
         dispatch(setLiveStatus('LOADING'));
         console.log('Successfully joined the channel!');
-        // setIsJoined(true); // Update joined state
       }
     } catch (error: any) {
       console.error('Failed to join the channel:', error.message);
       throw new Error('Unable to connect to the channel. Please try again.');
     }
   };
-  // const userJoinChannel = async () => {
-  //   if (!checkPermission()) {
-  //     Alert.alert('Error', 'Permission Required ...');
-  //   }
-  //   console.log('Connecting...', isJoined, user.id, podcast.host);
-  //   // return;
-
-  //   // if (!connected) {
-  //   //   loginUser()
-  //   //   return
-  //   // }
-
-  //   // Exit if already joined
-  //   if (isJoined) {
-  //     console.log('User is already in the channel.');
-  //     dispatch(setLiveStatus('CONNECTED'));
-  //     return;
-  //   }
-
-  //   try {
-  //     // Check if Agora engine is initialized
-  //     if (!agoraEngineRef.current) {
-  //       throw new Error('Agora engine is not initialized.');
-  //     }
-  //     let result1;
-  //     if (user.id == podcast.host) {
-  //       console.log('Joining as a host...');
-  //       result1 = agoraEngineRef.current.joinChannel(
-  //         user.agora_rtc_token,
-  //         podcast.channel,
-  //         user.id,
-  //         {
-  //           // channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
-  //           clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-  //           publishMicrophoneTrack: true,
-  //           autoSubscribeAudio: true,
-  //         },
-  //       );
-  //     } else {
-  //       console.log('Joining as an audience...');
-  //       result1 = agoraEngineRef.current.joinChannel(
-  //         String(user.agora_rtc_token),
-  //         String(podcast.channel),
-  //         user.id,
-  //         {
-  //           clientRoleType: ClientRoleType.ClientRoleAudience,
-  //           publishMicrophoneTrack: false,
-  //           autoSubscribeAudio: true,
-  //           audienceLatencyLevel:
-  //             AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
-  //         },
-  //       );
-  //     }
-  //     // Check if joinChannel was successful
-  //     if (result1 < 0) {
-  //       throw new Error(`Failed to join channel. Error code: ${result1}`);
-  //     }
-  //     if (result1 == 0) {
-  //       dispatch(setLiveStatus('LOADING'));
-  //       console.log('Successfully joined the channel!');
-  //       // setIsJoined(true); // Update joined state
-  //     }
-  //   } catch (error: any) {
-  //     console.error('Failed to join the channel:', error.message);
-  //     throw new Error('Unable to connect to the channel. Please try again.');
-  //   }
-  // };
 
   const checkPermission = async () => {
     const cam = await checkMicrophonePermission();
@@ -578,11 +564,16 @@ export default function GoLive({navigation}: any) {
   };
   const endPodcastForUser = async () => {
     try {
-      if (podcast.host == user.id) {
-        chatClient.roomManager.destroyChatRoom(podcast.chat_room_id || roomId);
-      } else {
-        await chatClient.roomManager.leaveChatRoom(podcast.chat_room_id);
+      if (podcast.chat_room_id) {
+        if (podcast.host == user.id) {
+          chatClient.roomManager.destroyChatRoom(
+            podcast.chat_room_id || roomId,
+          );
+        } else {
+          await chatClient.roomManager.leaveChatRoom(podcast.chat_room_id);
+        }
       }
+
       destroyEngine();
       resetPodcastState(dispatch);
       setTimeout(() => {
@@ -737,29 +728,11 @@ export default function GoLive({navigation}: any) {
             flexDirection: 'row',
             width: '90%',
             justifyContent: 'space-around',
-          }}>
-          {/* <TouchableOpacity style={styles.tempBtn}>
-            <Text style={styles.tempBtnTxt} onPress={loginUser}>
-              login chat
-            </Text>
-          </TouchableOpacity> */}
-          {/* <TouchableOpacity style={styles.tempBtn}>
-            <Text style={styles.tempBtnTxt} onPress={joinChannel}>
-              Join Chanel
-            </Text>
-          </TouchableOpacity> */}
-        </View>
-        <View>
-          {/* <TouchableOpacity style={styles.tempBtn}>
-            <Text style={styles.tempBtnTxt} onPress={destroyEngine}>
-              destroyEngine
-            </Text>
-          </TouchableOpacity> */}
-        </View>
+          }}></View>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <View style={{marginLeft: 10}}>
             <Text style={{color: '#fff'}} onPress={testListners}>
-              Chat Room Idb :{roomId}
+              Chat Room Idb :{podcast.id}
             </Text>
           </View>
           {/* <View>
@@ -770,10 +743,6 @@ export default function GoLive({navigation}: any) {
             </Text>
           </View> */}
         </View>
-
-        <Text style={{marginTop: 20}} onPress={enableMicrophone}>
-          Enable audio
-        </Text>
 
         {/* ************ second row ************ */}
 
@@ -793,14 +762,14 @@ export default function GoLive({navigation}: any) {
             contentContainerStyle={{
               alignItems: 'center',
               alignSelf: 'center',
-              justifyContent: 'space-between',
+              // justifyContent: 'space-between',
             }}
             // keyExtractor={(item,index) => item?.id.toString()}
             renderItem={({item, index}) => (
               // <View>
               <View
-                style={[styles.usersList, index > 0 ? {marginLeft: 15} : {}]}>
-                {item.occupied ? (
+                style={[styles.usersList, index > 0 ? {marginLeft: 10} : {}]}>
+                {item.user ? (
                   <PodcastHost
                     muteUnmuteUser={muteUnmuteUser}
                     token={token}
@@ -834,7 +803,9 @@ export default function GoLive({navigation}: any) {
           <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
         </View>
 
-        <TouchableOpacity style={{marginTop: 20}} onPress={leaveAgoraChannel}>
+        <TouchableOpacity
+          style={{marginTop: 20}}
+          onPress={() => getUserInfoFromAPI(1)}>
           <Text>leaveChannel</Text>
         </TouchableOpacity>
         {/* <Text style={{marginTop: 10}} onPress={() => getUserInfoFromAPI(2)}>
