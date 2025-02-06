@@ -41,14 +41,19 @@ import Context from '../../../../../Context/Context';
 import LiveLoading from '../Components/LiveLoading';
 import Header from '../Podcast/Header';
 import envVar from '../../../../../config/envVar';
-import {setLeaveModal} from '../../../../../store/slice/podcastSlice';
 import {setLiveStatus} from '../../../../../store/slice/usersSlice';
 import {ChatClient} from 'react-native-agora-chat';
-import {setHostLeftPodcast} from '../../../../../store/slice/podcastSlice';
+import {
+  setHostLeftPodcast,
+  setLeaveModal,
+} from '../../../../../store/slice/podcastSlice';
 import axios from 'axios';
 import {
   setStreamListeners,
   updateStreamListeners,
+  setUserInState,
+  removeUserFromStream,
+  setPrevUsersInStream,
 } from '../../../../../store/slice/streamingSlice';
 import {resetLiveStreaming, getLiveUsers} from '../scripts/liveScripts';
 import {setConnected} from '../../../../../store/slice/chatSlice';
@@ -101,7 +106,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    // setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -121,13 +126,13 @@ export default function LiveStreaming({navigation}) {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           console.log('Successfully joined channel: ' + elapsed);
           // previewHostStream();
-          addUserToState();
+          dispatch(setUserInState(user));
 
           if (stream.host == user.id) {
             // createUserChatRoom();
           }
           if (_connection.localUid !== stream.host) {
-            getStreamActiveUsers;
+            getStreamActiveUsers();
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
@@ -143,7 +148,7 @@ export default function LiveStreaming({navigation}) {
         onLeaveChannel(connection, stats) {
           console.log('user leave channel ,///');
           if (connection.localUid !== stream.host) {
-            filterOutUser(connection.localUid);
+            dispatch(removeUserFromStream(connection.localUid));
           }
           // if (connection.localUid === podcast.host) {
           //   console.log('host is lefting podcast');
@@ -159,9 +164,8 @@ export default function LiveStreaming({navigation}) {
             return;
           }
           if (uid !== stream.host) {
-            filterOutUser(uid);
+            dispatch(removeUserFromStream(uid));
           }
-          // setRemoteUid(0);
         },
         onConnectionStateChanged: (
           _connection: RtcConnection,
@@ -196,28 +200,9 @@ export default function LiveStreaming({navigation}) {
     try {
       // console.log(podcast.id, 'getting podcast users ....');
       const users = await getLiveUsers(stream.id, 'stream');
-      // console.log(users);
-
-      // Create a copy of current state to avoid direct mutation
-      const currentUsers = [...streamListeners];
-
-      // Create a Set of existing user IDs for quick lookup
-      const existingUserIds = new Set(
-        currentUsers.map((item: any) => item.user?.id),
-      );
-
-      // Filter new users that are not in the local state
-      const newUsers = users
-        .filter((user: any) => !existingUserIds.has(user.id))
-        .map((user: any) => ({
-          user,
-          occupied: true,
-          seatNo: null, // Default value (or set based on logic)
-          muted: false, // Default value (or set based on logic)
-        }));
-
-      // Update Redux state immutably
-      dispatch(setStreamListeners([...currentUsers, ...newUsers]));
+      if (users.length > 0) {
+        dispatch(setPrevUsersInStream(users));
+      }
     } catch (error) {
       console.error('Error getting active stream users:', error);
     }
@@ -460,33 +445,6 @@ export default function LiveStreaming({navigation}) {
     } catch (error) {
       console.error('Error fetching user info:', error);
     } finally {
-      dispatch(setLoading(false));
-    }
-  };
-  const addUserToState = async () => {
-    try {
-      let currentUsers = [...streamListeners];
-
-      // Check if user already exists in the list
-      let joined = currentUsers.find((item: any) => item.user?.id == user.id);
-      if (joined) return;
-
-      // Find an empty room (unoccupied slot)
-      const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
-      console.log(emptyRoomIndex, 'emptyRoomIndex', 'i am adding myself');
-
-      if (emptyRoomIndex !== -1) {
-        // Create a new array with the updated user (immutable update)
-        const updatedUsers = currentUsers.map((item, index) =>
-          index === emptyRoomIndex ? {...item, user, occupied: true} : item,
-        );
-
-        dispatch(setStreamListeners(updatedUsers));
-      } else {
-        console.warn('No empty rooms available');
-      }
-    } catch (error: any) {
-      console.log(error['_response']);
       dispatch(setLoading(false));
     }
   };

@@ -11,7 +11,10 @@ import React, {useState, useRef, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Popular from './Navigations/Popular';
 import envVar from '../../../config/envVar';
-import {updatePodcastListeners} from '../../../store/slice/podcastSlice';
+import {
+  updatePodcastListeners,
+  getUserInfoFromAPI,
+} from '../../../store/slice/podcastSlice';
 import {ChatTextMessageBody} from 'react-native-agora-chat';
 import {
   setUnreadCount,
@@ -107,38 +110,10 @@ export default function Home({navigation}) {
   }));
 
   const test = () => {
-    let m2 = [
-      {
-        attributes: [Object],
-        body: [ChatTextMessageBody],
-        chatType: 0,
-        conversationId: '1',
-        deliverOnlineOnly: false,
-        direction: 'rec',
-        from: '1',
-        groupAckCount: 0,
-        hasDeliverAck: false,
-        hasRead: false,
-        hasReadAck: false,
-        isBroadcast: false,
-        isChatThread: false,
-        isContentReplaced: false,
-        isOnline: true,
-        localMsgId: '1738595913367',
-        localTime: 1738595913367,
-        msgId: '1378818134001060802',
-        needGroupAck: false,
-        receiverList: [Array],
-        serverTime: 1738595913636,
-        status: 2,
-        to: '2',
-      },
-    ];
-
     console.log('hii');
     // dispatch(updatePodcastListeners(6));
-    dispatch(updateStreamListeners(5));
-    navigation.navigate('LiveStreaming');
+    // dispatch(updateStreamListeners(5));
+    // navigation.navigate('LiveStreaming');
     // navigation.navigate('GoLive');
   };
   return (

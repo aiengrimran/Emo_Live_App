@@ -7,6 +7,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  BackHandler,
   Image,
   FlatList,
   TextInput,
@@ -58,6 +59,11 @@ import {
   setRTCTokenRenewed,
   setPodcast,
   setLeaveModal,
+  setUserInState,
+  updatePodcastListeners,
+  removeUserFromPodcast,
+  getUserInfoFromAPI,
+  setPrevUsersInPodcast,
 } from '../../../../store/slice/podcastSlice';
 import {
   setLoading,
@@ -92,6 +98,22 @@ export default function GoLive({navigation}: any) {
 
   // callbacks
 
+  // useEffect(() => {
+  //   if (!isJoined && podcast.chat_room_id) return;
+
+  //   const backAction = () => {
+  //     dispatch(setLeaveModal(true));
+  //     return true; // Prevent default back action
+  //   };
+
+  //   const backHandler = BackHandler.addEventListener(
+  //     'hardwareBackPress',
+  //     backAction,
+  //   );
+
+  //   return () => backHandler.remove();
+  // }, [isJoined, podcast.chat_room_id, dispatch]);
+
   useEffect(() => {
     // Initialize the engine when the App starts
     setupVideoSDKEngine();
@@ -102,15 +124,6 @@ export default function GoLive({navigation}: any) {
     };
   }, []);
 
-  // useEffect(() => {
-  //   const latestUser = podcastListeners.find(
-  //     (item: any) => item.occupied && item.user,
-  //   );
-  //   if (latestUser) {
-  //     getUserInfoFromAPI(latestUser.user.id);
-  //   }
-  // }, [podcastListeners]);
-  // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
     try {
       // Create RtcEngine after obtaining device permissions
@@ -122,31 +135,28 @@ export default function GoLive({navigation}: any) {
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           if (podcast.host == user.id) {
-            createUserChatRoom();
+            // createUserChatRoom();
           } else {
-            userJoinChatRoom(podcast.chat_room_id);
+            dispatch(getUserInfoFromAPI(podcast.host));
+            // userJoinChatRoom(podcast.chat_room_id);
           }
-          addUserToState();
+
+          dispatch(setUserInState(user));
+
           if (_connection.localUid !== podcast.host) {
-            // getPodcastUsers();
+            getPodcastUsers();
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
-          console.log(
-            'Remote user ' + uid + ' joined',
-            'current user',
-            user.id,
-          );
           if (uid !== podcast.host) {
-            console.log(podcastListeners);
-            getUserInfoFromAPI(uid);
+            dispatch(getUserInfoFromAPI(uid));
           }
           // setRemoteUid(uid);
         },
         onLeaveChannel(connection, stats) {
           console.log('user leave channel ,///');
           if (connection.localUid !== podcast.host) {
-            filterOutUser(connection.localUid);
+            dispatch(removeUserFromPodcast(connection.localUid));
           }
           // if (connection.localUid === podcast.host) {
           //   console.log('host is lefting podcast');
@@ -158,7 +168,7 @@ export default function GoLive({navigation}: any) {
         onUserOffline: (_connection: RtcConnection, uid: number) => {
           console.log('user offline userid:', user.id, 'uid :', uid);
           if (uid !== podcast.host) {
-            filterOutUser(uid);
+            dispatch(removeUserFromPodcast(uid));
           }
           if (uid === podcast.host) {
             hostEndedPodcast();
@@ -170,8 +180,7 @@ export default function GoLive({navigation}: any) {
           state: ConnectionStateType,
           reason: ConnectionChangedReasonType,
         ) => {
-          // console.log('Clraring ......', _connection.localUid);
-          // console.log('state', state, 'user.id', _connection.localUid);
+          console.log(state, reason);
           handelConnection(state);
         },
       };
@@ -184,7 +193,7 @@ export default function GoLive({navigation}: any) {
         appId: envVar.AGORA_APP_ID,
       });
 
-      agoraEngine.enableLocalAudio(true);
+      // agoraEngine.enableLocalAudio(true);
       userJoinChannel();
     } catch (e) {
       console.log(e);
@@ -192,86 +201,12 @@ export default function GoLive({navigation}: any) {
   };
   const getPodcastUsers = async () => {
     try {
-      // console.log(podcast.id, 'getting podcast users ....');
       const users = await getLiveUsers(podcast.id, 'podcast');
-      // console.log(users);
-
-      // Create a copy of current state to avoid direct mutation
-      const currentUsers = [...podcastListeners];
-
-      // Create a Set of existing user IDs for quick lookup
-      const existingUserIds = new Set(
-        currentUsers.map((item: any) => item.user?.id),
-      );
-
-      // Filter new users that are not in the local state
-      const newUsers = users
-        .filter((user: any) => !existingUserIds.has(user.id))
-        .map((user: any) => ({
-          user,
-          occupied: true,
-          seatNo: null, // Default value (or set based on logic)
-          muted: false, // Default value (or set based on logic)
-        }));
-
-      // Update Redux state immutably
-      dispatch(setPodcastListeners([...currentUsers, ...newUsers]));
+      if (users.length > 0) {
+        dispatch(setPrevUsersInPodcast(users));
+      }
     } catch (error) {
       console.error('Error getting active podcast:', error);
-    }
-  };
-  const addUserToState = async () => {
-    try {
-      let currentUsers = [...podcastListeners];
-
-      // Check if user already exists in the list
-      let joined = currentUsers.find((item: any) => item.user?.id == user.id);
-      if (joined) return;
-
-      // Find an empty room (unoccupied slot)
-      const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
-      console.log(emptyRoomIndex, 'emptyRoomIndex', 'i am adding myself');
-
-      if (emptyRoomIndex !== -1) {
-        // Create a new array with the updated user (immutable update)
-        const updatedUsers = currentUsers.map((item, index) =>
-          index === emptyRoomIndex ? {...item, user, occupied: true} : item,
-        );
-
-        dispatch(setPodcastListeners(updatedUsers));
-      } else {
-        console.warn('No empty rooms available');
-      }
-    } catch (error: any) {
-      console.log(error['_response']);
-      dispatch(setLoading(false));
-    }
-  };
-  const filterOutUser = async (uid: number | undefined) => {
-    try {
-      let currentUsers = [...podcastListeners];
-      const emptyRoomIndex = currentUsers.findIndex(function (item) {
-        if (item.occupied && item.user?.id == uid) {
-          return true;
-        }
-      });
-      if (emptyRoomIndex !== -1) {
-        let leaveUser = currentUsers.find((item: any) => item.user.id == uid);
-        // Assign user to empty room
-        currentUsers[emptyRoomIndex] = {
-          ...currentUsers[emptyRoomIndex],
-          user: null,
-          occupied: false,
-        };
-        dispatch(setPodcastListeners(currentUsers));
-        if (leaveUser) {
-          Alert.alert('User Leaved: ', leaveUser.first_name);
-        }
-      } else {
-        console.warn('user not found in listener');
-      }
-    } catch (error) {
-      console.log(error);
     }
   };
   const handelConnection = (state: number) => {
@@ -286,6 +221,7 @@ export default function GoLive({navigation}: any) {
       case 1:
         dispatch(setLiveStatus('IDLE'));
         dispatch(setIsJoined(false));
+        // userJoinChannel();
         console.log('disconnected');
         break;
       default:
@@ -298,13 +234,6 @@ export default function GoLive({navigation}: any) {
     } catch (error) {}
   };
 
-  const enableMicrophone = () => {
-    try {
-      agoraEngineRef.current?.setClientRole(
-        ClientRoleType.ClientRoleBroadcaster,
-      );
-    } catch (error) {}
-  };
   // Function to handle open Bottom Sheet
   const handleOpenSheet = useCallback((type: string) => {
     setSheet(true);
@@ -389,84 +318,6 @@ export default function GoLive({navigation}: any) {
       dispatch(setPodcast(res.data.podcast));
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  const getUserInfoFromAPI = async (id: number) => {
-    try {
-      console.log('i should have latest data, ', podcastListeners);
-      const currentUsers = [...podcastListeners]; // Copy state to avoid mutation
-
-      // Check if user already exists in the list
-      if (currentUsers.some(item => item.user?.id === id)) return;
-
-      console.log(currentUsers, 'getUserInfoFromAPI');
-      dispatch(setLoading(true));
-
-      // Fetch user data from API
-      const {data} = await axiosInstance.post('users-info', {users: [id]});
-
-      if (data.users?.[0]) {
-        // Find an empty slot where `occupied` is false and `user` is not assigned
-        const emptyRoomIndex = currentUsers.findIndex(
-          item => !item.occupied && !item.user,
-        );
-        console.log(emptyRoomIndex, 'sss', currentUsers);
-
-        if (emptyRoomIndex !== -1) {
-          // Create a new array with updated user information (immutably)
-          const updatedUsers = currentUsers.map((item, index) =>
-            index === 1 ? {...item, user: data.users[0], occupied: true} : item,
-          );
-
-          dispatch(setPodcastListeners(updatedUsers));
-        } else {
-          console.warn('No empty rooms available');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-  const getUserInfoFromAPIx = async (id: number) => {
-    try {
-      const currentUsers = [...podcastListeners]; // Copy state to avoid mutation
-
-      // Check if user already exists in the list
-      if (currentUsers.some(item => item.user?.id === id)) return;
-
-      console.log(currentUsers, 'getUserInfoFromAPI');
-      dispatch(setLoading(true));
-
-      // Fetch user data from API
-      const {data} = await axiosInstance.post('users-info', {users: [id]});
-
-      if (data.users?.[0]) {
-        // Find an empty slot where `occupied` is false and `user` is not assigned
-        const emptyRoomIndex = currentUsers.findIndex(
-          item => !item.occupied && !item.user,
-        );
-        console.log(emptyRoomIndex, 'sss', currentUsers);
-
-        if (emptyRoomIndex !== -1) {
-          // Create a new array with updated user information (immutably)
-          const updatedUsers = currentUsers.map((item, index) =>
-            index === emptyRoomIndex
-              ? {...item, user: data.users[0], occupied: true}
-              : item,
-          );
-
-          dispatch(setPodcastListeners(updatedUsers));
-        } else {
-          console.warn('No empty rooms available');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    } finally {
-      dispatch(setLoading(false));
     }
   };
 
@@ -578,6 +429,7 @@ export default function GoLive({navigation}: any) {
       resetPodcastState(dispatch);
       setTimeout(() => {
         dispatch(setLeaveModal(false));
+        console.log('closing ....');
         navigation.navigate('HomeB');
       }, 400);
     } catch (error) {
@@ -596,16 +448,6 @@ export default function GoLive({navigation}: any) {
     }
   };
 
-  // Sends a text message to somebody.
-
-  const enableAudio = () => {
-    try {
-      const res = agoraEngineRef.current?.enableAudio();
-      console.log(res);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const podCastNotifications = async () => {
     try {
       const res = await axiosInstance.get('podcast-notification');
@@ -757,7 +599,7 @@ export default function GoLive({navigation}: any) {
           }}>
           <FlatList
             data={podcastListeners}
-            numColumns={5}
+            numColumns={4}
             keyExtractor={(item, index) => index.toString()}
             contentContainerStyle={{
               alignItems: 'center',
@@ -802,15 +644,31 @@ export default function GoLive({navigation}: any) {
         <View>
           <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
         </View>
+        <View>
+          <Text onPress={() => userJoinChannel()}>userJoinChannel room</Text>
+        </View>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <TouchableOpacity
+            style={{marginTop: 40}}
+            onPress={() => {
+              dispatch(updatePodcastListeners(5));
+            }}>
+            <Text style={{color: '#fff'}}>updated pod</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{marginTop: 40}}
+            onPress={() => {
+              dispatch(setUserInState(user));
+            }}>
+            <Text style={{color: '#fff'}}>userJoinChannel roomxxx</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={{marginTop: 20}}
-          onPress={() => getUserInfoFromAPI(1)}>
-          <Text>leaveChannel</Text>
+          onPress={() => leaveAgoraChannel()}>
+          <Text>leaveChannelx</Text>
         </TouchableOpacity>
-        {/* <Text style={{marginTop: 10}} onPress={() => getUserInfoFromAPI(2)}>
-          getUserInfoFromAPI
-        </Text> */}
         <EndLive
           user={user}
           endPodcastForUser={endPodcastForUser}
@@ -848,6 +706,10 @@ export default function GoLive({navigation}: any) {
             )}
           </BottomSheetView>
         </BottomSheet>
+
+        <Text style={{color: '#fff'}} onPress={userJoinChannel}>
+          User join channel
+        </Text>
 
         {!sheet && (
           <BottomSection

@@ -13,14 +13,15 @@ import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../../styles/styles';
 import liveStyles from '../styles/liveStyles';
+import {setChatRoomMessages} from '../../../../../store/slice/chatSlice';
 import {
   ChatClient,
   ChatMessage,
   ChatMessageChatType,
 } from 'react-native-agora-chat';
 
-import {msgs} from './tempData';
 import {useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 interface BottomSectionProps {
   handleOpenSheet: any;
   roomId: string;
@@ -28,11 +29,10 @@ interface BottomSectionProps {
 
 const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
+  const dispatch = useDispatch();
+  const {chatRoomMessages} = useSelector((state: any) => state.chat);
   const [messages, setMessages] = useState<any>([]);
-  const [message, setMessage] = useState<any>({
-    content: '',
-    status: 'IDLE',
-  });
+  const [message, setMessage] = useState<string>('');
 
   const sendChatRoomMessage = async () => {
     console.log(message);
@@ -40,34 +40,40 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
       let msg;
       msg = ChatMessage.createTextMessage(
         String(roomId),
-        message.content,
+        message,
         ChatMessageChatType.ChatRoom,
       );
+      setMessage('');
 
+      let roomMessage = [...chatRoomMessages];
+      roomMessage.push(message);
+      dispatch(setChatRoomMessages(roomMessage));
       const callback = new (class {
-        onProgress(locaMsgId, progress) {
-          console.log(`send message process: ${locaMsgId}, ${progress}`);
-          setMessage(prevState => ({...prevState, status: 'SENDING'}));
+        onProgress(localMsgId: any, progress: any) {
+          console.log(`send message process: ${localMsgId}, ${progress}`);
         }
-        onError(locaMsgId, error) {
-          setMessage((prevState: any) => ({
-            ...prevState,
-            content: '',
-            status: 'FAILED',
-          }));
+        onError(localMsgId: any, error: any) {
+          let updated = chatRoomMessages.map((roomMessage: ChatMessage) => {
+            if (roomMessage.localMsgId === localMsgId) {
+              return {...roomMessage, status: 3}; // Return updated message
+            }
+            return roomMessage; // Keep other messages unchanged
+          });
+          dispatch(setChatRoomMessages(updated));
           console.log(
-            `send message fail: ${locaMsgId}, ${JSON.stringify(error)}`,
+            `send message fail: ${localMsgId}, ${JSON.stringify(error)}`,
           );
         }
         onSuccess(message: any) {
           console.log(message);
-          setMessage((prevState: any) => ({
-            ...prevState,
-            content: '',
-            status: 'SUCCESS',
-          }));
-          const updatedMessages = [...messages, message];
-          setMessages(updatedMessages);
+          let updated = chatRoomMessages.map((roomMessage: ChatMessage) => {
+            if (roomMessage.localMsgId === message.localMsgId) {
+              return {...roomMessage, status: 2}; // Return updated message
+            }
+            return roomMessage; // Keep other messages unchanged
+          });
+          dispatch(setChatRoomMessages(updated));
+
           // console.log('send message success: ' + message.localMsgId);
         }
       })();
@@ -94,10 +100,11 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           Great to see you here. Please don’t use abusive language, enjoy the
           stream, Have fun😊
         </Text>
+        <Text style={{color: '#fff'}}>{roomId}</Text>
       </View>
       <View style={{height: '60%', marginTop: 10}}>
         <FlatList
-          data={messages}
+          data={chatRoomMessages}
           // data={msgs}
           keyExtractor={(item: any) => item?.msgId.toString()}
           renderItem={({item}: any) => (
@@ -130,10 +137,8 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
       <View style={styles.btn1}>
         <TextInput
           style={styles.inputBox}
-          onChangeText={(e: string) =>
-            setMessage((prevState: any) => ({...prevState, content: e}))
-          }
-          value={message.content}
+          onChangeText={setMessage}
+          value={message}
           placeholder="Say hello ...."
           placeholderTextColor={'grey'}
         />

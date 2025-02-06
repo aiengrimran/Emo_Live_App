@@ -16,8 +16,8 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['chat/setMessages'],
-        ignoredPaths: ['chat.messages'], // Ignore this path in the state
+        ignoredActions: ['chat/setMessages', 'chat/setChatRoomMessages'],
+        ignoredPaths: ['chat.messages', 'chat.chatRoomMessages'], // Ignore this path in the state
       },
     }),
   // middleware:(getDefaultMiddleware) =>

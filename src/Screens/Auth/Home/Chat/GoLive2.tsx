@@ -116,6 +116,7 @@ export default function GoLive2({navigation}) {
 
       const res = await axiosInstance.post(url, data);
       setLoading(false);
+      console.log(res.data);
 
       if (res.status == 201) {
         setUser(() => res.data.user);

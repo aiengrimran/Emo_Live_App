@@ -38,7 +38,6 @@ export const getPodcastUsers = async id => {
 };
 
 export const getLiveUsers = (id, type) => {
-  console.log(type, id);
   return new Promise(async (resolve, reject) => {
     try {
       const url = envVar.API_URL + type + '/users/' + id;

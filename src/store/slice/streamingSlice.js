@@ -69,6 +69,73 @@ const streamingSlice = createSlice({
     setStreamListeners: (state, action) => {
       state.streamListeners = action.payload;
     },
+    setUserInState: (state, {payload}) => {
+      let currentUsers = state.streamListeners;
+      // Check if user already exists in the list
+      let joined = currentUsers.find(item => item.user?.id == payload.id);
+      if (joined) return;
+
+      // Find an empty room (unoccupied slot)
+      const emptyRoomIndex = currentUsers.findIndex(item => !item.occupied);
+      console.log(emptyRoomIndex, 'emptyRoomIndex', 'i am adding myself');
+
+      if (emptyRoomIndex !== -1) {
+        // Create a new array with the updated user (immutable update)
+        const updatedUsers = currentUsers.map((item, index) =>
+          index === emptyRoomIndex
+            ? {...item, user: payload, occupied: true}
+            : item,
+        );
+        state.streamListeners = updatedUsers;
+
+        // dispatch(setPodcastListeners(updatedUsers));
+      } else {
+        console.warn('No empty rooms available');
+      }
+    },
+    setPrevUsersInStream: (state, {payload}) => {
+      let currentUsers = state.streamListeners;
+      const existingUserIds = new Set(currentUsers.map(item => item.user?.id));
+
+      const newUsers = payload
+        .filter(user => !existingUserIds.has(user.id))
+        .map(user => ({
+          user,
+          occupied: true,
+          seatNo: null, // Default value (or set based on logic)
+          muted: false, // Default value (or set based on logic)
+        }));
+      state.streamListeners = [...currentUsers, ...newUsers];
+    },
+    removeUserFromStream: (state, {payload}) => {
+      let currentUsers = state.streamListeners;
+      console.log('Copy run key ... filtering out user', currentUsers);
+
+      // Find the index of the user in the occupied rooms
+      const emptyRoomIndex = currentUsers.findIndex(
+        item => item.occupied && item.user?.id === payload,
+      );
+
+      if (emptyRoomIndex !== -1) {
+        // Get the user details safely
+        let leaveUser = currentUsers[emptyRoomIndex]?.user;
+
+        // Free the room
+        currentUsers[emptyRoomIndex] = {
+          ...currentUsers[emptyRoomIndex],
+          user: null,
+          occupied: false,
+        };
+
+        // Show alert if leaveUser exists
+        if (leaveUser) {
+          Alert.alert('User Left:', leaveUser?.first_name || 'Unknown');
+        }
+        state.streamListeners = currentUsers;
+      } else {
+        console.warn('User not found in listener');
+      }
+    },
   },
 });
 
@@ -78,6 +145,9 @@ export const {
   setStreamListeners,
   updateStreamListeners,
   setStreams,
+  setUserInState,
+  setPrevUsersInStream,
+  removeUserFromStream,
 } = streamingSlice.actions;
 
 export default streamingSlice.reducer;

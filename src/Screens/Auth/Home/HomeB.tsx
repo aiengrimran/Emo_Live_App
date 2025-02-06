@@ -45,7 +45,7 @@ export default function HomeB() {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
-  const {initialized, messages, chatRoomMessage, connected, error} =
+  const {initialized, messages, chatRoomMessages, connected, error} =
     useSelector((state: any) => state.chat);
   const {unread} = useSelector((state: any) => state.notification);
 
@@ -115,7 +115,10 @@ export default function HomeB() {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
           console.log('message recived ...', messagesReceived);
           if (messagesReceived[0].chatType == ChatMessageChatType.ChatRoom) {
-            let roomMessage = [...chatRoomMessage, ...messagesReceived]; // Clone current messages to avoid mutation
+            let roomMessage = [...chatRoomMessages];
+            messagesReceived.forEach((message: ChatMessage) => {
+              roomMessage.push(message);
+            });
             dispatch(setChatRoomMessages(roomMessage));
             return;
           }

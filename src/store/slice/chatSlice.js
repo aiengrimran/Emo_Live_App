@@ -44,7 +44,7 @@ const chatSlice = createSlice({
     error: null,
     tokenRenewed: false,
     messages: [],
-    chatRoomMessage: [],
+    chatRoomMessages: [],
   },
   reducers: {
     setConnectionStatus(state, action) {
@@ -58,7 +58,7 @@ const chatSlice = createSlice({
       state.hostLeftPodcast = action.payload;
     },
     setChatRoomMessages: (state, action) => {
-      state.chatRoomMessage = action.payload;
+      state.chatRoomMessages = action.payload;
     },
 
     setTokenRenewed(state, action) {
