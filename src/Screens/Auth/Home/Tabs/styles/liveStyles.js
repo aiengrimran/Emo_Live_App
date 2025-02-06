@@ -89,7 +89,6 @@ const liveStyles = StyleSheet.create({
   },
   usersList: {
     marginTop: 20,
-
     // width: '20%',
     // marginLeft: 10,
     // alignItems: 'center',

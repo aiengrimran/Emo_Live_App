@@ -1,47 +1,93 @@
-import {createSlice} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import envVar from '../../config/envVar';
+import {Alert} from 'react-native';
+import axiosInstance from '../../Api/axiosConfig';
+
+export const getUserInfoFromAPI = createAsyncThunk(
+  'streaming/getUserInfoFromAPI',
+  async (id, {getState, dispatch}) => {
+    // async (id: number, {getState, dispatch}) => {
+    try {
+      console.log(id, 'user id from stream');
+      const {streamListeners} = getState().streaming;
+      // Check if user already exists in the list
+      const currentUsers = streamListeners;
+
+      if (currentUsers.some(item => item.user?.id === id)) return;
+
+      // Fetch user data from API
+      const {data} = await axiosInstance.post('users-info', {users: [id]});
+
+      if (data.users?.[0]) {
+        // Find an empty slot where `occupied` is false and `user` is not assigned
+        const emptyRoomIndex = currentUsers.findIndex(
+          item => !item.occupied && !item.user,
+        );
+
+        if (emptyRoomIndex !== -1) {
+          // Create a new array with updated user information (immutably)
+          const updatedUsers = currentUsers.map((item, index) =>
+            index === emptyRoomIndex
+              ? {...item, user: data.users[0], occupied: true}
+              : item,
+          );
+
+          // Dispatch an action to update the state
+          dispatch(setStreamListeners(updatedUsers));
+        } else {
+          console.warn('No empty rooms available');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      throw error; // Re-throw the error to handle it in the component if needed
+    }
+  },
+);
 
 const streamingSlice = createSlice({
   name: 'streaming',
   initialState: {
     guests: null,
     rtcTokenRenewed: false,
-    stream: {
-      channel: 'ch_84536_0b85',
-      created_at: '2025-02-02T08:22:16.000000Z',
-      duration: 10,
-      host: 2,
-      id: 3,
-      listeners: 6,
-      listeners_added: 'null',
-      status: 'STARTED',
-      title: 'Some title',
-      type: 'PUBLIC',
-      updated_at: '2025-02-02T08:22:16.000000Z',
-      user: {
-        account_verified: 0,
-        address: 'buner kpk',
-        agora_chat_token:
-          '007eJxTYOCp36dep/BO+u8DD9Eft8wdvT8t4mLJPDfRritg88JDR00UGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSm+7Wpxv9rk9P/vyPkZGBlYERCEF8IAkA20sh0g==',
-        agora_chat_uid: null,
-        agora_rtc_token:
-          '007eJxTYHATlnp6aJNrRo7Mdsm8GTvPTvy15EJL4xr2+J+v7nQLXnivwJCcZGhuYWFqmZZmYGhiYJBiYZCSbGKQkmpobp6WmpKUbKE9P70hkJEhm8WJkZGBkYEFiEGACUwyg0kWMMnLkJwRb2FiamwWb5BkYcrIYAQAESchvA==',
-        avatar: 'users/avatars/1736177116.jpg',
-        bio: 'something should happen special',
-        can_create_chat_room: 1,
-        created_at: '2024-12-28T09:50:57.000000Z',
-        dob: '1997-03-15',
-        email: 'zalkip@gmail.com',
-        first_name: 'zalkip',
-        gender: 'male',
-        id: 2,
-        last_name: 'khan',
-        phone: null,
-        provider: null,
-        provider_id: null,
-        updated_at: '2025-02-02T08:22:16.000000Z',
-        user_name: null,
-      },
-    },
+    stream: '',
+    // stream: {
+    //   channel: 'ch_84536_0b85',
+    //   created_at: '2025-02-02T08:22:16.000000Z',
+    //   duration: 10,
+    //   host: 2,
+    //   id: 3,
+    //   listeners: 6,
+    //   listeners_added: 'null',
+    //   status: 'STARTED',
+    //   title: 'Some title',
+    //   type: 'PUBLIC',
+    //   updated_at: '2025-02-02T08:22:16.000000Z',
+    //   user: {
+    //     account_verified: 0,
+    //     address: 'buner kpk',
+    //     agora_chat_token:
+    //       '007eJxTYOCp36dep/BO+u8DD9Eft8wdvT8t4mLJPDfRritg88JDR00UGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSm+7Wpxv9rk9P/vyPkZGBlYERCEF8IAkA20sh0g==',
+    //     agora_chat_uid: null,
+    //     agora_rtc_token:
+    //       '007eJxTYHATlnp6aJNrRo7Mdsm8GTvPTvy15EJL4xr2+J+v7nQLXnivwJCcZGhuYWFqmZZmYGhiYJBiYZCSbGKQkmpobp6WmpKUbKE9P70hkJEhm8WJkZGBkYEFiEGACUwyg0kWMMnLkJwRb2FiamwWb5BkYcrIYAQAESchvA==',
+    //     avatar: 'users/avatars/1736177116.jpg',
+    //     bio: 'something should happen special',
+    //     can_create_chat_room: 1,
+    //     created_at: '2024-12-28T09:50:57.000000Z',
+    //     dob: '1997-03-15',
+    //     email: 'zalkip@gmail.com',
+    //     first_name: 'zalkip',
+    //     gender: 'male',
+    //     id: 2,
+    //     last_name: 'khan',
+    //     phone: null,
+    //     provider: null,
+    //     provider_id: null,
+    //     updated_at: '2025-02-02T08:22:16.000000Z',
+    //     user_name: null,
+    //   },
+    // },
     streamListeners: [],
     streams: [],
   },
@@ -87,8 +133,6 @@ const streamingSlice = createSlice({
             : item,
         );
         state.streamListeners = updatedUsers;
-
-        // dispatch(setPodcastListeners(updatedUsers));
       } else {
         console.warn('No empty rooms available');
       }

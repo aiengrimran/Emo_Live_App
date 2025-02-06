@@ -24,7 +24,6 @@ import ForgetPassword from '../Screens/Guest/ForgetPassword';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AgencyMembers from '../Screens/Auth/Home/Profile/Agency/AgencyMembers';
 import Chat from '../Screens/Auth/Home/Chat/Chat';
-import TempUI from '../Screens/Auth/Home/Tabs/TempUI';
 import GoLive from '../Screens/Auth/Home/Tabs/GoLive';
 import PlayCenter from '../Screens/Auth/Games/PlayCenter';
 import ScoreCard from '../Screens/Auth/Games/ScoreCard';
@@ -164,7 +163,6 @@ export default function Index() {
                         component={UserProfile}
                       />
 
-                      <Stack.Screen name="TempUI" component={TempUI} />
                       <Stack.Screen
                         name="PurchaseVIP"
                         component={PurchaseVIP}

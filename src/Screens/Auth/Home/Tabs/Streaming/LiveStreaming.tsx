@@ -49,10 +49,10 @@ import {
 } from '../../../../../store/slice/podcastSlice';
 import axios from 'axios';
 import {
-  setStreamListeners,
   updateStreamListeners,
   setUserInState,
   removeUserFromStream,
+  getUserInfoFromAPI,
   setPrevUsersInStream,
 } from '../../../../../store/slice/streamingSlice';
 import {resetLiveStreaming, getLiveUsers} from '../scripts/liveScripts';
@@ -71,7 +71,6 @@ import {
 import Gifts from '../Podcast/Gifts';
 import Users from '../Podcast/Users';
 import Tools from '../Podcast/Tools';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   setRTCTokenRenewed,
   setLoading,
@@ -81,7 +80,7 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 const MAX_RETRIES = 5;
 
 export default function LiveStreaming({navigation}) {
-  // const chatClient = ChatClient.getInstance();
+  const chatClient = ChatClient.getInstance();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
@@ -106,7 +105,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -124,12 +123,13 @@ export default function LiveStreaming({navigation}) {
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
-          console.log('Successfully joined channel: ' + elapsed);
           // previewHostStream();
           dispatch(setUserInState(user));
-
           if (stream.host == user.id) {
-            // createUserChatRoom();
+            createUserChatRoom();
+          } else {
+            dispatch(getUserInfoFromAPI(stream.host));
+            userJoinChatRoom(stream.chat_room_id);
           }
           if (_connection.localUid !== stream.host) {
             getStreamActiveUsers();
@@ -141,7 +141,7 @@ export default function LiveStreaming({navigation}) {
             Platform.OS == 'ios' ? 'IOS' : 'Android',
           );
           if (uid !== user.id) {
-            getUserInfoFromAPI(uid);
+            dispatch(getUserInfoFromAPI(uid));
           }
           // setRemoteUid(uid);
         },
@@ -184,7 +184,7 @@ export default function LiveStreaming({navigation}) {
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
         appId: envVar.AGORA_APP_ID,
       });
-      // agoraEngine.enableLocalAudio(true);
+      agoraEngine.enableLocalAudio(true);
       agoraEngine.enableLocalVideo(true);
       userJoinChannel();
     } catch (e) {
@@ -253,11 +253,6 @@ export default function LiveStreaming({navigation}) {
       return;
     }
 
-    // if (!connected) {
-    //   loginUser()
-    //   return
-    // }
-
     // Exit if already joined
     if (isJoined) {
       console.log('User is already in the channel.');
@@ -292,7 +287,7 @@ export default function LiveStreaming({navigation}) {
           {
             clientRoleType: ClientRoleType.ClientRoleBroadcaster,
             // clientRoleType: ClientRoleType.ClientRoleAudience,
-            publishMicrophoneTrack: false,
+            publishMicrophoneTrack: true,
             publishCameraTrack: true,
             autoSubscribeAudio: true,
             audienceLatencyLevel:
@@ -327,13 +322,12 @@ export default function LiveStreaming({navigation}) {
     try {
       if (!connected) {
         console.log('Not connected, logging in first...');
-        loginUser();
         return;
       }
 
       console.log('Creating chat room...');
       const chatRoom = await chatClient.roomManager.createChatRoom(
-        'Podcast',
+        'Stream Starting',
         'Hi',
         'welcome',
         [],
@@ -342,7 +336,6 @@ export default function LiveStreaming({navigation}) {
 
       const roomId = chatRoom.roomId;
       saveChatRoomId(roomId);
-      // dispatch(setRoomId(roomId));
       userJoinChatRoom(roomId);
       console.log(roomId, 'Chat room created successfully');
     } catch (error: any) {
@@ -365,40 +358,8 @@ export default function LiveStreaming({navigation}) {
 
   const userJoinChatRoom = async (roomId: any) => {
     try {
+      if (roomId) return;
       await chatClient.roomManager.joinChatRoom(roomId);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const hostEndedStream = async () => {
-    try {
-      dispatch(setHostLeftPodcast(true));
-      dispatch(setLeaveModal(true));
-      return;
-
-      const url = envVar.LOCAL_URL + 'podcast/end' + stream.id;
-      const data = {
-        id: stream.id,
-      };
-      const res = await axios.post(url);
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const hostEndedStreamx = async () => {
-    try {
-      dispatch(setHostLeftPodcast(true));
-      dispatch(setLeaveModal(false));
-      return;
-
-      const url = envVar.LOCAL_URL + 'stream/end' + stream.id;
-      const data = {
-        id: stream.id,
-      };
-      const res = await axios.post(url);
-      console.log(res.data);
     } catch (error) {
       console.log(error);
     }
@@ -413,58 +374,6 @@ export default function LiveStreaming({navigation}) {
       };
       const res = await axios.post(url, JSON.stringify(data));
       console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getUserInfoFromAPI = async (id: number) => {
-    try {
-      const currentUsers = [...streamListeners];
-      if (currentUsers.some(item => item.user?.id === id)) return;
-
-      dispatch(setLoading(true));
-      const {data} = await axiosInstance.post('users-info', {users: [id]});
-
-      if (data.users?.[0]) {
-        const emptyRoomIndex = currentUsers.findIndex(
-          item => !item.occupied && !item.user,
-        );
-
-        if (emptyRoomIndex !== -1) {
-          currentUsers[emptyRoomIndex] = {
-            ...currentUsers[emptyRoomIndex],
-            user: data.users[0],
-            occupied: true,
-          };
-          dispatch(setStreamListeners(currentUsers));
-        } else {
-          console.warn('No empty rooms available');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-  const filterOutUser = async (uid: number | undefined) => {
-    try {
-      let currentUsers = [...streamListeners];
-      const emptyRoomIndex = currentUsers.findIndex(
-        item => item.occupied && item.user.id == uid,
-      );
-      if (emptyRoomIndex !== -1) {
-        // Assign user to empty room
-        currentUsers[emptyRoomIndex] = {
-          ...currentUsers[emptyRoomIndex],
-          user: null,
-          occupied: false,
-        };
-        dispatch(setStreamListeners(currentUsers));
-      } else {
-        console.warn('user not found in listener');
-      }
     } catch (error) {
       console.log(error);
     }
@@ -488,14 +397,10 @@ export default function LiveStreaming({navigation}) {
     try {
       console.log('i am called ...');
       if (stream.chat_room_id) {
-        if (stream.chat_room_id) {
-          if (stream.host == user.id) {
-            chatClient.roomManager.destroyChatRoom(
-              stream.chat_room_id || roomId,
-            );
-          } else {
-            await chatClient.roomManager.leaveChatRoom(stream.chat_room_id);
-          }
+        if (stream.host == user.id) {
+          chatClient.roomManager.destroyChatRoom(stream.chat_room_id || roomId);
+        } else {
+          await chatClient.roomManager.leaveChatRoom(stream.chat_room_id);
         }
       }
       destroyEngine();
@@ -503,17 +408,28 @@ export default function LiveStreaming({navigation}) {
         dispatch(setLeaveModal(false));
         navigation.navigate('HomeB');
       }, 400);
-      // await chatClient.roomManager.leaveChatRoom(podcast.roomId);
     } catch (error) {}
   };
 
   const destroyEngine = () => {
     resetLiveStreaming(dispatch);
-
-    const res = agoraEngineRef.current?.leaveChannel();
-
-    agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
-    agoraEngineRef.current?.release();
+    try {
+      const channelLeave = agoraEngineRef.current?.leaveChannel();
+      let handler = agoraEngineRef.current?.unregisterEventHandler(
+        eventHandler.current!,
+      );
+      const engine = agoraEngineRef.current?.release();
+      console.log(
+        'channelLeave => ',
+        channelLeave,
+        'handler => ',
+        handler,
+        'engine =>',
+        engine,
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
   const toggleCamera = () => {
     try {
@@ -526,44 +442,6 @@ export default function LiveStreaming({navigation}) {
       }
     } catch (error) {
       console.error('Error toggling mute:', error);
-    }
-  };
-  const loginUser = async () => {
-    try {
-      setLoading(true);
-      console.log('login to chat ...');
-      const loggedIn = await chatClient.isLoginBefore();
-      console.log(loggedIn);
-      if (loggedIn) {
-        setConnected(true);
-      }
-      if (!loggedIn) {
-        const res = await chatClient.loginWithToken(
-          String(user.id),
-          user.agora_chat_token,
-        );
-        // console.log(res);
-        setLoading(false);
-        dispatch(setConnected(true));
-      }
-    } catch (error: any) {
-      if (error.code == 202) {
-        renewUserRTMToken();
-      }
-      console.log(error);
-    }
-  };
-  const renewUserRTMToken = async () => {
-    try {
-      const userUpdated = await renewRTMToken();
-      if (userUpdated) {
-        setUser(userUpdated);
-        await AsyncStorage.setItem('user', JSON.stringify(userUpdated));
-      }
-
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
     }
   };
 
@@ -600,45 +478,6 @@ export default function LiveStreaming({navigation}) {
     if (index < 0) setSheet(false);
   }, []);
   // Render a single host view
-  const renderHost = ({item, index}) => (
-    <View style={styles.hostView}>
-      {item.user ? (
-        <>
-          <React.Fragment key={item.user.id}>
-            <RtcSurfaceView
-              canvas={{
-                uid: item.user.id,
-                // sourceType: VideoSourceType.VideoSourceRemote,
-              }}
-              style={styles.videoView}
-            />
-          </React.Fragment>
-          <Text
-            style={[
-              {
-                position: 'absolute',
-                bottom: 10,
-                textAlign: 'center',
-                alignSelf: 'center',
-                color: colors.complimentary,
-              },
-            ]}>
-            {' '}
-            {item.user.first_name + ' ' + item.user.last_name}
-          </Text>
-        </>
-      ) : (
-        <View style={{alignItems: 'center'}}>
-          <TouchableOpacity>
-            <Icon name="sofa-single" color={'#CDC6CE'} size={60} />
-            <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-              Apply to join
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -666,41 +505,61 @@ export default function LiveStreaming({navigation}) {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              // previewHostStream();
-            }}>
-            <Text style={{color: '#fff'}}>preview</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
               userJoinChannel();
             }}>
             <Text style={{color: '#fff', marginTop: 10}}>join</Text>
           </TouchableOpacity>
         </View>
-        {/* <Text
-          style={{marginTop: 20, color: '#fff'}}
-          onPress={() => console.log(streamListeners)}>
-          sss
-        </Text> */}
 
         <TouchableOpacity
           style={{marginTop: 20}}
           onPress={() => console.log(streamListeners)}>
           <Text style={{color: '#fff'}}>leave channel</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity onPress={createUserChatRoom}>
-          <Text style={{color: '#fff'}}>createUserChatRoom</Text>
-        </TouchableOpacity> */}
+
         <View
           style={{
             marginTop: 30,
-            height: '50%',
           }}>
           <FlatList
             data={streamListeners}
-            renderItem={Streams}
+            contentContainerStyle={{}}
+            renderItem={({item}) => (
+              <View style={styles.hostView}>
+                {item.user ? (
+                  <>
+                    <React.Fragment key={item.user.id}>
+                      <RtcSurfaceView
+                        canvas={{
+                          uid: item.user.id,
+                          // sourceType: VideoSourceType.VideoSourceRemote,
+                        }}
+                        style={styles.videoView}
+                      />
+                    </React.Fragment>
+                    <Text style={styles.userTxt}>
+                      {' '}
+                      {item.user.first_name + ' ' + item.user.last_name}{' '}
+                      {item.user.id}
+                    </Text>
+                  </>
+                ) : (
+                  <View style={{alignItems: 'center'}}>
+                    <TouchableOpacity>
+                      <Icon name="sofa-single" color={'#CDC6CE'} size={60} />
+                      <Text
+                        style={[
+                          appStyles.bodyMd,
+                          {color: colors.complimentary},
+                        ]}>
+                        Apply to join
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
             keyExtractor={(item, index) => index.toString()}
-            // keyExtractor={item => item.id.toString()}
             numColumns={3}
           />
         </View>
@@ -781,6 +640,28 @@ const styles = StyleSheet.create({
   },
   tempBtn: {marginLeft: 10, padding: 10, backgroundColor: colors.accent},
   tempBtnTxt: {
+    color: colors.complimentary,
+  },
+  hostView: {
+    flex: 0.3,
+    aspectRatio: 1, // Ensure each host view is square
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)', // Transparent white
+    // backgroundColor: '#98347E',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  videoView: {
+    width: '100%',
+    flex: 1,
+    height: '100%',
+    backgroundColor: 'red',
+  },
+  userTxt: {
+    position: 'absolute',
+    bottom: 10,
+    textAlign: 'center',
+    alignSelf: 'center',
     color: colors.complimentary,
   },
 });

@@ -205,6 +205,7 @@ export default function HomeB() {
       const res = await axiosInstance.get('/renew-agora-token');
       dispatch(setTokenRenewed(true));
       setUser(res.data.user);
+      loginUser();
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
     } catch (error) {
       console.log(error);

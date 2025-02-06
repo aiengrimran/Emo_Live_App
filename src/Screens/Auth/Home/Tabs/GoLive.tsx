@@ -40,6 +40,7 @@ import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 import AvatarSheet from './Components/AvatarSheet';
 import BottomSection from './Components/BottomSection';
+import PodcastGuest from './Podcast/PodcastGuest';
 import {resetPodcastState, getLiveUsers} from './scripts/liveScripts';
 import Header from './Podcast/Header';
 
@@ -135,10 +136,10 @@ export default function GoLive({navigation}: any) {
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           if (podcast.host == user.id) {
-            // createUserChatRoom();
+            createUserChatRoom();
           } else {
             dispatch(getUserInfoFromAPI(podcast.host));
-            // userJoinChatRoom(podcast.chat_room_id);
+            userJoinChatRoom(podcast.chat_room_id);
           }
 
           dispatch(setUserInState(user));
@@ -158,11 +159,11 @@ export default function GoLive({navigation}: any) {
           if (connection.localUid !== podcast.host) {
             dispatch(removeUserFromPodcast(connection.localUid));
           }
-          // if (connection.localUid === podcast.host) {
-          //   console.log('host is lefting podcast');
-          //   hostEndedPodcast();
-          //   return;
-          // }
+          if (connection.localUid === podcast.host) {
+            console.log('host is lefting podcast');
+            hostEndedPodcast();
+            return;
+          }
           console.log('new function', 'user has leaved the');
         },
         onUserOffline: (_connection: RtcConnection, uid: number) => {
@@ -250,27 +251,10 @@ export default function GoLive({navigation}: any) {
     if (index < 0) setSheet(false);
   }, []);
 
-  const loginUser = async () => {
-    try {
-      console.log('login to chat ...');
-      const loggedIn = await chatClient.isLoginBefore();
-      if (!loggedIn) {
-        const res = await chatClient.loginWithToken(
-          String(user.id),
-          user.agora_chat_token,
-        );
-        console.log(res);
-        dispatch(setConnected(true));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const createUserChatRoom = async (retryCount = 0) => {
     try {
       if (!connected) {
         console.log('Not connected, logging in first...');
-        loginUser();
         return;
       }
 
@@ -346,12 +330,6 @@ export default function GoLive({navigation}: any) {
     }
     console.log('Connecting...', isJoined, user.id, podcast.host);
     // return;
-
-    // if (!connected) {
-    //   loginUser()
-    //   return
-    // }
-
     // Exit if already joined
     if (isJoined) {
       console.log('User is already in the channel.');
@@ -577,25 +555,13 @@ export default function GoLive({navigation}: any) {
               Chat Room Idb :{podcast.id}
             </Text>
           </View>
-          {/* <View>
-            <Text
-              onPress={createUserChatRoom}
-              style={{color: '#fff', marginVertical: 10}}>
-              createUserChatRoom
-            </Text>
-          </View> */}
         </View>
 
         {/* ************ second row ************ */}
-
         <View
           style={{
             width: '99%',
             // backgroundColor: 'red',
-            justifyContent: 'space-around',
-            // justifyContent:"space-arro"
-            // height: 400,
-            // alignItems: 'center',
           }}>
           <FlatList
             data={podcastListeners}
@@ -603,16 +569,14 @@ export default function GoLive({navigation}: any) {
             keyExtractor={(item, index) => index.toString()}
             contentContainerStyle={{
               alignItems: 'center',
-              alignSelf: 'center',
-              // justifyContent: 'space-between',
             }}
             // keyExtractor={(item,index) => item?.id.toString()}
             renderItem={({item, index}) => (
               // <View>
               <View
-                style={[styles.usersList, index > 0 ? {marginLeft: 10} : {}]}>
+                style={[styles.usersList, index > 0 ? {marginLeft: 35} : {}]}>
                 {item.user ? (
-                  <PodcastHost
+                  <PodcastGuest
                     muteUnmuteUser={muteUnmuteUser}
                     token={token}
                     handleOpenSheet2={handleOpenSheet2}
@@ -641,34 +605,11 @@ export default function GoLive({navigation}: any) {
             )}
           />
         </View>
-        <View>
-          <Text onPress={() => userJoinChatRoom(roomId)}>join room</Text>
+        <View style={{marginTop: 20}}>
+          <Text style={{color: '#fff'}} onPress={() => userJoinChannel()}>
+            userJoinChannel room
+          </Text>
         </View>
-        <View>
-          <Text onPress={() => userJoinChannel()}>userJoinChannel room</Text>
-        </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-          <TouchableOpacity
-            style={{marginTop: 40}}
-            onPress={() => {
-              dispatch(updatePodcastListeners(5));
-            }}>
-            <Text style={{color: '#fff'}}>updated pod</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{marginTop: 40}}
-            onPress={() => {
-              dispatch(setUserInState(user));
-            }}>
-            <Text style={{color: '#fff'}}>userJoinChannel roomxxx</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={{marginTop: 20}}
-          onPress={() => leaveAgoraChannel()}>
-          <Text>leaveChannelx</Text>
-        </TouchableOpacity>
         <EndLive
           user={user}
           endPodcastForUser={endPodcastForUser}
@@ -707,10 +648,6 @@ export default function GoLive({navigation}: any) {
           </BottomSheetView>
         </BottomSheet>
 
-        <Text style={{color: '#fff'}} onPress={userJoinChannel}>
-          User join channel
-        </Text>
-
         {!sheet && (
           <BottomSection
             roomId={podcast.chat_room_id}
@@ -730,62 +667,3 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
   },
 });
-interface PodcastHost {
-  item: any;
-  token: string;
-  dispatch: any;
-  handleOpenSheet2: any;
-  muteUnmuteUser: any;
-}
-
-const PodcastHost = ({
-  item,
-  token,
-  dispatch,
-  handleOpenSheet2,
-  muteUnmuteUser,
-}: PodcastHost) => (
-  <TouchableOpacity
-    style={{
-      alignItems: 'center',
-    }}
-    onPress={() => {
-      dispatch(setSelectedGuest(item));
-      handleOpenSheet2();
-    }}>
-    <Image
-      source={
-        item.user.avatar
-          ? {
-              uri: envVar.API_URL + 'display-avatar/' + item.user.id,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          : require('../../../../assets/images/place.jpg')
-      }
-      style={styles.chatAvatar}
-    />
-    <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
-      {item.user.first_name + ' ' + item.user.last_name}
-    </Text>
-    <View style={styles.points}>
-      <Icon name="star-four-points" size={20} color={colors.dominant} />
-      <Text style={[appStyles.small, {color: colors.dominant}]}>3754</Text>
-    </View>
-    <TouchableOpacity
-      onPress={() => muteUnmuteUser(item)}
-      style={{
-        position: 'absolute',
-        right: 10,
-      }}>
-      <Icon
-        name={item.muted ? 'microphone-off' : 'microphone'}
-        // name="microphone" microphone-off
-
-        size={25}
-        color={colors.complimentary}
-      />
-    </TouchableOpacity>
-  </TouchableOpacity>
-);

@@ -20,16 +20,7 @@ export default function Streams({item}) {
               style={styles.videoView}
             />
           </React.Fragment>
-          <Text
-            style={[
-              {
-                position: 'absolute',
-                bottom: 10,
-                textAlign: 'center',
-                alignSelf: 'center',
-                color: colors.complimentary,
-              },
-            ]}>
+          <Text style={styles.userTxt}>
             {' '}
             {item.user.first_name + ' ' + item.user.last_name} {item.user.id}
           </Text>
@@ -63,5 +54,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     backgroundColor: 'red',
+  },
+  userTxt: {
+    position: 'absolute',
+    bottom: 10,
+    textAlign: 'center',
+    alignSelf: 'center',
+    color: colors.complimentary,
   },
 });

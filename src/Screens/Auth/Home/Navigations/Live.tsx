@@ -49,7 +49,6 @@ export default function Popular({navigation}) {
       }
     } catch (error) {
       setLoading(false);
-
       console.log(error);
     }
   };
@@ -67,9 +66,7 @@ export default function Popular({navigation}) {
       // console.log(res.data);
       setUser(res.data.user);
       dispatch(updateStreamListeners(item.listeners));
-      // dispatch(updateStreamListeners(res.data.listeners + 1));
       dispatch(setStream(item));
-      // await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
       navigation.navigate('LiveStreaming');
     } catch (error) {
       setLoading(false);
