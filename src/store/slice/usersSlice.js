@@ -13,11 +13,11 @@ const initialState = {
   chatUser: '',
   roomId: '',
   liveForm: {
-    liveType: '',
+    liveType: null,
     title: 'test 122',
     duration: '20',
-    listeners: [],
-    type: '',
+    listeners: null,
+    type: null,
   },
 };
 
@@ -31,8 +31,23 @@ export const managerSlice = createSlice({
     setSelectedGuest: (state, action) => {
       state.selectedGuest = action.payload;
     },
-    setLiveForm: (state, action) => {
-      state.liveForm = {...state.liveForm, ...action.payload};
+    setLiveForm: (state, {payload}) => {
+      state.liveForm = {
+        ...state.liveForm,
+        [payload.field]: payload.value,
+      };
+      console.log(state.liveForm);
+    },
+    setLiveFormx: (state, {payload}) => {
+      // console.log
+      // let i = state.liveForm;
+      console.log(payload);
+      // let b = {...i, [payload]}
+      return;
+      state.liveForm = {
+        ...state.liveForm,
+        [payload.duration]: payload.duration,
+      };
     },
     setRoomId: (state, action) => {
       state.roomId = action.payload;

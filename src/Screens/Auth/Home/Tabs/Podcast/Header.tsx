@@ -85,22 +85,16 @@ export default function Header({
       <View
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-around',
-          width: '30%',
+          width: '35%',
+          justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-        <TouchableOpacity onPress={() => navigation.navigate('TempUI')}>
-          <IconM name="warning" size={25} color={'red'} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon
-            name="eye"
-            size={25}
-            color={isJoined ? '#F0DF00' : colors.accent}
-          />
-        </TouchableOpacity>
+        <View>
+          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+            Duration: <Text style={[{color: colors.golden}]}>10:34</Text>
+          </Text>
+        </View>
         <TouchableOpacity onPress={leavePodcast}>
-          {/* <TouchableOpacity onPress={() => navigation.goBack()}> */}
           {/* <TouchableOpacity onPress={() => navigation.navigate('HomeB')}> */}
           <Icon
             name="close"

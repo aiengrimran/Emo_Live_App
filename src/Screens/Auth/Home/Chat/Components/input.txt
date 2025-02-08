@@ -12,13 +12,23 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
+import AudioService from '../../../../../services/audioService';
 import Svg, {Polyline} from 'react-native-svg';
+interface InputProps {
+  audioPlayerRef: React.RefObject<AudioRecorderPlayer | null>;
+  message: any;
+  setMessage: any;
+  sendMsg: any;
+}
 
-export default function Input({message, setMessage, sendMsg}) {
-  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
-
+export default function Input({
+  audioPlayerRef,
+  message,
+  setMessage,
+  sendMsg,
+}: InputProps) {
   const [audioData, setAudioData] = useState<any>([]);
-  const [audioMessage, setAudioMessage] = useState({
+  const [audioMessage, setAudioMessage] = useState<any>({
     record: false,
     recorded: false,
     played: false,
@@ -29,39 +39,34 @@ export default function Input({message, setMessage, sendMsg}) {
     // playTime:
   });
   const [recordTime, setRecordTime] = useState<any>('');
-  const [playTime, setPlayTime] = useState('');
-
-  useEffect(() => {
-    return () => {
-      audioRecorderPlayer.removePlayBackListener();
-      audioRecorderPlayer.removeRecordBackListener();
-    };
-  }, []);
+  const [playTime, setPlayTime] = useState<any>('');
 
   const onStartPlay = async () => {
     try {
       if (audioMessage.played) {
-        await audioRecorderPlayer.stopPlayer();
+        await audioPlayerRef.current?.stopPlayer();
         onStopPlay();
         return;
       }
-      const msg = await audioRecorderPlayer.startPlayer();
+      const msg = await audioPlayerRef.current?.startPlayer();
       console.log('Playing audio:', msg);
 
-      audioRecorderPlayer.addPlayBackListener(e => {
+      audioPlayerRef.current?.addPlayBackListener(e => {
         const waveform = processAudioData(e.currentPosition); // Simulated data
         setAudioData(waveform);
 
         const positionInSeconds = e.currentPosition / 1000;
 
-        setPlayTime(audioRecorderPlayer.mmss(Math.floor(positionInSeconds)));
+        setPlayTime(
+          audioPlayerRef.current?.mmss(Math.floor(positionInSeconds)),
+        );
 
         if (e.currentPosition >= e.duration) {
           onStopPlay();
         }
       });
 
-      setAudioMessage({...audioMessage, played: true});
+      setAudioMessage(prevState => ({...prevState, played: true}));
     } catch (error) {
       console.error('Error starting playback:', error);
     }
@@ -81,107 +86,82 @@ export default function Input({message, setMessage, sendMsg}) {
     try {
       if (audioMessage.record) {
         console.log('b');
-        const result = await audioRecorderPlayer.stopRecorder();
+        const result = await audioPlayerRef.current?.stopRecorder();
         console.log(result, 'recording stopped');
-        audioRecorderPlayer.removeRecordBackListener();
+        audioPlayerRef.current?.removeRecordBackListener();
         setRecordTime('');
-        setAudioMessage({...audioMessage, record: false, renderPlay: true});
-        setMessage({
-          ...message,
+        setAudioMessage(prevState => ({
+          ...prevState,
+          record: false,
+          renderPlay: true,
+        }));
+        setMessage((prevState: any) => ({
+          ...prevState,
           icon: 'microphone',
-        });
+        }));
         return;
       }
       console.log('a');
-      const result = await audioRecorderPlayer.startRecorder();
-      //   console.log('file uri ', result);
+      const filePath = await audioPlayerRef.current?.startRecorder();
 
-      audioRecorderPlayer.addRecordBackListener(e => {
+      audioPlayerRef.current?.addRecordBackListener(e => {
         const waveform = processAudioData(e.currentPosition); // Simulated data
         setAudioData(waveform);
         const positionInSeconds = e.currentPosition / 1000;
-        setRecordTime(audioRecorderPlayer.mmss(Math.floor(positionInSeconds)));
+        setRecordTime(
+          audioPlayerRef.current?.mmss(Math.floor(positionInSeconds)),
+        );
         // setRecordTime(
-        //   audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
+        //   audioPlayerRef.current?.mmssss(Math.floor(e.currentPosition)),
         // );
       });
-      setAudioMessage({
-        ...audioMessage,
+      setAudioMessage(prevState => ({
+        ...prevState,
         record: true,
         recorded: true,
         renderPlay: false,
-        uri: result,
-      });
-      setMessage({
-        ...message,
+        uri: filePath,
+      }));
+      setMessage((prevState: any) => ({
+        ...prevState,
         type: 'voice',
         icon: 'pause',
-      });
+        uri: filePath,
+      }));
       console.log('i am king ....');
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const recordVoicex = async () => {
-    try {
-      if (audioMessage.record) {
-        console.log('b');
-        const result = await audioRecorderPlayer.stopRecorder();
-        console.log(result, 'recording stopped');
-        audioRecorderPlayer.removeRecordBackListener();
-        setRecordTime('');
-        setAudioMessage({...audioMessage, record: false, renderPlay: true});
-        return;
-      }
-      console.log('a');
-      const result = await audioRecorderPlayer.startRecorder();
-      console.log('file uri ', result);
-
-      audioRecorderPlayer.addRecordBackListener(e => {
-        const waveform = processAudioData(e.currentPosition); // Simulated data
-        setAudioData(waveform);
-        const positionInSeconds = e.currentPosition / 1000;
-        setRecordTime(audioRecorderPlayer.mmss(Math.floor(positionInSeconds)));
-        // setRecordTime(
-        //   audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)),
-        // );
-      });
-      setAudioMessage({
-        ...audioMessage,
-        record: true,
-        recorded: true,
-        renderPlay: false,
-        uri: result,
-      });
     } catch (error) {
       console.log(error);
     }
   };
 
   const onStopPlay = async () => {
-    await audioRecorderPlayer.stopPlayer();
-    setAudioMessage({...audioMessage, played: false});
+    await audioPlayerRef.current?.stopPlayer();
+    setAudioMessage(prevState => ({...prevState, played: false}));
 
     // setAudioData([]);
   };
 
   const deleteVoice = async () => {
     try {
-      await audioRecorderPlayer.stopRecorder();
-      await audioRecorderPlayer.stopPlayer();
-      audioRecorderPlayer.removeRecordBackListener();
-      audioRecorderPlayer.removePlayBackListener();
+      await audioPlayerRef.current?.stopRecorder();
+      await audioPlayerRef.current?.stopPlayer();
+      audioPlayerRef.current?.removeRecordBackListener();
+      audioPlayerRef.current?.removePlayBackListener();
       setPlayTime('');
       setRecordTime('');
       setAudioData([]);
-      setAudioMessage({
-        ...audioMessage,
+      setAudioMessage(prevState => ({
+        ...prevState,
         record: false,
         recorded: false,
         renderPlay: false,
         uri: '',
-      });
-      setMessage({...message, type: 'initial', icon: 'microphone'});
+      }));
+      setMessage((prevState: any) => ({
+        ...prevState,
+        type: 'initial',
+        icon: 'microphone',
+      }));
 
       // Optional: Delete file logic (if needed)
       console.log('Voice deleted');
@@ -190,18 +170,27 @@ export default function Input({message, setMessage, sendMsg}) {
     }
   };
   const sendVoiceMessage = () => {
-    console.log('sss');
-    setMessage({...message, uri: audioMessage.uri, type: 'initial'});
-    setAudioMessage({
-      ...audioMessage,
+    resetParentMessage();
+    // sendMsg();
+    // deleteVoice()
+  };
+  const resetParentMessage = () => {
+    setMessage((prevState: any) => ({
+      ...prevState,
+      type: 'initial',
+      icon: 'microphone',
+    }));
+    // console.log('i run ...');
+    // return;
+    setAudioMessage(prevState => ({
+      ...prevState,
       record: false,
       recorded: false,
       renderPlay: false,
       uri: '',
-    });
-
+    }));
+    console.log('i run ...');
     sendMsg();
-    // deleteVoice()
   };
   return (
     <View style={styles.container}>
@@ -226,17 +215,20 @@ export default function Input({message, setMessage, sendMsg}) {
                 style={styles.input}
                 value={message.content}
                 onChangeText={text => {
-                  console.log(text.length);
                   if (text.length < 1) {
-                    setMessage({...message, content: text, icon: 'microphone'});
+                    setMessage((prevState: any) => ({
+                      ...prevState,
+                      content: text,
+                      icon: 'microphone',
+                    }));
                     return;
                   }
-                  setMessage({
-                    ...message,
+                  setMessage((prevState: any) => ({
+                    ...prevState,
                     type: 'text',
                     icon: 'send',
                     content: text,
-                  });
+                  }));
                 }}
               />
               <Icon name="camera" size={25} color={colors.body_text} />
@@ -245,12 +237,11 @@ export default function Input({message, setMessage, sendMsg}) {
               style={styles.voiceBtn}
               onPress={() => {
                 if (message.type == 'text') {
-                  sendMsg();
+                  resetParentMessage();
                 } else {
                   recordVoice();
                 }
               }}>
-              <Text>d</Text>
               <Icon
                 name={message.icon}
                 size={25}
@@ -312,12 +303,11 @@ export default function Input({message, setMessage, sendMsg}) {
               style={styles.voiceBtn}
               onPress={() => {
                 if (message.type == 'text') {
-                  sendMsg();
+                  sendVoiceMessage();
                 } else {
                   recordVoice();
                 }
               }}>
-              <Text>l</Text>
               <Icon
                 name={message.icon}
                 size={25}

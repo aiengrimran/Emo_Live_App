@@ -19,6 +19,7 @@ import PurchaseVIP from '../Screens/Auth/Home/Profile/PurchaseVIP';
 import JoinAgency from '../Screens/Auth/Home/Profile/ShortCuts/JoinAgency';
 import UpdatePassword from '../Screens/Auth/Home/Profile/CRUD/UpdatePassword';
 import Register from '../Screens/Guest/Register';
+import LiveStreamingTest from '../tests/LiveStreaming';
 import BlockedUsers from '../Screens/Auth/Home/Profile/Settings/BlockedList';
 import ForgetPassword from '../Screens/Guest/ForgetPassword';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -145,6 +146,10 @@ export default function Index() {
                     </Stack.Group>
                   ) : (
                     <>
+                      {/* <Stack.Screen
+                        name="LiveStreamingTest"
+                        component={LiveStreamingTest}
+                      /> */}
                       <Stack.Screen name="HomeB" component={HomeB} />
                       <Stack.Screen name="ScoreCard" component={ScoreCard} />
                       <Stack.Screen name="VIP" component={VIP} />

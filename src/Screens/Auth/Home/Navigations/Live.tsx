@@ -32,7 +32,7 @@ export default function Popular({navigation}) {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getStream();
+    // getStream();
   }, []);
   const getStream = async () => {
     try {
@@ -94,6 +94,9 @@ export default function Popular({navigation}) {
           data={streams}
           keyExtractor={(item: any) => item.id?.toString()}
           numColumns={2}
+          contentContainerStyle={{
+            paddingBottom: 120,
+          }}
           renderItem={({item}: any) => (
             <TouchableOpacity
               style={styles.PodcastUser}

@@ -51,43 +51,6 @@ const streamingSlice = createSlice({
     guests: null,
     rtcTokenRenewed: false,
     stream: '',
-    // stream: {
-    //   channel: 'ch_84536_0b85',
-    //   created_at: '2025-02-02T08:22:16.000000Z',
-    //   duration: 10,
-    //   host: 2,
-    //   id: 3,
-    //   listeners: 6,
-    //   listeners_added: 'null',
-    //   status: 'STARTED',
-    //   title: 'Some title',
-    //   type: 'PUBLIC',
-    //   updated_at: '2025-02-02T08:22:16.000000Z',
-    //   user: {
-    //     account_verified: 0,
-    //     address: 'buner kpk',
-    //     agora_chat_token:
-    //       '007eJxTYOCp36dep/BO+u8DD9Eft8wdvT8t4mLJPDfRritg88JDR00UGJKTDM0tLEwt09IMDE0MDFIsDFKSTQxSUg3NzdNSU5KSm+7Wpxv9rk9P/vyPkZGBlYERCEF8IAkA20sh0g==',
-    //     agora_chat_uid: null,
-    //     agora_rtc_token:
-    //       '007eJxTYHATlnp6aJNrRo7Mdsm8GTvPTvy15EJL4xr2+J+v7nQLXnivwJCcZGhuYWFqmZZmYGhiYJBiYZCSbGKQkmpobp6WmpKUbKE9P70hkJEhm8WJkZGBkYEFiEGACUwyg0kWMMnLkJwRb2FiamwWb5BkYcrIYAQAESchvA==',
-    //     avatar: 'users/avatars/1736177116.jpg',
-    //     bio: 'something should happen special',
-    //     can_create_chat_room: 1,
-    //     created_at: '2024-12-28T09:50:57.000000Z',
-    //     dob: '1997-03-15',
-    //     email: 'zalkip@gmail.com',
-    //     first_name: 'zalkip',
-    //     gender: 'male',
-    //     id: 2,
-    //     last_name: 'khan',
-    //     phone: null,
-    //     provider: null,
-    //     provider_id: null,
-    //     updated_at: '2025-02-02T08:22:16.000000Z',
-    //     user_name: null,
-    //   },
-    // },
     streamListeners: [],
     streams: [],
   },
@@ -102,6 +65,7 @@ const streamingSlice = createSlice({
         user: null,
         occupied: false,
         muted: false,
+        camOn: true,
       }));
       // let hosts = Array.from({length: action.payload}, (_, i) => i + 1);
       state.streamListeners = hosts;
@@ -111,6 +75,12 @@ const streamingSlice = createSlice({
     },
     setStreams: (state, action) => {
       state.streams = action.payload;
+    },
+    updateStreamRoomId: (state, {payload}) => {
+      // state.stream.roomId
+      let stream = state.stream;
+      stream = {...stream, chat_room_id: payload};
+      state.streams = stream;
     },
     setStreamListeners: (state, action) => {
       state.streamListeners = action.payload;
@@ -146,10 +116,25 @@ const streamingSlice = createSlice({
         .map(user => ({
           user,
           occupied: true,
-          seatNo: null, // Default value (or set based on logic)
-          muted: false, // Default value (or set based on logic)
+          seatNo: null,
+          camOn: true,
+          muted: false,
         }));
       state.streamListeners = [...currentUsers, ...newUsers];
+    },
+    updatedMuteUnmuteUser: (state, {payload}) => {
+      state.streamListeners = state.streamListeners.map(listener =>
+        listener.user?.id === payload
+          ? {...listener, muted: !listener.muted} // Create a new object with updated muted property
+          : listener,
+      );
+    },
+    updateUserCamera: (state, {payload}) => {
+      state.streamListeners = state.streamListeners.map(listener =>
+        listener.user?.id === payload
+          ? {...listener, camOn: !listener.camOn} // Create a new object with updated muted property
+          : listener,
+      );
     },
     removeUserFromStream: (state, {payload}) => {
       let currentUsers = state.streamListeners;
@@ -190,6 +175,9 @@ export const {
   updateStreamListeners,
   setStreams,
   setUserInState,
+  updatedMuteUnmuteUser,
+  updateStreamRoomId,
+  updateUserCamera,
   setPrevUsersInStream,
   removeUserFromStream,
 } = streamingSlice.actions;

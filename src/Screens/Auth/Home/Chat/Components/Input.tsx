@@ -12,6 +12,7 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
+import audioService from '../../../../../services/audioService';
 import Svg, {Polyline} from 'react-native-svg';
 interface InputProps {
   audioPlayerRef: React.RefObject<AudioRecorderPlayer | null>;
@@ -43,7 +44,8 @@ export default function Input({
   const onStartPlay = async () => {
     try {
       if (audioMessage.played) {
-        await audioPlayerRef.current?.stopPlayer();
+        await audioService.stopPlaying();
+        // await audioPlayerRef.current?.stopPlayer();
         onStopPlay();
         return;
       }

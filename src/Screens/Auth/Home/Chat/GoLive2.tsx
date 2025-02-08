@@ -208,7 +208,7 @@ export default function GoLive2({navigation}) {
               {color: colors.complimentary, textAlign: 'center', marginTop: 40},
             ]}>
             Please Select Seat for{' '}
-            {liveForm.type == 'video' ? 'Video' : 'Podcast'} Streaming
+            {liveForm.liveType == 'video' ? 'Video' : 'Podcast'} Streaming
           </Text>
           <View style={styles.room}>
             <TouchableOpacity onPress={() => dispatch(setGuests(1))}>

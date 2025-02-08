@@ -48,7 +48,7 @@ export default function PodcastGuest({
         {item.user.first_name + ' ' + item.user.last_name}
       </Text>
       <View style={styles.points}>
-        <Icon name="star-four-points" size={20} color={colors.dominant} />
+        <Icon name="star-four-points" size={15} color={colors.dominant} />
         <Text style={[appStyles.small, {color: colors.dominant}]}>3754</Text>
       </View>
       <TouchableOpacity

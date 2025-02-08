@@ -130,7 +130,11 @@ const podcastSlice = createSlice({
       console.log('i updated array ....');
       state.podcastListeners = action.payload;
     },
-
+    updatePodcastRoomId: (state, {payload}) => {
+      let podcast = state.payload;
+      podcast = {...podcast, chat_room_id: payload};
+      state.podcast = podcast;
+    },
     setHostLeftPodcast: (state, action) => {
       state.hostLeftPodcast = action.payload;
     },
@@ -172,6 +176,13 @@ const podcastSlice = createSlice({
           muted: false, // Default value (or set based on logic)
         }));
       state.podcastListeners = [...currentUsers, ...newUsers];
+    },
+    updatedMuteUnmuteUser: (state, {payload}) => {
+      state.streamListeners = state.streamListeners.map(listener =>
+        listener.user?.id === payload
+          ? {...listener, muted: !listener.muted} // Create a new object with updated muted property
+          : listener,
+      );
     },
     removeUserFromPodcast: (state, {payload}) => {
       let currentUsers = state.podcastListeners;
@@ -224,6 +235,8 @@ export const {
   setRoomId,
   setHostId,
   setLoading,
+  updatedMuteUnmuteUser,
+  updatePodcastRoomId,
   setPodcastListeners,
   setRTCTokenRenewed,
   updatePodcastListeners,

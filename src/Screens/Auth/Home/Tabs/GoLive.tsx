@@ -65,11 +65,11 @@ import {
   removeUserFromPodcast,
   getUserInfoFromAPI,
   setPrevUsersInPodcast,
+  updatePodcastRoomId,
 } from '../../../../store/slice/podcastSlice';
 import {
   setLoading,
   setSelectedGuest,
-  setRoomId,
   setIsJoined,
 } from '../../../../store/slice/usersSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
@@ -99,21 +99,21 @@ export default function GoLive({navigation}: any) {
 
   // callbacks
 
-  // useEffect(() => {
-  //   if (!isJoined && podcast.chat_room_id) return;
+  useEffect(() => {
+    if (!isJoined) return;
 
-  //   const backAction = () => {
-  //     dispatch(setLeaveModal(true));
-  //     return true; // Prevent default back action
-  //   };
+    const backAction = () => {
+      dispatch(setLeaveModal(true));
+      return true; // Prevent default back action
+    };
 
-  //   const backHandler = BackHandler.addEventListener(
-  //     'hardwareBackPress',
-  //     backAction,
-  //   );
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
 
-  //   return () => backHandler.remove();
-  // }, [isJoined, podcast.chat_room_id, dispatch]);
+    return () => backHandler.remove();
+  }, [isJoined, dispatch]);
 
   useEffect(() => {
     // Initialize the engine when the App starts
@@ -229,12 +229,6 @@ export default function GoLive({navigation}: any) {
         break;
     }
   };
-  const testListners = () => {
-    try {
-      console.log(podcastListeners);
-    } catch (error) {}
-  };
-
   // Function to handle open Bottom Sheet
   const handleOpenSheet = useCallback((type: string) => {
     setSheet(true);
@@ -269,7 +263,7 @@ export default function GoLive({navigation}: any) {
 
       const roomId = chatRoom.roomId;
       saveChatRoomId(roomId);
-      dispatch(setRoomId(roomId));
+      dispatch(updatePodcastRoomId(roomId));
       userJoinChatRoom(roomId);
       console.log(roomId, 'Chat room created successfully');
     } catch (error: any) {
@@ -481,15 +475,9 @@ export default function GoLive({navigation}: any) {
 
         {/* ************ second row ************ */}
 
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginVertical: 30,
-            justifyContent: 'space-between',
-          }}>
+        <View style={[liveStyles.liveStates]}>
           <View style={{flexDirection: 'row', width: 50, alignItems: 'center'}}>
-            <Icon name="star-four-points" size={25} color="#F0DF00" />
+            <Icon name="star-four-points" size={20} color="#F0DF00" />
             <Text
               style={[
                 appStyles.regularTxtMd,
@@ -505,7 +493,6 @@ export default function GoLive({navigation}: any) {
             style={{
               flexDirection: 'row',
               width: '30%',
-              // justifyContent: 'space-around',
             }}>
             <Image
               style={{height: 20, width: 20, borderRadius: 10}}
@@ -549,14 +536,6 @@ export default function GoLive({navigation}: any) {
             width: '90%',
             justifyContent: 'space-around',
           }}></View>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <View style={{marginLeft: 10}}>
-            <Text style={{color: '#fff'}} onPress={testListners}>
-              Chat Room Idb :{podcast.id}
-            </Text>
-          </View>
-        </View>
-
         {/* ************ second row ************ */}
         <View
           style={{
@@ -574,7 +553,7 @@ export default function GoLive({navigation}: any) {
             renderItem={({item, index}) => (
               // <View>
               <View
-                style={[styles.usersList, index > 0 ? {marginLeft: 35} : {}]}>
+                style={[styles.usersList, index > 0 ? {marginLeft: 25} : {}]}>
                 {item.user ? (
                   <PodcastGuest
                     muteUnmuteUser={muteUnmuteUser}
@@ -604,11 +583,6 @@ export default function GoLive({navigation}: any) {
               </View>
             )}
           />
-        </View>
-        <View style={{marginTop: 20}}>
-          <Text style={{color: '#fff'}} onPress={() => userJoinChannel()}>
-            userJoinChannel room
-          </Text>
         </View>
         <EndLive
           user={user}

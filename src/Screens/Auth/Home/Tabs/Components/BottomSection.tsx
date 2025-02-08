@@ -31,10 +31,13 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const {chatRoomMessages} = useSelector((state: any) => state.chat);
-  const [messages, setMessages] = useState<any>([]);
   const [message, setMessage] = useState<string>('');
 
   const sendChatRoomMessage = async () => {
+    if (!roomId) {
+      Alert.alert('Slow network', 'Chat room is not created');
+      return;
+    }
     console.log(message);
     try {
       let msg;
@@ -46,7 +49,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
       setMessage('');
 
       let roomMessage = [...chatRoomMessages];
-      roomMessage.push(message);
+      roomMessage.push(msg);
       dispatch(setChatRoomMessages(roomMessage));
       const callback = new (class {
         onProgress(localMsgId: any, progress: any) {
@@ -100,12 +103,10 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           Great to see you here. Please don’t use abusive language, enjoy the
           stream, Have fun😊
         </Text>
-        <Text style={{color: '#fff'}}>{roomId}</Text>
       </View>
       <View style={{height: '60%', marginTop: 10}}>
         <FlatList
           data={chatRoomMessages}
-          // data={msgs}
           keyExtractor={(item: any) => item?.msgId.toString()}
           renderItem={({item}: any) => (
             <View
@@ -183,9 +184,3 @@ const styles = StyleSheet.create({
     ...appStyles.bodyRg,
   },
 });
-
-const renderHost = ({item, index}) => (
-  <View>
-    <Text>{item.localMsgId}</Text>
-  </View>
-);

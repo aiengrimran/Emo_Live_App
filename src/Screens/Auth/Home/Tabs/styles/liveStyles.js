@@ -2,7 +2,7 @@ import {colors} from '../../../../../styles/colors';
 import {Platform, StyleSheet} from 'react-native';
 import appStyles from '../../../../../styles/styles';
 const liveStyles = StyleSheet.create({
-  chatAvatar: {width: 60, height: 60, borderRadius: 35},
+  chatAvatar: {width: 50, height: 50, borderRadius: 25},
   sofa: {
     width: 60,
     height: 60,
@@ -26,6 +26,12 @@ const liveStyles = StyleSheet.create({
     flexDirection: 'row',
     width: '38%',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  liveStates: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 30,
     justifyContent: 'space-between',
   },
   contentContainer: {
@@ -64,11 +70,12 @@ const liveStyles = StyleSheet.create({
   points: {
     flexDirection: 'row',
     backgroundColor: colors.semantic,
-    borderRadius: 25,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 30,
+    // width: 60,
+    paddingHorizontal: 10,
+    // height: 20,
   },
   sheetAction: {
     flexDirection: 'row',

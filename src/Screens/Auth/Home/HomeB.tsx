@@ -57,7 +57,7 @@ export default function HomeB() {
       // Initialize the chat SDK here
       initializedOnce = true;
 
-      initializedAgoraChat();
+      // initializedAgoraChat();
     }
   }, [initialized, chatManagerRef.current, chatClientRef.current, connected]);
 
@@ -170,7 +170,7 @@ export default function HomeB() {
       chatClient.chatManager.addMessageListener(msgListener);
     };
     if (connected) {
-      setMessageListener();
+      // setMessageListener();
     }
   }, [connected]);
 

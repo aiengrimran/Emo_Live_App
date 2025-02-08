@@ -105,7 +105,7 @@ export default function LiveStreaming({navigation}) {
   const {connected} = useSelector((state: any) => state.chat);
 
   useEffect(() => {
-    if (!isJoined) return;
+    if (!isJoined && stream.chat_room_id) return;
 
     const backAction = () => {
       dispatch(setLeaveModal(true));
@@ -118,7 +118,7 @@ export default function LiveStreaming({navigation}) {
     );
 
     return () => backHandler.remove();
-  }, [isJoined, dispatch]);
+  }, [isJoined, stream.chat_room_id, dispatch]);
   // Generate a list of hosts
 
   useEffect(() => {

@@ -25,6 +25,7 @@ import {setPodcasts} from '../../../../store/slice/podcastSlice';
 
 export default function Popular({navigation}) {
   const {podcasts} = useSelector((state: any) => state.podcast);
+  const {streams} = useSelector((state: any) => state.streaming);
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {token} = tokenMemo;
   const [error, setError] = useState('');
@@ -101,19 +102,13 @@ export default function Popular({navigation}) {
           </Text>
         </TouchableOpacity>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
-        <View
-          style={
-            {
-              // height: '90%',
-              // flex: 1,
-            }
-          }>
+        <View>
           <FlatList
             data={podcasts}
             keyExtractor={(item: any) => item.id?.toString()}
             numColumns={2}
             contentContainerStyle={{
-              flexGrow: 1,
+              paddingBottom: 120,
             }}
             renderItem={({item}: any) => (
               <TouchableOpacity
