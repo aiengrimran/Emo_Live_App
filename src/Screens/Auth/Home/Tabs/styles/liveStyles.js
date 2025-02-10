@@ -29,9 +29,10 @@ const liveStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   liveStates: {
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 15,
     justifyContent: 'space-between',
   },
   contentContainer: {
@@ -87,7 +88,7 @@ const liveStyles = StyleSheet.create({
   btn1: {
     position: 'absolute',
     flexDirection: 'row',
-    bottom: Platform.OS == 'android' ? 0 : 20,
+    bottom: Platform.OS == 'android' ? 10 : 20,
     width: '99%',
     alignSelf: 'center',
     borderRadius: 15,
@@ -96,18 +97,13 @@ const liveStyles = StyleSheet.create({
   },
   usersList: {
     marginTop: 20,
-    // width: '20%',
-    // marginLeft: 10,
-    // alignItems: 'center',
-    // flexDirection: 'row',
-    // width: '90%',
-    // justifyContent: 'space-around',
   },
   emptySeat: {
-    width: 60,
-    height: 60,
-    borderRadius: 35,
-    backgroundColor: '#874975',
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    borderColor: colors.accent,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -119,6 +115,7 @@ const liveStyles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    // backgroundColor: 'red',
   },
   heading: {
     ...appStyles.headline,
@@ -128,7 +125,7 @@ const liveStyles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    padding: 10,
+    // padding: 10,
   },
   reportBtn: {
     borderRadius: 25,

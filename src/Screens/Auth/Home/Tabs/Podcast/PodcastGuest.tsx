@@ -44,7 +44,11 @@ export default function PodcastGuest({
         }
         style={styles.chatAvatar}
       />
-      <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+      <Text
+        style={[
+          appStyles.bodyMd,
+          {color: colors.complimentary, textAlign: 'center'},
+        ]}>
         {item.user.first_name + ' ' + item.user.last_name}
       </Text>
       <View style={styles.points}>

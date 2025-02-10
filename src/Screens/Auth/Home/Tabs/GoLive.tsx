@@ -10,12 +10,15 @@ import {
   BackHandler,
   Image,
   FlatList,
+  Dimensions,
   TextInput,
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import liveStyles from './styles/liveStyles';
+const deviceWidth = Dimensions.get('window').width;
+
 import React, {
   useRef,
   useContext,
@@ -24,6 +27,8 @@ import React, {
   useState,
 } from 'react';
 import Tools from './Podcast/Tools';
+import PodcastStatus from './Podcast/PodcastStatus';
+// import PodcastSt
 import {
   createAgoraRtcEngine,
   ChannelProfileType,
@@ -67,11 +72,7 @@ import {
   setPrevUsersInPodcast,
   updatePodcastRoomId,
 } from '../../../../store/slice/podcastSlice';
-import {
-  setLoading,
-  setSelectedGuest,
-  setIsJoined,
-} from '../../../../store/slice/usersSlice';
+import {setLoading, setIsJoined} from '../../../../store/slice/usersSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
 import {checkMicrophonePermission} from '../../../../scripts';
 import LiveLoading from './Components/LiveLoading';
@@ -117,7 +118,7 @@ export default function GoLive({navigation}: any) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    // setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -472,76 +473,11 @@ export default function GoLive({navigation}: any) {
         />
 
         {/* ************ Header end ************ */}
-
+        {/* ************ second row ************ */}
+        <PodcastStatus />
         {/* ************ second row ************ */}
 
-        <View style={[liveStyles.liveStates]}>
-          <View style={{flexDirection: 'row', width: 50, alignItems: 'center'}}>
-            <Icon name="star-four-points" size={20} color="#F0DF00" />
-            <Text
-              style={[
-                appStyles.regularTxtMd,
-                {
-                  marginLeft: 5,
-                  color: colors.complimentary,
-                },
-              ]}>
-              50.0k
-            </Text>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              width: '30%',
-            }}>
-            <Image
-              style={{height: 20, width: 20, borderRadius: 10}}
-              source={require('../../../../assets/images/male/male.jpeg')}
-            />
-            <Image
-              style={{
-                height: 20,
-                width: 20,
-                borderRadius: 10,
-                marginHorizontal: 5,
-              }}
-              source={require('../../../../assets/images/live/girl2.jpg')}
-            />
-            <Image
-              style={{
-                height: 20,
-                width: 20,
-                borderRadius: 10,
-              }}
-              source={require('../../../../assets/images/live/girl3.jpg')}
-            />
-            <TouchableOpacity>
-              <Text
-                style={[
-                  appStyles.regularTxtMd,
-                  {
-                    color: colors.complimentary,
-                    marginLeft: 5,
-                  },
-                ]}>
-                +25
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '90%',
-            justifyContent: 'space-around',
-          }}></View>
-        {/* ************ second row ************ */}
-        <View
-          style={{
-            width: '99%',
-            // backgroundColor: 'red',
-          }}>
+        <View>
           <FlatList
             data={podcastListeners}
             numColumns={4}
@@ -549,11 +485,8 @@ export default function GoLive({navigation}: any) {
             contentContainerStyle={{
               alignItems: 'center',
             }}
-            // keyExtractor={(item,index) => item?.id.toString()}
             renderItem={({item, index}) => (
-              // <View>
-              <View
-                style={[styles.usersList, index > 0 ? {marginLeft: 25} : {}]}>
+              <View style={[styles.podcastHost]}>
                 {item.user ? (
                   <PodcastGuest
                     muteUnmuteUser={muteUnmuteUser}
@@ -565,16 +498,13 @@ export default function GoLive({navigation}: any) {
                 ) : (
                   <View style={{alignItems: 'center'}}>
                     <View style={styles.emptySeat}>
-                      <Image
-                        source={require('../../../../assets/images/icons/sofa.png')}
-                        style={{width: 25, height: 25, borderRadius: 25}}
-                      />
+                      <Icon name="sofa-single" color={'#CDC6CE'} size={20} />
                     </View>
 
                     <Text
                       style={[
                         appStyles.paragraph1,
-                        {color: colors.complimentary},
+                        {color: colors.complimentary, textAlign: 'center'},
                       ]}>
                       {item.seatNo}
                     </Text>
@@ -639,5 +569,10 @@ const styles = StyleSheet.create({
   tempBtn: {marginLeft: 10, padding: 10, backgroundColor: colors.accent},
   tempBtnTxt: {
     color: colors.complimentary,
+  },
+  podcastHost: {
+    width: Dimensions.get('window').width * 0.25,
+    alignSelf: 'stretch',
+    marginBottom: 20,
   },
 });

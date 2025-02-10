@@ -10,12 +10,13 @@ import {
 
 import {colors} from '../../../../../styles/colors';
 import appStyles from '../../../../../styles/styles';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setLoading} from '../../../../../store/slice/usersSlice';
 import {useSelector} from 'react-redux';
 import axiosInstance from '../../../../../Api/axiosConfig';
+import {envVar} from '../Streaming/streamingImport';
 
 interface HeaderProps {
   user: any;
@@ -35,16 +36,39 @@ export default function Header({
   leavePodcast,
   connected,
 }: HeaderProps) {
+  const [time, setTime] = useState(0); // Time in seconds
+
   // const {podcast} = useSelector((state: any) => state.podcast);
   // const {stream} = useSelector((state: any) => state.streaming);
   const {loading, isJoined} = useSelector((state: any) => state.user);
+  let host = '';
 
-  const [host, setHost] = useState(
-    liveEvent.host == user.id ? user : liveEvent.user,
-  );
-  const followUser = () => {
+  // const [host, setHost] = useState(
+  //   liveEvent.host == user.id ? user : liveEvent.user,
+  // );
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setTime(prevTime => prevTime + 1); // Increment time by 1 second
+  //   }, 1000);
+  //   return () => clearInterval(interval); // Cleanup interval on unmount
+  // }, []);
+  // Convert time to mm:ss format
+  const formatTime = timeInSeconds => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
+      2,
+      '0',
+    )}`;
+  };
+  const followUser = async () => {
     try {
-    } catch (error) {}
+      const url = envVar.API_URL + 'follow-user';
+      const res = await axiosInstance.get(url);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <View style={styles.header}>
@@ -91,7 +115,9 @@ export default function Header({
         }}>
         <View>
           <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
-            Duration: <Text style={[{color: colors.golden}]}>10:34</Text>
+            Duration:{' '}
+            <Text style={[{color: colors.golden}]}>{formatTime(time)}</Text>
+            {/* Duration: <Text style={[{color: colors.golden}]}>10:34</Text> */}
           </Text>
         </View>
         <TouchableOpacity onPress={leavePodcast}>
@@ -112,6 +138,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: Platform.OS == 'ios' ? 40 : 0,
     flexDirection: 'row',
+    padding: 10,
     width: '98%',
     justifyContent: 'space-between',
   },

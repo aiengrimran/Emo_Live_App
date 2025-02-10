@@ -19,6 +19,10 @@ const initialState = {
     listeners: null,
     type: null,
   },
+  guestUser: {
+    joined: null,
+    user: '',
+  },
 };
 
 export const managerSlice = createSlice({
@@ -31,6 +35,10 @@ export const managerSlice = createSlice({
     setSelectedGuest: (state, action) => {
       state.selectedGuest = action.payload;
     },
+    setGuestUser: (state, {}) => {
+      state.guestUser.joined = payload.state;
+      state.guestUser.user = payload.user;
+    },
     setLiveForm: (state, {payload}) => {
       state.liveForm = {
         ...state.liveForm,
@@ -38,16 +46,8 @@ export const managerSlice = createSlice({
       };
       console.log(state.liveForm);
     },
-    setLiveFormx: (state, {payload}) => {
-      // console.log
-      // let i = state.liveForm;
-      console.log(payload);
-      // let b = {...i, [payload]}
-      return;
-      state.liveForm = {
-        ...state.liveForm,
-        [payload.duration]: payload.duration,
-      };
+    setLiveFormFull: (state, {payload}) => {
+      state.liveForm = payload;
     },
     setRoomId: (state, action) => {
       state.roomId = action.payload;
@@ -87,6 +87,8 @@ export const {
   setLiveForm,
   setChatConnected,
   setChatUser,
+  setLiveFormFull,
+  setGuestUser,
   setLoading,
   setLiveStatus,
 } = managerSlice.actions;

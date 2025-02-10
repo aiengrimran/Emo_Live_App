@@ -34,6 +34,10 @@ export const getUserInfoFromAPI = createAsyncThunk(
 
           // Dispatch an action to update the state
           dispatch(setStreamListeners(updatedUsers));
+          dispatch({
+            type: 'users/setGuestUser',
+            payload: {user: data.users?.[0], state: true},
+          });
         } else {
           console.warn('No empty rooms available');
         }

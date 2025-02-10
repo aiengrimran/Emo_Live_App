@@ -63,6 +63,7 @@ export default function GoLive2({navigation}) {
       const data = {
         title: 'Some title',
         duration: 10,
+        // listeners: guests,
         listeners: guests + 1,
         listeners_can_add: [],
         type: 'PUBLIC',

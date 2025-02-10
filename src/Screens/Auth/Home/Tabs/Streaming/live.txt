@@ -105,7 +105,7 @@ export default function LiveStreaming({navigation}) {
   const {connected} = useSelector((state: any) => state.chat);
 
   useEffect(() => {
-    if (!isJoined && stream.chat_room_id) return;
+    if (!isJoined) return;
 
     const backAction = () => {
       dispatch(setLeaveModal(true));
@@ -118,7 +118,7 @@ export default function LiveStreaming({navigation}) {
     );
 
     return () => backHandler.remove();
-  }, [isJoined, stream.chat_room_id, dispatch]);
+  }, [isJoined, dispatch]);
   // Generate a list of hosts
 
   useEffect(() => {
@@ -414,7 +414,7 @@ export default function LiveStreaming({navigation}) {
     try {
       if (agoraEngineRef.current) {
         // Toggle mute/unmute for the remote user
-        agoraEngineRef.current.muteLocalAudioStream(item.isMuted);
+        agoraEngineRef.current.muteLocalAudioStream(item.muted);
         dispatch(updatedMuteUnmuteUser(item.user.id));
       }
     } catch (error) {
@@ -642,7 +642,7 @@ export default function LiveStreaming({navigation}) {
                             onPress={() => toggleMute(item)}>
                             <Icon
                               name={
-                                item.isMuted ? 'microphone-off' : 'microphone'
+                                item.muted ? 'microphone-off' : 'microphone'
                               }
                               size={20}
                               color={colors.complimentary}

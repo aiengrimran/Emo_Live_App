@@ -11,6 +11,7 @@ import {
   Image,
   Alert,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import React, {
   useRef,
@@ -38,8 +39,10 @@ import {
   ConnectionChangedReasonType,
   VideoSourceType,
 } from 'react-native-agora';
+import StreamStatus from './StreamStatus';
 import Context from '../../../../../Context/Context';
 import LiveLoading from '../Components/LiveLoading';
+const deviceWidth = Dimensions.get('window').width;
 import Header from '../Podcast/Header';
 import envVar from '../../../../../config/envVar';
 import {setLiveStatus} from '../../../../../store/slice/usersSlice';
@@ -67,19 +70,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../../../../styles/colors';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {
-  renewRTCToken,
-  renewRTMToken,
   checkCamPermission,
   checkMicrophonePermission,
 } from '../../../../../scripts';
 import Gifts from '../Podcast/Gifts';
 import Users from '../Podcast/Users';
 import Tools from '../Podcast/Tools';
-import {
-  setRTCTokenRenewed,
-  setLoading,
-  setIsJoined,
-} from '../../../../../store/slice/usersSlice';
+import {setLoading, setIsJoined} from '../../../../../store/slice/usersSlice';
 import axiosInstance from '../../../../../Api/axiosConfig';
 const MAX_RETRIES = 5;
 
@@ -123,7 +120,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    // setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -414,25 +411,7 @@ export default function LiveStreaming({navigation}) {
     try {
       if (agoraEngineRef.current) {
         // Toggle mute/unmute for the remote user
-        agoraEngineRef.current.muteLocalAudioStream(item.isMuted);
-        dispatch(updatedMuteUnmuteUser(item.user.id));
-      }
-    } catch (error) {
-      console.error('Error toggling mute:', error);
-    }
-  };
-  const toggleMutex = (item: any) => {
-    try {
-      if (agoraEngineRef.current) {
-        // Toggle mute/unmute for the remote user
-        if (item.user.id == user.id) {
-          agoraEngineRef.current.muteLocalAudioStream(item.isMuted);
-        } else {
-          agoraEngineRef.current.muteRemoteAudioStream(
-            item.user.id,
-            item.isMuted,
-          );
-        }
+        agoraEngineRef.current.muteLocalAudioStream(item.muted);
         dispatch(updatedMuteUnmuteUser(item.user.id));
       }
     } catch (error) {
@@ -447,22 +426,6 @@ export default function LiveStreaming({navigation}) {
           agoraEngineRef.current.disableVideo();
         } else {
           agoraEngineRef.current.enableVideo();
-        }
-        dispatch(updateUserCamera(item.user.id));
-      }
-    } catch (error) {
-      console.error('Error toggling mute:', error);
-    }
-  };
-  const offCamerax = (item: any) => {
-    try {
-      if (agoraEngineRef.current) {
-        // Toggle mute/unmute for the remote user
-        if (item.user.id == user.id) {
-          agoraEngineRef.current.disableVideo();
-          agoraEngineRef.current.muteLocalAudioStream(item.camOn);
-        } else {
-          console.log('ss');
         }
         dispatch(updateUserCamera(item.user.id));
       }
@@ -521,19 +484,6 @@ export default function LiveStreaming({navigation}) {
     }
   };
 
-  const enableLocalVideo = () => {
-    try {
-      // const
-      console.log('open cam');
-      agoraEngineRef.current?.enableVideo();
-      agoraEngineRef.current?.startPreview(
-        VideoSourceType.VideoSourceCameraPrimary,
-      );
-      console.log('cam opend');
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const leaveStream = () => {
     dispatch(setLeaveModal(true));
   };
@@ -568,37 +518,26 @@ export default function LiveStreaming({navigation}) {
           leavePodcast={leaveStream}
           connected={connected}
         />
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '80%',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity onPress={enableLocalVideo}>
-            <Text style={{color: '#fff'}}>
-              enableLocalVideo ss {stream.host}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              userJoinChannel();
-            }}>
-            <Text style={{color: '#fff', marginTop: 10}}>join</Text>
-          </TouchableOpacity>
-        </View>
+        <StreamStatus />
 
-        <TouchableOpacity
-          style={{marginTop: 20}}
-          onPress={() => console.log(streamListeners)}>
-          <Text style={{color: '#fff'}}>leave channel</Text>
-        </TouchableOpacity>
+        {/* <TouchableOpacity
+          style={{backgroundColor: 'red', padding: 10}}
+          onPress={() => dispatch(updateStreamListeners(3))}>
+          <Text>update room</Text>
+        </TouchableOpacity> */}
 
         <View
           style={{
-            marginTop: 30,
+            height:
+              streamListeners.length > 6
+                ? deviceWidth * 0.963
+                : streamListeners.length > 3
+                ? deviceWidth * 0.7
+                : deviceWidth * 0.4,
           }}>
           <FlatList
             data={streamListeners}
+            contentContainerStyle={{paddingBottom: 40}}
             renderItem={({item}) => (
               <View style={styles.hostView}>
                 {item.user ? (
@@ -613,13 +552,21 @@ export default function LiveStreaming({navigation}) {
                         />
                       ) : (
                         <View style={{backgroundColor: colors.accent}}>
-                          <Text
-                            style={[
-                              appStyles.regularTxtMd,
-                              {color: colors.complimentary},
-                            ]}>
-                            Camera off
-                          </Text>
+                          <Image
+                            source={
+                              item.user.avatar
+                                ? {
+                                    uri:
+                                      envVar.API_URL +
+                                      'display-avatar/' +
+                                      item.user.id,
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                : require('../../../../../assets/images/place.jpg')
+                            }
+                          />
                         </View>
                       )}
 
@@ -642,7 +589,7 @@ export default function LiveStreaming({navigation}) {
                             onPress={() => toggleMute(item)}>
                             <Icon
                               name={
-                                item.isMuted ? 'microphone-off' : 'microphone'
+                                item.muted ? 'microphone-off' : 'microphone'
                               }
                               size={20}
                               color={colors.complimentary}
@@ -765,11 +712,12 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
   },
   hostView: {
-    flex: 0.3,
-    aspectRatio: 1, // Ensure each host view is square
+    // flex: 0.3,
+    width: deviceWidth * 0.332,
+    height: deviceWidth * 0.32,
+    // aspectRatio: 1, // Ensure each host view is square
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.3)', // Transparent white
-    // backgroundColor: '#98347E',
     borderWidth: 1,
     borderColor: '#ccc',
   },

@@ -111,11 +111,11 @@ export default function Home({navigation}) {
 
   const test = () => {
     console.log('hii');
-    // dispatch(updatePodcastListeners(6));
+    dispatch(updatePodcastListeners(6));
     // dispatch(updateStreamListeners(5));
 
     // navigation.navigate('LiveStreaming');
-    // navigation.navigate('GoLive');
+    navigation.navigate('GoLive');
   };
   return (
     // <ReanimatedSwipeable>

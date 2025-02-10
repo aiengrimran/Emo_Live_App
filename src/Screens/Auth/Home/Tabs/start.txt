@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Platform,
   Switch,
-  Linking,
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
@@ -12,140 +11,82 @@ import {
   AppState,
   ImageBackground,
 } from 'react-native';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import StartModal from './Components/StartModal';
 import appStyles from '../../../../styles/styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../../../styles/colors';
 import {useDispatch, useSelector} from 'react-redux';
-import {setLiveForm, setLiveFormFull} from '../../../../store/slice/usersSlice';
-import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import {setLiveForm} from '../../../../store/slice/usersSlice';
+import Camera from 'react-native-vision-camera';
 
 interface StartLiveProps {
   navigation: any;
 }
 export default function StartLive({navigation}: StartLiveProps) {
   const dispatch = useDispatch();
-  const camRef = useRef<Camera>(null);
   const {liveForm} = useSelector((state: any) => state.user);
   const [beautySettings, setBeautySettings] = useState(false);
-  const [editor, setEditor] = useState<any>({
-    device: '',
-    ready: false,
-    type: '',
-  });
   const [liveType, setLiveType] = useState('');
   const [modal, setModal] = useState<boolean>(false);
-  const devices = useCameraDevices();
-  // useEffect(() => {
-  //   async function getPermission() {
-  //     const permission = await Camera.requestCameraPermission();
-  //     console.log(`Camera permission status: ${permission}`);
-  //     if (permission === 'denied') await Linking.openSettings();
-  //   }
-  //   getPermission();
-  // }, []);
-
-  const useSpecificCamera = (position: 'front' | 'back') => {
-    return devices.find(device => device.position === position);
-  };
-  const startCamera = () => {
-    let back = useSpecificCamera('back');
-    // console.log(back);
-    if (!back) {
-      Alert.alert('Camera Device', 'Not found');
-      return;
-    }
-    if (back) {
-      setEditor(() => ({type: 'back', device: back, ready: true}));
-    }
-  };
-  const switchCamera = () => {
-    if (editor.type == 'back') {
-      let front = useSpecificCamera('front');
-      setEditor(() => ({type: 'back', device: front, ready: true}));
-      return;
-    }
-    let back = useSpecificCamera('back');
-    setEditor(() => ({type: 'back', device: back, ready: true}));
-  };
-
-  const capturePhoto = async () => {
-    try {
-      // camRef.
-      const file = await camRef.current?.takePhoto();
-      Alert.alert('Photo captured', '');
-      console.log(file);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  // const device = devices.back;
 
   return (
     <View style={styles.container}>
       <ImageBackground
         style={{
-          marginTop: Platform.OS == 'ios' ? 55 : 0,
+          marginTop: 55,
           flex: 1,
           width: '100%',
         }}
         source={require('../../../../assets/images/parts/flowerBg.jpg')}>
         <View
           style={{
-            height: '77%',
+            height: '60%',
             backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}>
           <Text style={styles.heading}>Start Live</Text>
-          {editor.ready && editor.device && (
-            <Camera
-              ref={camRef}
-              style={StyleSheet.absoluteFill}
-              device={editor.device}
-              isActive={editor.ready}
-              photo={true}
-              preview={true}
-            />
-          )}
-          {beautySettings && liveForm.liveType == 'video' && (
-            <View style={styles.filter}>
-              <TouchableOpacity
-                onPress={switchCamera}
-                style={{alignItems: 'center'}}>
-                <Icon
-                  name="camera-flip-outline"
-                  color={colors.complimentary}
-                  size={30}
-                />
-                <Text style={styles.filterTxt}>Switch Camera</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={capturePhoto}
-                style={{alignItems: 'center'}}>
-                <Icon
-                  name="emoticon-happy-outline"
-                  color={colors.complimentary}
-                  size={30}
-                />
-                <Text style={styles.filterTxt}>Sticker/Beautify</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{alignItems: 'center'}}>
-                <Icon name="mirror" color={colors.complimentary} size={30} />
-                <Text style={styles.filterTxt}>Mirror Camera</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         <View
           style={{
-            height: '23%',
+            height: '40%',
             backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}>
           <View style={{alignItems: 'center'}}>
-            <View style={{width: '100%', marginTop: 10}}>
+            {beautySettings && liveType == 'video' && (
+              <View style={styles.filter}>
+                <TouchableOpacity style={{alignItems: 'center'}}>
+                  <Icon
+                    name="camera-flip-outline"
+                    color={colors.complimentary}
+                    size={30}
+                  />
+                  <Text style={styles.filterTxt}>Switch Camera</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{alignItems: 'center'}}>
+                  <Icon
+                    name="emoticon-happy-outline"
+                    color={colors.complimentary}
+                    size={30}
+                  />
+                  <Text style={styles.filterTxt}>Sticker/Beautify</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{alignItems: 'center'}}>
+                  <Icon name="mirror" color={colors.complimentary} size={30} />
+                  <Text style={styles.filterTxt}>Mirror Camera</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={{width: '100%', marginTop: 80}}>
               {liveForm.liveType == 'video' && (
-                <View style={styles.beautify}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '90%',
+                    alignSelf: 'center',
+                  }}>
                   <Text
                     style={[appStyles.bodyMd, {color: colors.complimentary}]}>
                     Beauty Settings & more
@@ -157,14 +98,7 @@ export default function StartLive({navigation}: StartLiveProps) {
                     }}
                     thumbColor={colors.complimentary}
                     ios_backgroundColor="#3e3e3e"
-                    onValueChange={(value: boolean) => {
-                      setBeautySettings(value);
-                      if (editor.ready) {
-                        setEditor((prev: any) => ({...prev, ready: false}));
-                        return;
-                      }
-                      startCamera();
-                    }}
+                    onValueChange={setBeautySettings}
                     value={beautySettings}
                   />
                 </View>
@@ -177,26 +111,18 @@ export default function StartLive({navigation}: StartLiveProps) {
                       Alert.alert('Error', 'Please Select Live Type');
                       return;
                     }
-                    if (liveForm.liveType == 'podcast') {
-                      setModal(true);
-                      return;
-                    }
-                    if (liveForm.liveType == 'video') {
-                      dispatch(
-                        setLiveFormFull({
-                          liveType: 'video',
-                          type: 'PUBLIC',
-                          title: 'test title',
-                          duration: 20,
-                        }),
-                      );
-                      navigation.navigate('GoLive2');
-                    }
+                    setModal(true);
                   }}
                   style={styles.btn}>
                   <Text style={[appStyles.paragraph1]}>Go Live</Text>
                 </TouchableOpacity>
-                <View style={styles.tabs}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    marginTop: 20,
+                    width: '80%',
+                    justifyContent: 'space-around',
+                  }}>
                   <TouchableOpacity
                     onPress={() => {
                       dispatch(
@@ -285,7 +211,7 @@ const styles = StyleSheet.create({
   filter: {
     // display: beautySettings ? 'flex' : 'none',
     position: 'absolute', // Keeps it from affecting other elements
-    bottom: 0, // Adjust as needed
+    top: 0, // Adjust as needed
     left: 20,
     right: 0,
     alignSelf: 'center',
@@ -317,11 +243,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderBottomLeftRadius: 10,
   },
-  tabs: {
-    flexDirection: 'row',
-    marginTop: 15,
-    width: '80%',
-    justifyContent: 'space-around',
+  btn: {
+    marginTop: 20,
+    width: '99%',
+    alignSelf: 'center',
+    borderColor: colors.accent,
+    borderWidth: 1,
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 9,
   },
   tab: {
     borderBottomColor: '#FAEB3B',
@@ -341,12 +271,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  beautify: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignSelf: 'center',
   },
 });

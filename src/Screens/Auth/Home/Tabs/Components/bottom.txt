@@ -6,14 +6,12 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-  Animated,
   StyleSheet,
 } from 'react-native';
 import {colors} from '../../../../../styles/colors';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../../styles/styles';
-import {setGuestUser} from '../../../../../store/slice/usersSlice';
 import liveStyles from '../styles/liveStyles';
 import {setChatRoomMessages} from '../../../../../store/slice/chatSlice';
 import {
@@ -22,7 +20,7 @@ import {
   ChatMessageChatType,
 } from 'react-native-agora-chat';
 
-import {useEffect, useRef, useState} from 'react';
+import {useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 interface BottomSectionProps {
   handleOpenSheet: any;
@@ -33,39 +31,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const {chatRoomMessages} = useSelector((state: any) => state.chat);
-  const {guestUser} = useSelector((state: any) => state.users);
   const [message, setMessage] = useState<string>('');
-
-  // create an animated value for opacity
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (guestUser) {
-      fadeInAndOut();
-    }
-  }, [guestUser]);
-  // Function to start the fade-in and fade-out animation
-  const fadeInAndOut = () => {
-    console.log('i am clicked', 'value => ', fadeAnim);
-    // First, set the initial opacity to 1 (fully visible)
-    Animated.timing(fadeAnim, {
-      toValue: 1, // Fully visible
-      duration: 500, // Fade in duration (0.5 seconds)
-      useNativeDriver: true, // Use native driver for better performance
-    }).start(() => {
-      console.log('i am start', 'value => ', fadeAnim);
-
-      // After fading in, start fading out after 3 seconds
-      setTimeout(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 0, // Fully transparent
-          duration: 2500, // Fade out duration (2.5 seconds)
-          useNativeDriver: true,
-        }).start();
-        // update state
-        dispatch(setGuestUser({state: false, user: ''}));
-      }, 3000); // Wait 3 seconds before starting the fade-out
-    });
-  };
 
   const sendChatRoomMessage = async () => {
     if (!roomId) {
@@ -122,29 +88,22 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   };
 
   return (
-    <View style={{flex: 1, padding: 10}}>
+    <View style={{marginTop: 30, flex: 1}}>
       {/* <View style={{position: 'absolute', bottom: '5%'}}> */}
-      <View style={styles.sheetMessage}>
-        <Text
-          onPress={fadeInAndOut}
-          style={[appStyles.bodyMd, {color: colors.yellow, lineHeight: 20}]}>
+      <View style={{flexDirection: 'row', width: '80%'}}>
+        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
           Emo Live :{' '}
-          <Text style={[appStyles.bodyRg, {color: colors.complimentary}]}>
-            {' '}
-            Great to see you here. Please don’t use abusive language, enjoy the
-            stream, Have fun 😊
-          </Text>
+        </Text>
+        <Text
+          style={[
+            appStyles.bodyRg,
+            {color: colors.complimentary, textAlign: 'left'},
+          ]}>
+          {' '}
+          Great to see you here. Please don’t use abusive language, enjoy the
+          stream, Have fun😊
         </Text>
       </View>
-      {guestUser && (
-        <Animated.View
-          style={{
-            opacity: fadeAnim, // Bind the opacity to animated value
-          }}>
-          <JoinUser guestUser={guestUser} />
-        </Animated.View>
-      )}
-
       <View style={{height: '60%', marginTop: 10}}>
         <FlatList
           data={chatRoomMessages}
@@ -189,7 +148,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           <TouchableOpacity onPress={sendChatRoomMessage}>
             <Icon name="send" color={colors.complimentary} size={24} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleOpenSheet('tools')}>
+          <TouchableOpacity>
             <Icon
               name="dots-horizontal"
               color={colors.complimentary}
@@ -197,7 +156,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenSheet('tools')}>
             <IconM
               name="emoji-emotions"
               color={colors.complimentary}
@@ -224,51 +183,4 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
     ...appStyles.bodyRg,
   },
-  sheetMessage: {
-    flexDirection: 'row',
-    width: '95%',
-    paddingHorizontal: 20,
-    borderRadius: 4,
-    paddingVertical: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
 });
-
-const JoinUser = ({guestUser}: any) => {
-  return (
-    <View
-      style={{
-        marginTop: 20,
-        paddingVertical: 10,
-        width: '95%',
-        paddingLeft: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      }}>
-      <View
-        style={{
-          paddingHorizontal: 10,
-          paddingVertical: 2,
-          backgroundColor: colors.yellow,
-          borderRadius: 9,
-        }}>
-        <Text style={[appStyles.small, {color: colors.dominant}]}>
-          Official{' '}
-        </Text>
-      </View>
-      <View style={{marginLeft: 10, flexDirection: 'row'}}>
-        <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-          Mr {guestUser.first_name}:
-        </Text>
-        <Text
-          style={[
-            appStyles.bodyRg,
-            {color: colors.complimentary, marginLeft: 5},
-          ]}>
-          Join Room
-        </Text>
-      </View>
-    </View>
-  );
-};

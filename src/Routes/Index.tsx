@@ -1,11 +1,8 @@
-import {View, Text} from 'react-native';
 import React, {useState, useEffect, useMemo} from 'react';
-import {createStaticNavigation} from '@react-navigation/native';
 import {NavigationContainer} from '@react-navigation/native';
 import Landing from '../Screens/Guest/Landing';
 import Phone from '../Screens/Guest/Phone';
 import SplashScreen from '../Screens/Guest/SplashScreen';
-import Home from '../Screens/Auth/Home/Home';
 import GeneralPermission from '../Components/GeneralPermission';
 import HomeB from '../Screens/Auth/Home/HomeB';
 import Notifications from '../Screens/Auth/Home/Notifications';

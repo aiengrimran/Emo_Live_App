@@ -104,13 +104,11 @@ export default function App() {
     <GestureHandlerRootView>
       <View style={{flex: 1}}>
         {/* <Agora2 /> */}
-        {/* <PodCast /> */}
         {/* <SwipeImran/> */}
         {/* <GestureTest/> */}
         {/* <MoveFunction/> */}
         {/* <LiveStreaming /> */}
         <Provider store={store}>
-          {/* <PodCast /> */}
           {/* <Audio /> */}
           {/* <Chat /> */}
           {/* <Chats1 /> */}
