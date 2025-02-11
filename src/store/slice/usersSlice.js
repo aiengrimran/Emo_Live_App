@@ -35,7 +35,7 @@ export const managerSlice = createSlice({
     setSelectedGuest: (state, action) => {
       state.selectedGuest = action.payload;
     },
-    setGuestUser: (state, {}) => {
+    setGuestUser: (state, {payload}) => {
       state.guestUser.joined = payload.state;
       state.guestUser.user = payload.user;
     },

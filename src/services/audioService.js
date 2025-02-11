@@ -44,6 +44,10 @@ class AudioService {
       console.log('Error stopping recording', error);
     }
   };
+  mmss = sec => {
+    const seconds = this.audioRecorderPlayer.mmss(sec);
+    return seconds;
+  };
 }
 const audioService = new AudioService();
 export default audioService;

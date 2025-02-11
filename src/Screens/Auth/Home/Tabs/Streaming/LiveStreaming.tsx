@@ -120,7 +120,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -341,8 +341,8 @@ export default function LiveStreaming({navigation}) {
         console.log('Not connected, logging in first...');
         return;
       }
+      Alert.alert('chat room', 'Creating ');
 
-      console.log('Creating chat room...');
       const chatRoom = await chatClient.roomManager.createChatRoom(
         'Stream Starting',
         'Hi',
@@ -435,7 +435,6 @@ export default function LiveStreaming({navigation}) {
   };
   const endPodcastForUser = async () => {
     try {
-      console.log('i am called ...');
       if (stream.chat_room_id) {
         if (stream.host == user.id) {
           chatClient.roomManager.destroyChatRoom(stream.chat_room_id || roomId);
@@ -448,7 +447,9 @@ export default function LiveStreaming({navigation}) {
         dispatch(setLeaveModal(false));
         navigation.navigate('HomeB');
       }, 400);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const destroyEngine = () => {

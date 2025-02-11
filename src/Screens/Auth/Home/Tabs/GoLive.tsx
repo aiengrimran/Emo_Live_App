@@ -76,7 +76,7 @@ import {setLoading, setIsJoined} from '../../../../store/slice/usersSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
 import {checkMicrophonePermission} from '../../../../scripts';
 import LiveLoading from './Components/LiveLoading';
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 3;
 
 export default function GoLive({navigation}: any) {
   const chatClient = ChatClient.getInstance();
@@ -118,7 +118,7 @@ export default function GoLive({navigation}: any) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -269,7 +269,6 @@ export default function GoLive({navigation}: any) {
       console.log(roomId, 'Chat room created successfully');
     } catch (error: any) {
       console.log('Error creating chat room:', error);
-
       if (error.code === 2 || error.code === 300) {
         if (retryCount < MAX_RETRIES) {
           const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff

@@ -110,12 +110,11 @@ export default function Home({navigation}) {
   }));
 
   const test = () => {
-    console.log('hii');
-    dispatch(updatePodcastListeners(6));
+    // console.log('hii');
+    // dispatch(updatePodcastListeners(6));
     // dispatch(updateStreamListeners(5));
-
     // navigation.navigate('LiveStreaming');
-    navigation.navigate('GoLive');
+    // navigation.navigate('GoLive');
   };
   return (
     // <ReanimatedSwipeable>
@@ -140,11 +139,11 @@ export default function Home({navigation}) {
           </Text>
           <TouchableOpacity
             onPress={() => {
-              test();
+              // test();
+              navigation.navigate('Notifications');
               // dispatch(updateStreamListeners(6));
               // navigation.navigate('LiveStreaming');
             }}>
-            {/* <TouchableOpacity onPress={() => navigation.navigate('GoLive')}> */}
             {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
           </TouchableOpacity>

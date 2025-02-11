@@ -4,6 +4,7 @@ import {
   ScrollView,
   FlatList,
   Image,
+  Dimensions,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
@@ -90,54 +91,64 @@ export default function Popular({navigation}) {
             Get Live Streaming
           </Text>
         </TouchableOpacity>
-        <FlatList
-          data={streams}
-          keyExtractor={(item: any) => item.id?.toString()}
-          numColumns={2}
-          contentContainerStyle={{
-            paddingBottom: 120,
-          }}
-          renderItem={({item}: any) => (
-            <TouchableOpacity
-              style={styles.PodcastUser}
-              onPress={() => joinStream(item)}>
-              <View
-                style={{
-                  width: '100%',
-                  height: 180,
-                }}>
-                <Image
-                  style={styles.userImage}
-                  source={
-                    item.user.avatar
-                      ? {
-                          uri:
-                            envVar.API_URL + 'display-avatar/' + item.user.id,
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }
-                      : require('../../../../assets/images/parts/placeBlack.png')
-                  }
-                />
-                <TouchableOpacity style={styles.waveform}>
-                  <Icon
-                    name="waveform"
-                    color={colors.complimentary}
-                    size={30}
+        <View
+          style={{
+            height: Dimensions.get('window').height * 0.63,
+          }}>
+          <FlatList
+            data={streams}
+            keyExtractor={(item: any) => item.id?.toString()}
+            numColumns={2}
+            contentContainerStyle={{
+              paddingBottom: 120,
+            }}
+            renderItem={({item}: any) => (
+              <TouchableOpacity
+                style={styles.PodcastUser}
+                onPress={() => joinStream(item)}>
+                <View
+                  style={{
+                    width: '100%',
+                    height: 180,
+                  }}>
+                  <Image
+                    style={styles.userImage}
+                    source={
+                      item.user.avatar
+                        ? {
+                            uri:
+                              envVar.API_URL + 'display-avatar/' + item.user.id,
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
+                        : require('../../../../assets/images/parts/placeBlack.png')
+                    }
                   />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.userStats}>
-                  <Icon name="diamond" color={colors.complimentary} size={20} />
-                  <Text style={styles.userFollower}>10.51K</Text>
-                </TouchableOpacity>
-                <Text style={styles.userTxt}>
-                  {item.user.first_name + ' ' + item.user.last_name} : {item.id}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
+                  <TouchableOpacity style={styles.waveform}>
+                    <Icon
+                      name="waveform"
+                      color={colors.complimentary}
+                      size={30}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.userStats}>
+                    <Icon
+                      name="diamond"
+                      color={colors.complimentary}
+                      size={20}
+                    />
+                    <Text style={styles.userFollower}>10.51K</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.userTxt}>
+                    {item.user.first_name + ' ' + item.user.last_name} :{' '}
+                    {item.id}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       </View>
     </View>
   );

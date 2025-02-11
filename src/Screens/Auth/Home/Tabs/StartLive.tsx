@@ -20,6 +20,7 @@ import {colors} from '../../../../styles/colors';
 import {useDispatch, useSelector} from 'react-redux';
 import {setLiveForm, setLiveFormFull} from '../../../../store/slice/usersSlice';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import {checkCamPermission} from '../../../../scripts';
 
 interface StartLiveProps {
   navigation: any;
@@ -49,7 +50,12 @@ export default function StartLive({navigation}: StartLiveProps) {
   const useSpecificCamera = (position: 'front' | 'back') => {
     return devices.find(device => device.position === position);
   };
-  const startCamera = () => {
+  const startCamera = async () => {
+    const permission = await checkCamPermission();
+    if (!permission) {
+      Alert.alert('Permission', ' required');
+      return;
+    }
     let back = useSpecificCamera('back');
     // console.log(back);
     if (!back) {

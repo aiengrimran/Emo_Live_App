@@ -2,6 +2,7 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import envVar from '../../config/envVar';
 import {Alert} from 'react-native';
 import axiosInstance from '../../Api/axiosConfig';
+import axios from 'axios';
 
 export const getUserInfoFromAPI = createAsyncThunk(
   'streaming/getUserInfoFromAPI',
@@ -34,6 +35,7 @@ export const getUserInfoFromAPI = createAsyncThunk(
 
           // Dispatch an action to update the state
           dispatch(setStreamListeners(updatedUsers));
+          console.log('I should have');
           dispatch({
             type: 'users/setGuestUser',
             payload: {user: data.users?.[0], state: true},
@@ -48,7 +50,6 @@ export const getUserInfoFromAPI = createAsyncThunk(
     }
   },
 );
-
 const streamingSlice = createSlice({
   name: 'streaming',
   initialState: {

@@ -1,40 +1,4 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
-import {ChatClient, ChatOptions} from 'react-native-agora-chat';
-import envVar from '../../config/envVar';
-const AGORA_CHAT_KEY = envVar.AGORA_CHAT_KEY;
-// const chatManager = chatClient.chatManager;
-
-// Async thunk for initializing the chat SDK
-
-// Async thunk for adding connection listeners
-// export const setupConnectionListeners = createAsyncThunk(
-//   'chat/setupConnectionListeners',
-//   async (_, {dispatch, rejectWithValue}) => {
-//     try {
-//       const connectionListener = {
-//         onConnected: () => {
-//           console.log('Connected to chat server');
-//           dispatch(setConnectionStatus(true));
-//         },
-//         onDisconnected: errorCode => {
-//           console.log('Disconnected from chat server:', errorCode);
-//           dispatch(setConnectionStatus(false));
-//         },
-//         onTokenWillExpire: () => {
-//           console.log('Token will expire soon.');
-//         },
-//         onTokenDidExpire: () => {
-//           console.log('Token has expired.');
-//         },
-//       };
-
-//       chatClient.addConnectionListener(connectionListener);
-//     } catch (error) {
-//       console.error('Failed to set up connection listeners:', error);
-//       return rejectWithValue(error.message);
-//     }
-//   },
-// );
 
 const chatSlice = createSlice({
   name: 'chat',
@@ -44,6 +8,8 @@ const chatSlice = createSlice({
     error: null,
     tokenRenewed: false,
     messages: [],
+    messagesByConversation: {},
+    activeConversationId: '',
     chatRoomMessages: [],
   },
   reducers: {
@@ -57,15 +23,69 @@ const chatSlice = createSlice({
     setHostLeftPodcast(state, action) {
       state.hostLeftPodcast = action.payload;
     },
-    setChatRoomMessages: (state, action) => {
-      state.chatRoomMessages = action.payload;
+    setChatRoomMessages: (state, {payload}) => {
+      let roomMessage = [...state.chatRoomMessages];
+      payload.forEach(message => {
+        roomMessage.push(message);
+      });
+      state.chatRoomMessages = roomMessage;
     },
-
+    resetChatRoomMessage: state => {
+      state.chatRoomMessages = [];
+    },
     setTokenRenewed(state, action) {
       state.tokenRenewed = action.payload;
     },
-    setMessages(state, action) {
-      state.messages = action.payload;
+    setMessages(state, {payload}) {
+      console.log(payload);
+      // Loop through each incoming message in the payload
+      payload.forEach(message => {
+        // return;
+        const {from} = message;
+        // Append the new message to the existing conversation's messages
+        state.messagesByConversation[from] = [
+          ...(state.messagesByConversation[from] || []), // Existing messages (or empty array if none)
+          message, // New message
+        ];
+      });
+    },
+    setSentMessage: (state, {payload}) => {
+      const {to} = payload; // Extract the recipient ID (conversationId)
+
+      // Append the new message to the existing conversation's messages
+      state.messagesByConversation[to] = [
+        ...(state.messagesByConversation[to] || []), // Existing messages (or empty array if none)
+        payload, // New message
+      ];
+    },
+    setMessagesx(state, {payload}) {
+      // console.log(payload);
+      // Loop through each incoming message in the payload
+      payload.forEach(message => {
+        // return;
+        const {from} = message;
+        // Append the new message to the existing conversation's messages
+        state.messagesByConversation[conversationId] = [
+          ...(state.messagesByConversation[conversationId] || []), // Existing messages (or empty array if none)
+          message, // New message
+        ];
+      });
+    },
+    setMessageStatus: (state, {payload}) => {
+      const {conversationId, msgId, status} = payload;
+      console.log(conversationId, msgId, status);
+
+      // Check if the conversation exists
+      if (!state.messagesByConversation[conversationId]) {
+        console.warn(`Conversation ID ${conversationId} not found in state.`);
+        return;
+      }
+
+      // Update the specific message's status
+      state.messagesByConversation[conversationId] =
+        state.messagesByConversation[conversationId].map(message =>
+          message.localMsgId === msgId ? {...message, status} : message,
+        );
     },
     setInitialized(state, action) {
       state.initialized = action.payload;
@@ -78,11 +98,14 @@ const chatSlice = createSlice({
 
 export const {
   setConnectionStatus,
+  setMessageStatus,
   setTokenRenewed,
   setMessages,
   setInitialized,
   setChatRoomMessages,
   setConnected,
+  setSentMessage,
+  resetChatRoomMessage,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

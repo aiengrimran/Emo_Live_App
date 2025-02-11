@@ -33,19 +33,18 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const {chatRoomMessages} = useSelector((state: any) => state.chat);
-  const {guestUser} = useSelector((state: any) => state.users);
+  const {guestUser} = useSelector((state: any) => state.user);
   const [message, setMessage] = useState<string>('');
 
   // create an animated value for opacity
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (guestUser) {
+    if (guestUser.joined) {
       fadeInAndOut();
     }
   }, [guestUser]);
   // Function to start the fade-in and fade-out animation
   const fadeInAndOut = () => {
-    console.log('i am clicked', 'value => ', fadeAnim);
     // First, set the initial opacity to 1 (fully visible)
     Animated.timing(fadeAnim, {
       toValue: 1, // Fully visible
@@ -62,7 +61,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           useNativeDriver: true,
         }).start();
         // update state
-        dispatch(setGuestUser({state: false, user: ''}));
+        dispatch(setGuestUser({state: null, user: ''}));
       }, 3000); // Wait 3 seconds before starting the fade-out
     });
   };
@@ -136,7 +135,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           </Text>
         </Text>
       </View>
-      {guestUser && (
+      {guestUser.joined && (
         <Animated.View
           style={{
             opacity: fadeAnim, // Bind the opacity to animated value
@@ -144,18 +143,12 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           <JoinUser guestUser={guestUser} />
         </Animated.View>
       )}
-
       <View style={{height: '60%', marginTop: 10}}>
         <FlatList
           data={chatRoomMessages}
           keyExtractor={(item: any) => item?.msgId.toString()}
           renderItem={({item}: any) => (
-            <View
-              style={{
-                padding: 4,
-                alignItems: 'center',
-                flexDirection: 'row',
-              }}>
+            <View style={styles.list}>
               <View>
                 <Image
                   style={{height: 30, width: 30, borderRadius: 20}}
@@ -232,20 +225,25 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  guest: {
+    marginTop: 20,
+    paddingVertical: 10,
+    width: '95%',
+    paddingLeft: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  list: {
+    padding: 4,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
 });
 
 const JoinUser = ({guestUser}: any) => {
   return (
-    <View
-      style={{
-        marginTop: 20,
-        paddingVertical: 10,
-        width: '95%',
-        paddingLeft: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      }}>
+    <View style={styles.guest}>
       <View
         style={{
           paddingHorizontal: 10,
@@ -259,7 +257,7 @@ const JoinUser = ({guestUser}: any) => {
       </View>
       <View style={{marginLeft: 10, flexDirection: 'row'}}>
         <Text style={[appStyles.bodyMd, {color: colors.yellow}]}>
-          Mr {guestUser.first_name}:
+          Mr {guestUser.user?.first_name}:
         </Text>
         <Text
           style={[

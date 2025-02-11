@@ -4,15 +4,15 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Modal,
   Dimensions,
   Alert,
-  StyleSheet,
 } from 'react-native';
 import React, {useState, useEffect, useRef, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
-import ChatModal from './Components/ChatModal';
 import Svg, {Polyline} from 'react-native-svg';
+import {setConnected} from '../../../../store/slice/chatSlice';
 const deviceHeight = Dimensions.get('window').height;
 import RNFS from 'react-native-fs';
 import {
@@ -24,17 +24,9 @@ import {
   ChatSearchDirection,
   ChatMessage,
 } from 'react-native-agora-chat';
-import {selectMessagesForConversation} from '../../../../store/selectors/selectors';
-import Header from './Components/Header';
 import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
 import Input from './Components/Input';
-import {
-  setMessages,
-  setMessageStatus,
-  setSentMessage,
-  setConnected,
-} from '../../../../store/slice/chatSlice';
 import axiosInstance from '../../../../Api/axiosConfig';
 import envVar from '../../../../config/envVar';
 import {useSelector, useDispatch} from 'react-redux';
@@ -47,18 +39,26 @@ interface ChatProps {
 export default function Chat({navigation, route}: ChatProps) {
   const dispatch = useDispatch();
   const chatClient = ChatClient.getInstance();
+  // const chatManager = chatClient.get
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
-  const {connected, messages} = useSelector((state: any) => state.chat);
+  const {initialized, connected, error} = useSelector(
+    (state: any) => state.chat,
+  );
   const {chatUser} = useSelector((state: any) => state.user);
   const {userAuthInfo, tokenMemo} = useContext(Context);
-  const {user} = userAuthInfo;
+  const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
+  const receiverUser = chatUser;
+
+  const [status, setStatus] = useState({
+    connected: false,
+    error: '',
+  });
 
   const [modalInfo, setModalInfo] = useState({
     modal: false,
     type: '',
   });
-
   const [message, setMessage] = useState({
     type: 'initial',
     uri: '',
@@ -71,11 +71,8 @@ export default function Chat({navigation, route}: ChatProps) {
     id: '',
     played: false,
   });
-
-  const userMessages = useSelector(state =>
-    selectMessagesForConversation(state, chatUser.id),
-  );
   const [modal, setShowModal] = useState(true);
+  const [messages, setMessages] = useState<any>([]);
   // useEffect(() => {
   //   // Subscribe to network state updates
   //   const unsubscribe = NetInfo.addEventListener(state => {
@@ -101,16 +98,42 @@ export default function Chat({navigation, route}: ChatProps) {
     };
   }, []);
 
+  const getConversationDevice = async () => {
+    try {
+      const convId = 2;
+      // const convId = receiverUser.id;
+      // chatClient.chatManager.
+      const convType = ChatConversationType.PeerChat;
+      // const vv = await chatClient.chatManager.getAllConversations();
+      const vv = await chatClient.chatManager.getConversation(
+        String(1),
+        0,
+        false,
+        false,
+      );
+      console.log(convId, 'sss', vv);
+      return;
+
+      const conversation = await chatClient.chatManager.getConversation(
+        convId,
+        0,
+        // convType,
+        false,
+      );
+      console.log(conversation);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // Sends a text message to somebody.
   const sendMsg = async () => {
     try {
-      if (!connected) console.log('Perform initialization first.');
+      if (!initialized) console.log('Perform initialization first.');
       let msg;
       if (message.type == 'text') {
         msg = ChatMessage.createTextMessage(
-          String(2),
-          // String(50),
-          // String(chatUser.id),
+          String(receiverUser.id),
           message.content,
           ChatMessageChatType.PeerChat,
         );
@@ -121,48 +144,36 @@ export default function Chat({navigation, route}: ChatProps) {
         };
         let fileUri = message.uri.replace('file:///', '/');
         msg = ChatMessage.createVoiceMessage(
-          String(chatUser.id),
+          String(receiverUser.id),
           fileUri,
           // message.uri,
           // messageInfo,
         );
       }
-      dispatch(setSentMessage(msg));
-      setMessage((prevState: any) => ({
-        ...prevState,
-        content: '',
-        uri: '',
-      }));
       const callback = new (class {
-        onProgress(locaMsgId: string, progress: string) {
+        onProgress(locaMsgId, progress) {
           console.log(`send message process: ${locaMsgId}, ${progress}`);
-          let payload = {
-            conversationId: chatUser.id,
-            status: 1,
-            msgId: locaMsgId,
-          };
-          dispatch(setMessageStatus(payload));
         }
-        onError(locaMsgId: string, error: any) {
-          console.log(error);
-          if (error.code == 201) {
-            dispatch(setConnected(false));
-          }
-          let payload = {
-            conversationId: chatUser.id,
-            status: 3,
-            msgId: locaMsgId,
-          };
-          dispatch(setMessageStatus(payload));
+        onError(locaMsgId, error) {
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          console.log(
+            `send message fail: ${locaMsgId}, ${JSON.stringify(error)}`,
+          );
         }
-        onSuccess(message: any) {
-          console.log('sent', message);
-          let payload = {
-            conversationId: message.conversationId,
-            status: 2,
-            msgId: message.localMsgId,
-          };
-          dispatch(setMessageStatus(payload));
+        onSuccess(message) {
+          Alert.alert('Test', 'message sent');
+          setMessage((prevState: any) => ({
+            ...prevState,
+            content: '',
+            uri: '',
+          }));
+          const updatedMessages = [...messages, message];
+          setMessages(updatedMessages);
+          // console.log('send message success: ' + message.localMsgId);
         }
       })();
       await chatClient.chatManager.sendMessage(msg, callback);
@@ -173,10 +184,10 @@ export default function Chat({navigation, route}: ChatProps) {
   };
 
   const getMessages = async () => {
-    console.log(chatUser.id);
+    console.log(receiverUser.id);
     try {
       let params = {
-        convId: String(chatUser.id),
+        convId: String(receiverUser.id),
         convType: 0,
         msgType: ChatMessageType.TXT,
         direction: ChatSearchDirection.DOWN,
@@ -196,12 +207,62 @@ export default function Chat({navigation, route}: ChatProps) {
       // (a, b) => a.timestamp - b.timestamp,
       // );
       console.log(voiceMessages);
-      // setMessages(voiceMessages);
+      setMessages(voiceMessages);
       // setMessages(allMessages);
     } catch (error) {
       console.log(error);
     }
   };
+  const getFromServer = async () => {
+    try {
+      let params = {
+        convId: String(receiverUser.id),
+        convType: 0,
+        msgType: ChatMessageType.TXT,
+        direction: ChatSearchDirection.DOWN,
+        timestamp: Date.now(),
+        count: 1,
+        // sender: String(user.id),
+        isChatThread: false,
+      };
+      const textMessages = await chatClient.chatManager.getMsgsWithMsgType(
+        params,
+      );
+      const voiceMessages = await chatClient.chatManager.getMsgsWithMsgType({
+        ...params,
+        msgType: ChatMessageType.VOICE,
+      });
+      // const allMessages = [...textMessages, ...voiceMessages].sort(
+      // (a, b) => a.timestamp - b.timestamp,
+      // );
+      console.log(voiceMessages);
+      setMessages(voiceMessages);
+      // setMessages(allMessages);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const getMessagesx = () => {
+    console.log(receiverUser.id);
+    chatClient.chatManager
+      .getMsgsWithMsgType({
+        convId: String(receiverUser.id),
+        convType: 0,
+        msgType: ChatMessageType.TXT,
+        direction: ChatSearchDirection.DOWN,
+        timestamp: Date.now(),
+        count: 4,
+        // sender: String(user.id),
+        isChatThread: false,
+      })
+      .then(messages => {
+        console.log('get message success', messages);
+      })
+      .catch(reason => {
+        console.log('get message fail.', reason);
+      });
+  };
+
   const processAudioData = position => {
     const maxHeight = 18;
     const maxAmplitude = 100;
@@ -334,29 +395,94 @@ export default function Chat({navigation, route}: ChatProps) {
 
   return (
     <View style={chatStyles.container}>
-      {/* Header */}
       <>
-        <Header navigation={navigation} token={token} connected={connected} />
+        <View style={chatStyles.chatHeader}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Icon
+                name="arrow-left-thin"
+                size={25}
+                color={colors.complimentary}
+              />
+            </TouchableOpacity>
+            <View style={{flexDirection: 'row', marginLeft: 10}}>
+              <Image
+                style={{width: 43, height: 43, borderRadius: 25}}
+                source={
+                  receiverUser.avatar
+                    ? {
+                        uri:
+                          envVar.API_URL + 'display-avatar/' + receiverUser.id,
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      }
+                    : require('../../../../assets/images/place.jpg')
+                }
+              />
+              <View style={{marginLeft: 10}}>
+                <Text style={chatStyles.user}>
+                  {receiverUser.first_name + ' ' + receiverUser.last_name}
+                </Text>
+                <Text
+                  style={chatStyles.userStatus}
+                  onPress={() => navigation.navigate('Chat2')}>
+                  offline
+                </Text>
+              </View>
+            </View>
+          </View>
 
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              onPress={() => {
+                // console.log(list);
+              }}>
+              <Icon
+                name="trash-can-outline"
+                size={25}
+                color={colors.complimentary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity style={{marginLeft: 10}}>
+              <Icon
+                name="information-outline"
+                size={25}
+                color={connected ? colors.complimentary : colors.accent}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
         {/* chat messages ... */}
 
         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <TouchableOpacity
-            style={{backgroundColor: colors.accent, padding: 5}}>
-            <Text style={{color: '#fff'}}>send Msg</Text>
-          </TouchableOpacity>
-
-          <Text
-            style={{color: '#fff'}}
-            onPress={() => console.log(userMessages)}>
+          <Text style={{color: '#fff'}} onPress={getConversationDevice}>
+            get conversation
+          </Text>
+          <Text style={{color: '#fff'}} onPress={sendMsg}>
+            send Msg
+          </Text>
+          <Text style={{color: '#fff'}} onPress={getMessages}>
             getMessages
           </Text>
         </View>
 
-        <View style={styles.list}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+          <Text style={{color: '#fff'}} onPress={clearMessages}>
+            Clear Messages
+          </Text>
+          <Text style={{color: '#fff'}} onPress={() => setMessages([])}>
+            Clear state
+          </Text>
+        </View>
+        <View
+          style={{
+            marginTop: 30,
+            marginVertical: 180,
+            height: deviceHeight * 0.7,
+          }}>
           <FlatList
-            data={userMessages}
-            contentContainerStyle={{paddingBottom: 30}}
+            data={messages}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({item}: any) => {
               return (
@@ -422,7 +548,12 @@ export default function Chat({navigation, route}: ChatProps) {
                                 </Text>
                               </>
                             ) : (
-                              <View style={styles.voiceView}>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  justifyContent: 'space-between',
+                                  width: '90%',
+                                }}>
                                 <Text style={{color: colors.complimentary}}>
                                   {
                                     '||||| :::: ||||| |||| ||||| ||||| ||| ||||| ::::::: |||||'
@@ -450,11 +581,10 @@ export default function Chat({navigation, route}: ChatProps) {
                     <View style={chatStyles.mineMessage}>
                       <TouchableOpacity
                         onLongPress={() => {
-                          console.log('i should set Modal');
-                          setModalInfo({
-                            modal: true,
-                            type: 'delete',
-                          });
+                          setModalInfo((prevState: any) => ({
+                            ...prevState,
+                            type: 'report',
+                          }));
                         }}
                         style={chatStyles.myMessageBody}>
                         {item.body.type == 'txt' ? (
@@ -463,7 +593,11 @@ export default function Chat({navigation, route}: ChatProps) {
                           </Text>
                         ) : item.body.type == 'voice' ? (
                           <>
-                            <View style={styles.voiceMsg}>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                              }}>
                               <TouchableOpacity onPress={() => playVoice(item)}>
                                 <Icon
                                   name={
@@ -527,17 +661,12 @@ export default function Chat({navigation, route}: ChatProps) {
                           <Text>File Type</Text>
                         )}
                       </TouchableOpacity>
-                      <View style={styles.messageAck}>
-                        {item.status > 0 && item.status < 3 ? (
+                      <View
+                        style={{position: 'absolute', right: 10, bottom: 25}}>
+                        {item.status > 0 ? (
                           <Icon
                             name={item.status == 1 ? 'check' : 'check-all'}
-                            color={item.hasReadAck ? 'blue' : colors.accent}
-                            size={16}
-                          />
-                        ) : item.status == 3 ? (
-                          <Icon
-                            name="alert-circle-outline"
-                            color={colors.lines}
+                            color={item.isRead ? 'blue' : colors.accent}
                             size={16}
                           />
                         ) : (
@@ -558,12 +687,56 @@ export default function Chat({navigation, route}: ChatProps) {
             }}
           />
         </View>
-        <ChatModal
-          modalInfo={modalInfo}
-          setModalInfo={setModalInfo}
-          setShowModal={setShowModal}
-        />
 
+        <Modal
+          visible={modalInfo.modal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowModal(false)}>
+          {/* Backdrop */}
+          <View style={chatStyles.backdrop}>
+            {/* Modal Content */}
+            <View style={chatStyles.modalView}>
+              <Text style={[appStyles.title1, {color: colors.complimentary}]}>
+                {modalInfo.type === 'delete'
+                  ? 'Delete Conversation'
+                  : 'Report a Problem'}
+              </Text>
+              <View style={{marginVertical: 20}}>
+                <Text
+                  style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                  {modalInfo.type == 'delete'
+                    ? 'All will be permanently deleted for yourself'
+                    : 'Nudity, indecent exposure fake profile etc.'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  setModalInfo((prevState: any) => ({
+                    ...prevState,
+                    modal: false,
+                  }))
+                }
+                style={[chatStyles.deleteButton]}>
+                <Text style={chatStyles.deleteText}>
+                  {modalInfo.type == 'delete' ? 'Delete' : 'Report'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  setModalInfo((prevState: any) => ({
+                    ...prevState,
+                    modal: false,
+                  }))
+                }
+                style={chatStyles.cancelButton}>
+                <Text style={[appStyles.paragraph1, {color: colors.unknown2}]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
         <View
           style={{
             position: 'absolute',
@@ -582,20 +755,3 @@ export default function Chat({navigation, route}: ChatProps) {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  voiceMsg: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  list: {
-    marginTop: 30,
-    marginVertical: 180,
-    height: deviceHeight * 0.7,
-  },
-  voiceView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-  },
-  messageAck: {position: 'absolute', right: 10, bottom: 25},
-});

@@ -32,7 +32,6 @@ export default function Search({navigation}: SearchScreenProps) {
   const users = useSelector((state: any) => state.user.users);
   // const valetRating = useSelector((state: any) => state.valetReducer.rating);
 
-  // const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchLoader, setSearchLoader] = useState(false);
@@ -40,15 +39,15 @@ export default function Search({navigation}: SearchScreenProps) {
   const [searchUsers, setSearchUsers] = useState([]);
 
   useEffect(() => {
-    getUsers();
+    // getUsers();
   }, []);
 
   const getUsers = async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get('/chat/active-users');
-      // console.log(res.data);
       dispatch(updateUsers(res.data.users));
+
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -103,7 +102,7 @@ export default function Search({navigation}: SearchScreenProps) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginTop: Platform.OS == 'ios' ? 60 : 30,
+          marginTop: Platform.OS == 'ios' ? 60 : 0,
         }}>
         <TextInput
           style={styles.input}
@@ -133,6 +132,10 @@ export default function Search({navigation}: SearchScreenProps) {
         />
       ) : (
         <View style={{marginTop: 40}}>
+          <TouchableOpacity
+            style={{padding: 10, backgroundColor: colors.accent}}>
+            <Text onPress={getUsers}>getUsers</Text>
+          </TouchableOpacity>
           <FlatList
             data={searchUsers.length ? searchUsers : users}
             keyExtractor={item => item.id?.toString()}

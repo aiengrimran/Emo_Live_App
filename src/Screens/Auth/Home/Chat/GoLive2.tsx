@@ -69,8 +69,6 @@ export default function GoLive2({navigation}) {
         type: 'PUBLIC',
       };
 
-      // dispatch(updateStreamListeners(guests));
-      // dispatch(setGuests(guests));
       const res = await axiosInstance.post(url, data);
       console.log(res.data);
 

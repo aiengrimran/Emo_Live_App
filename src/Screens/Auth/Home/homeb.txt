@@ -4,6 +4,7 @@ import Home from './Home';
 import Search from './Tabs/Search';
 import Profile from './Tabs/Profile';
 import Notifications from './Notifications';
+import GoLive2 from './Chat/GoLive2';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import StartLive from './Tabs/StartLive';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -33,7 +34,7 @@ import {
 } from '../../../store/slice/chatSlice';
 import {useSelector, useDispatch} from 'react-redux';
 import appStyles from '../../../styles/styles';
-const MAX_RETRIES = 3;
+import axios from 'axios';
 
 export default function HomeB() {
   const dispatch = useDispatch();
@@ -44,9 +45,8 @@ export default function HomeB() {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
-  const {initialized, connected, tokenRenewed, error} = useSelector(
-    (state: any) => state.chat,
-  );
+  const {initialized, messages, chatRoomMessages, connected, error} =
+    useSelector((state: any) => state.chat);
   const {unread} = useSelector((state: any) => state.notification);
 
   useEffect(() => {
@@ -57,11 +57,8 @@ export default function HomeB() {
       // Initialize the chat SDK here
       initializedOnce = true;
 
-      initializedAgoraChat();
+      // initializedAgoraChat();
     }
-    return () => {
-      // chatClient.removeAllConnectionListener();
-    };
   }, [initialized, chatManagerRef.current, chatClientRef.current, connected]);
 
   const initializedAgoraChat = () => {
@@ -73,11 +70,10 @@ export default function HomeB() {
     chatClient
       .init(o)
       .then(() => {
-        if (!connected) {
-          loginUser();
-        }
+        loginUser();
         console.log('init success ::::');
         dispatch(setInitialized(true));
+        // login();
         let listener: ChatConnectEventListener = {
           onTokenWillExpire() {
             callApiForRenewToken();
@@ -117,13 +113,52 @@ export default function HomeB() {
       console.log('run message listener ...');
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
-          console.log('message Received ...', messagesReceived);
-          Alert.alert('Message Received', '1');
+          console.log('message recived ...', messagesReceived);
           if (messagesReceived[0].chatType == ChatMessageChatType.ChatRoom) {
-            dispatch(setChatRoomMessages(messagesReceived));
+            let roomMessage = [...chatRoomMessages];
+            messagesReceived.forEach((message: ChatMessage) => {
+              roomMessage.push(message);
+            });
+            dispatch(setChatRoomMessages(roomMessage));
             return;
           }
-          dispatch(setMessages(messagesReceived));
+
+          let currentMessages = [...messages]; // Clone current messages to avoid mutation
+          messagesReceived.forEach((message: ChatMessage) => {
+            const existingConversation = currentMessages.find(
+              item => item.conversationId === message.conversationId,
+            );
+
+            if (existingConversation) {
+              // Append the new message to the existing conversation's messages
+              existingConversation.messages.push(message);
+            } else {
+              // Create a new conversation with this message
+              currentMessages.push({
+                conversationId: message.conversationId,
+                messages: [message],
+              });
+            }
+          });
+
+          // Dispatch the updated messages
+          dispatch(setMessages(currentMessages));
+          // let currentMessages = messages;
+          // messagesReceived.forEach((message: ChatMessage) => {
+          //   let added = currentMessages.find(
+          //     (item: ChatMessage) =>
+          //       item.conversationId == message.conversationId,
+          //   );
+          //   if (added) {
+          //     currentMessages['conversationId'] = [
+          //       ...currentMessages['conversationId'],
+          //       messagesReceived,
+          //     ];
+          //   } else {
+          //     currentMessages['conversationId'] = [messagesReceived];
+          //   }
+          // });
+          // dispatch(setMessages(currentMessages));
         },
         onMessagesRead: messages => {
           console.log('onMessagesRead: ' + JSON.stringify(messages));
@@ -131,18 +166,16 @@ export default function HomeB() {
         onMessagesDelivered: messages => {},
         onMessagesRecalled: messages => {},
       };
-      return () => {
-        chatClient.chatManager.removeAllMessageListener();
-        chatClient.chatManager.addMessageListener(msgListener);
-      };
+      chatClient.chatManager.removeAllMessageListener();
+      chatClient.chatManager.addMessageListener(msgListener);
     };
     if (connected) {
-      setMessageListener();
+      // setMessageListener();
     }
   }, [connected]);
 
   // Logs in with an account ID and a token.
-  const loginUser = async (retryCount = 0) => {
+  const loginUser = async () => {
     const isLoggedIn = await chatClient.isLoginBefore();
     if (isLoggedIn) {
       dispatch(setConnected(true));
@@ -150,25 +183,14 @@ export default function HomeB() {
       return; // Prevent duplicate login
     }
 
-    if (!initialized) console.log('Perform initialization first.', user.id);
+    if (!initialized) console.log('Perform initialization first.');
     try {
-      await chatClient.loginWithToken(
-        String(user.id),
-        String(user.agora_chat_token),
-      );
+      await chatClient.loginWithToken(String(user.id), user.agora_chat_token);
       console.log('login operation success.');
     } catch (error: any) {
-      if (error.code === 2 || error.code === 300) {
-        if (retryCount < MAX_RETRIES) {
-          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-          console.log(`Retrying in ${delay / 1000} seconds...`);
-          setTimeout(() => loginUser(retryCount + 1), delay);
-        } else {
-          Alert.alert(
-            'Network Error',
-            'Failed to login chat after multiple attempts.',
-          );
-        }
+      console.log(error);
+      if (error.code == 2) {
+        return;
       }
       if (error.code == 111 || error.code == 202) {
         callApiForRenewToken();
@@ -178,17 +200,15 @@ export default function HomeB() {
 
   const callApiForRenewToken = async () => {
     try {
-      if (tokenRenewed) return;
       console.log('calling.api.for chat token renew');
 
       const res = await axiosInstance.get('/renew-agora-token');
       dispatch(setTokenRenewed(true));
-      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
       setUser(res.data.user);
       loginUser();
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
     } catch (error) {
       console.log(error);
-      Alert.alert('Error', 'Error occurred on token renewal');
     }
   };
 

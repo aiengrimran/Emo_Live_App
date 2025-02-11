@@ -86,7 +86,7 @@ export const chatStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '99%',
-    marginTop: Platform.OS == 'ios' ? 50 : 20,
+    marginTop: Platform.OS == 'ios' ? 50 : 0,
   },
   deleteButton: {
     backgroundColor: colors.accent,

@@ -13,11 +13,13 @@ import {
   setIsJoined,
   setLiveStatus,
 } from '../../../../../store/slice/usersSlice';
+import {resetChatRoomMessage} from '../../../../../store/slice/chatSlice';
 
 export const resetPodcastState = dispatch => {
   console.log('function run');
   dispatch(setIsJoined(false));
   dispatch(setPodcastListeners([]));
+  dispatch(resetChatRoomMessage());
   dispatch(setPodcast(''));
   dispatch(setLiveStatus('IDLE'));
 };
@@ -54,6 +56,7 @@ export const resetLiveStreaming = dispatch => {
   console.log('function run');
   dispatch(setIsJoined(false));
   dispatch(setStreamListeners([]));
+  dispatch(resetChatRoomMessage());
   dispatch(setStream(''));
   dispatch(setLiveStatus('IDLE'));
 };

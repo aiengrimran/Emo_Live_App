@@ -16,8 +16,17 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['chat/setMessages', 'chat/setChatRoomMessages'],
-        ignoredPaths: ['chat.messages', 'chat.chatRoomMessages'], // Ignore this path in the state
+        ignoredActions: [
+          'chat/setMessages',
+          'chat/setChatRoomMessages',
+          'chat/setMessageStatus',
+          'chat/setSentMessage',
+        ],
+        ignoredPaths: [
+          'chat.messages',
+          'chat.chatRoomMessages',
+          'chat.messagesByConversation',
+        ], // Ignore this path in the state
       },
     }),
   // middleware:(getDefaultMiddleware) =>
@@ -28,3 +37,4 @@ export default store;
 // export type RootState = ReturnType<typeof store.getState>;
 // // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 // export type AppDispatch = typeof store.dispatch;
+// chat.messagesByConversation

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
 
 import {colors} from '../../../../../styles/colors';
@@ -14,7 +15,7 @@ import React, {useState, useEffect} from 'react';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setLoading} from '../../../../../store/slice/usersSlice';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 import axiosInstance from '../../../../../Api/axiosConfig';
 import {envVar} from '../Streaming/streamingImport';
 
@@ -36,6 +37,7 @@ export default function Header({
   leavePodcast,
   connected,
 }: HeaderProps) {
+  const dispatch = useDispatch();
   const [time, setTime] = useState(0); // Time in seconds
 
   // const {podcast} = useSelector((state: any) => state.podcast);
@@ -96,7 +98,11 @@ export default function Header({
           </Text>
         </View>
         {host.id != user.id && (
-          <TouchableOpacity style={styles.addBtn}>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              Alert.alert('Coming Soon', '!!');
+            }}>
             <Icon name="plus" color="#fff" size={20} />
           </TouchableOpacity>
         )}
