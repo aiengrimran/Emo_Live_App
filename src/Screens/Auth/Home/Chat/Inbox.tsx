@@ -18,11 +18,16 @@ import Context from '../../../../Context/Context';
 import Stranger from '../../../../assets/svg/stranger.svg';
 import {UseSelector, useDispatch, useSelector} from 'react-redux';
 import {setConnected, setInitialized} from '../../../../store/slice/chatSlice';
+import {selectInbox} from '../../../../store/selectors/selectors';
 import axiosInstance from '../../../../Api/axiosConfig';
 // import {Colors} from 'react-native/Libraries/NewAppScreen';
 
-export default function Inbox({navigation}) {
+interface InboxProps {
+  navigation: any;
+}
+export default function Inbox({navigation}: InboxProps) {
   const {tokenMemo} = useContext(Context);
+  const inbox = useSelector(selectInbox);
   const {token} = tokenMemo;
 
   const {connected} = useSelector((state: any) => state.chat);
@@ -58,12 +63,6 @@ export default function Inbox({navigation}) {
     users: [],
     usersGet: true,
     finalConversation: [],
-    // local: [],
-    // users: [],
-    // lastMessages: [],
-    // usersGet: false,
-    // finalConversation: [],
-    // messagesGet: false,
   });
   const [users1, setUsers] = useState<any>([]);
   const getAllConversation = async () => {

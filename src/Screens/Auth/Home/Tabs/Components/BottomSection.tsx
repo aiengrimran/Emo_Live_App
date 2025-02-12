@@ -33,7 +33,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const {chatRoomMessages} = useSelector((state: any) => state.chat);
-  const {guestUser} = useSelector((state: any) => state.user);
+  const {guestUser} = useSelector((state: any) => state.users);
   const [message, setMessage] = useState<string>('');
 
   // create an animated value for opacity

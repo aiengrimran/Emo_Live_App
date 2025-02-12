@@ -42,7 +42,7 @@ export default function Header({
 
   // const {podcast} = useSelector((state: any) => state.podcast);
   // const {stream} = useSelector((state: any) => state.streaming);
-  const {loading, isJoined} = useSelector((state: any) => state.user);
+  const {loading, isJoined} = useSelector((state: any) => state.users);
   let host = '';
 
   // const [host, setHost] = useState(

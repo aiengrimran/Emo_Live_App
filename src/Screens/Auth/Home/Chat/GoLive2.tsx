@@ -36,7 +36,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoLive2({navigation}) {
   const {guests} = useSelector((state: any) => state.streaming);
-  const {liveForm} = useSelector((state: any) => state.user);
+  const {liveForm} = useSelector((state: any) => state.users);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useDispatch();

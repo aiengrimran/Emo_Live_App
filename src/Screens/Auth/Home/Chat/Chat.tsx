@@ -49,7 +49,7 @@ export default function Chat({navigation, route}: ChatProps) {
   const chatClient = ChatClient.getInstance();
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
   const {connected, messages} = useSelector((state: any) => state.chat);
-  const {chatUser} = useSelector((state: any) => state.user);
+  const {chatUser} = useSelector((state: any) => state.users);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
@@ -104,13 +104,13 @@ export default function Chat({navigation, route}: ChatProps) {
   // Sends a text message to somebody.
   const sendMsg = async () => {
     try {
-      if (!connected) console.log('Perform initialization first.');
+      if (!connected) console.log('Perform initialization first.', chatUser.id);
       let msg;
       if (message.type == 'text') {
         msg = ChatMessage.createTextMessage(
-          String(2),
+          // String(2),
           // String(50),
-          // String(chatUser.id),
+          String(chatUser.id),
           message.content,
           ChatMessageChatType.PeerChat,
         );

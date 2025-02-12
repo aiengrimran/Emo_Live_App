@@ -28,7 +28,7 @@ export default function UserProfile({navigation}) {
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
   const [error, setError] = useState('');
-  const {visitProfile} = useSelector((state: any) => state.user);
+  const {visitProfile} = useSelector((state: any) => state.users);
 
   const [loading, setLoading] = useState(false);
   const followUser = async () => {

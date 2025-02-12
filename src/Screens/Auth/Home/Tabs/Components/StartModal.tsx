@@ -25,7 +25,7 @@ export default function StartModal({
   setModal,
 }: StartModalProps) {
   const dispatch = useDispatch();
-  const {liveForm} = useSelector((state: any) => state.user);
+  const {liveForm} = useSelector((state: any) => state.users);
 
   const startLiveTransmission = async () => {
     if (!validations()) return;

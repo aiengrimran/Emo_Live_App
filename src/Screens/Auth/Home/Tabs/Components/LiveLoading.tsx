@@ -5,7 +5,7 @@ import appStyles from '../../../../../styles/styles';
 import {useSelector} from 'react-redux';
 
 export default function LiveLoading() {
-  const {liveStatus} = useSelector((state: any) => state.user);
+  const {liveStatus} = useSelector((state: any) => state.users);
   return (
     <View>
       <Modal

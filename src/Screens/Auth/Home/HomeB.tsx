@@ -24,6 +24,7 @@ import {
   ChatMessageEventListener,
   ChatMessageChatType,
 } from 'react-native-agora-chat';
+import {fetchUserDetails} from '../../../store/slice/usersSlice';
 import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
 import {
@@ -76,7 +77,6 @@ export default function HomeB() {
         if (!connected) {
           loginUser();
         }
-        console.log('init success ::::');
         dispatch(setInitialized(true));
         let listener: ChatConnectEventListener = {
           onTokenWillExpire() {
@@ -114,7 +114,6 @@ export default function HomeB() {
   useEffect(() => {
     // Registers listeners for messaging.
     const setMessageListener = () => {
-      console.log('run message listener ...');
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
           console.log('message Received ...', messagesReceived);
@@ -124,6 +123,7 @@ export default function HomeB() {
             return;
           }
           dispatch(setMessages(messagesReceived));
+          dispatch(fetchUserDetails(messagesReceived[0].from));
         },
         onMessagesRead: messages => {
           console.log('onMessagesRead: ' + JSON.stringify(messages));
@@ -141,8 +141,15 @@ export default function HomeB() {
     }
   }, [connected]);
 
+  const connection = () => {
+    chatClient.isConnected();
+  };
   // Logs in with an account ID and a token.
   const loginUser = async (retryCount = 0) => {
+    if (await chatClient.isConnected()) {
+      dispatch(setConnected(true));
+      true;
+    }
     const isLoggedIn = await chatClient.isLoginBefore();
     if (isLoggedIn) {
       dispatch(setConnected(true));

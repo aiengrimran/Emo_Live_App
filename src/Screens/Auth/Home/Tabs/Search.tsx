@@ -29,8 +29,7 @@ export default function Search({navigation}: SearchScreenProps) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const dispatch = useDispatch();
-  const users = useSelector((state: any) => state.user.users);
-  // const valetRating = useSelector((state: any) => state.valetReducer.rating);
+  const users = useSelector((state: any) => state.users.users);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

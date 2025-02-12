@@ -90,7 +90,7 @@ export default function LiveStreaming({navigation}) {
     (state: any) => state.streaming,
   );
   const {isJoined, loading, liveStatus} = useSelector(
-    (state: any) => state.user,
+    (state: any) => state.users,
   );
 
   const {user, setUser} = userAuthInfo;

@@ -1,4 +1,17 @@
-import {createSlice} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+export const fetchUserDetails = createAsyncThunk(
+  'users/fetchUserDetails',
+  async ids => {
+    try {
+      // Fetch user data from API
+      const {data} = await axiosInstance.post('users-info', {users: ids});
+      return data;
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      throw error; // Re-throw the error to handle it in the component if needed
+    }
+  },
+);
 
 const initialState = {
   users: [],
@@ -6,6 +19,8 @@ const initialState = {
   distTip: [],
   rtcTokenRenewed: false,
   loading: false,
+  userDetails: {},
+  error: '',
   isJoined: false,
   liveStatus: 'IDLE',
   selectedGuest: '',
@@ -73,6 +88,24 @@ export const managerSlice = createSlice({
     setRTCTokenRenewed: (state, action) => {
       state.rtcTokenRenewed = action.payload;
     },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(fetchUserDetails.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserDetails.fulfilled, (state, action) => {
+        state.userDetails = false;
+        // Merge the fetched user details into the existing userDetails object
+        action.payload.forEach(user => {
+          state.userDetails[user.id] = user;
+        });
+      })
+      .addCase(fetchUserDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
   },
 });
 

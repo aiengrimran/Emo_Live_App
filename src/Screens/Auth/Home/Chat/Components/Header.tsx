@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 export default function Header({navigation, token, connected}: HeaderProps) {
-  const {chatUser} = useSelector((state: any) => state.user);
+  const {chatUser} = useSelector((state: any) => state.users);
 
   return (
     <View style={chatStyles.chatHeader}>

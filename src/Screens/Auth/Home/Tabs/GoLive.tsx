@@ -88,7 +88,7 @@ export default function GoLive({navigation}: any) {
     (state: any) => state.podcast,
   );
   const {isJoined, liveStatus, roomId} = useSelector(
-    (state: any) => state.user,
+    (state: any) => state.users,
   );
 
   const {userAuthInfo, tokenMemo} = useContext(Context);

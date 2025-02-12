@@ -28,7 +28,7 @@ interface StartLiveProps {
 export default function StartLive({navigation}: StartLiveProps) {
   const dispatch = useDispatch();
   const camRef = useRef<Camera>(null);
-  const {liveForm} = useSelector((state: any) => state.user);
+  const {liveForm} = useSelector((state: any) => state.users);
   const [beautySettings, setBeautySettings] = useState(false);
   const [editor, setEditor] = useState<any>({
     device: '',

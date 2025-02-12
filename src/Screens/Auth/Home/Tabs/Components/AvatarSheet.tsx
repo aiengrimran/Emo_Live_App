@@ -21,7 +21,7 @@ export default function AvatarSheet({
   envVar,
 }: AvatarSheetProps) {
   const dispatch = useDispatch();
-  const {selectedGuest} = useSelector((state: any) => state.user);
+  const {selectedGuest} = useSelector((state: any) => state.users);
 
   const followUser = async () => {
     try {
