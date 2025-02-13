@@ -58,10 +58,14 @@ const streamingSlice = createSlice({
     stream: '',
     streamListeners: [],
     streams: [],
+    single: false,
   },
   reducers: {
     setGuests: (state, action) => {
       state.guests = action.payload;
+    },
+    setSingle: (state, {payload}) => {
+      state.single = payload;
     },
     updateStreamListeners: (state, action) => {
       let hosts = Array.from({length: action.payload}, (_, i) => ({
@@ -181,6 +185,7 @@ export const {
   setStreams,
   setUserInState,
   updatedMuteUnmuteUser,
+  setSingle,
   updateStreamRoomId,
   updateUserCamera,
   setPrevUsersInStream,

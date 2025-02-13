@@ -4,6 +4,7 @@ import chatReducer from './slice/chatSlice';
 import notificationReducer from './slice/notificationSlice';
 import podcastReducer from './slice/podcastSlice';
 import streamingReducer from './slice/streamingSlice';
+// import {composeWithDevTools} from 'redux-devtools-extension';
 
 export const store = configureStore({
   reducer: {
@@ -29,9 +30,11 @@ export const store = configureStore({
         ], // Ignore this path in the state
       },
     }),
+  // enhancers: [composeWithDevTools],
   // middleware:(getDefaultMiddleware) =>
 });
 export default store;
+// export type AppDispatch = typeof store.dispatch
 
 // // Infer the `RootState` and `AppDispatch` types from the store itself
 // export type RootState = ReturnType<typeof store.getState>;

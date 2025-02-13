@@ -32,7 +32,7 @@ export const selectInbox = createSelector(
           conversationId,
           latestMessage,
           user,
-          unreadCount: messages.filter(msg => !msg.isRead).length,
+          // unreadCount: messages.filter(msg => !msg.isRead).length,
         });
       }
     }

@@ -16,6 +16,7 @@ import appStyles from '../../../../../styles/styles';
 import {setGuestUser} from '../../../../../store/slice/usersSlice';
 import liveStyles from '../styles/liveStyles';
 import {setChatRoomMessages} from '../../../../../store/slice/chatSlice';
+import bottomStyles from './styles/bottomStyles';
 import {
   ChatClient,
   ChatMessage,
@@ -27,9 +28,14 @@ import {useDispatch, useSelector} from 'react-redux';
 interface BottomSectionProps {
   handleOpenSheet: any;
   roomId: string;
+  single: boolean;
 }
 
-const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
+const BottomSection = ({
+  handleOpenSheet,
+  roomId,
+  single,
+}: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
   const dispatch = useDispatch();
   const {chatRoomMessages} = useSelector((state: any) => state.chat);
@@ -121,9 +127,16 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
   };
 
   return (
-    <View style={{flex: 1, padding: 10}}>
+    <View
+      style={[
+        {
+          flex: 1,
+          padding: 10,
+        },
+        single && bottomStyles.singleLive,
+      ]}>
       {/* <View style={{position: 'absolute', bottom: '5%'}}> */}
-      <View style={styles.sheetMessage}>
+      <View style={[styles.sheetMessage, single && {bottom: 130}]}>
         <Text
           onPress={fadeInAndOut}
           style={[appStyles.bodyMd, {color: colors.yellow, lineHeight: 20}]}>
@@ -143,7 +156,7 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           <JoinUser guestUser={guestUser} />
         </Animated.View>
       )}
-      <View style={{height: '60%', marginTop: 10}}>
+      <View style={[single && styles.messages]}>
         <FlatList
           data={chatRoomMessages}
           keyExtractor={(item: any) => item?.msgId.toString()}
@@ -169,13 +182,19 @@ const BottomSection = ({handleOpenSheet, roomId}: BottomSectionProps) => {
           )}
         />
       </View>
-      <View style={styles.btn1}>
+      <View style={[styles.btn1]}>
         <TextInput
-          style={styles.inputBox}
+          style={[
+            styles.inputBox,
+            single && {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              borderColor: colors.complimentary,
+            },
+          ]}
           onChangeText={setMessage}
           value={message}
           placeholder="Say hello ...."
-          placeholderTextColor={'grey'}
+          placeholderTextColor={single ? colors.complimentary : 'grey'}
         />
         <View style={styles.action}>
           {/* <TouchableOpacity> */}
@@ -212,32 +231,11 @@ export default BottomSection;
 
 const styles = StyleSheet.create({
   ...liveStyles,
+  ...bottomStyles,
   roomMessage: {
     marginLeft: 5,
     color: colors.complimentary,
     ...appStyles.bodyRg,
-  },
-  sheetMessage: {
-    flexDirection: 'row',
-    width: '95%',
-    paddingHorizontal: 20,
-    borderRadius: 4,
-    paddingVertical: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  guest: {
-    marginTop: 20,
-    paddingVertical: 10,
-    width: '95%',
-    paddingLeft: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  list: {
-    padding: 4,
-    alignItems: 'center',
-    flexDirection: 'row',
   },
 });
 

@@ -88,10 +88,11 @@ const liveStyles = StyleSheet.create({
   btn1: {
     position: 'absolute',
     flexDirection: 'row',
-    bottom: Platform.OS == 'android' ? 10 : 20,
+    bottom: Platform.OS == 'android' ? 10 : 25,
     width: '99%',
     alignSelf: 'center',
     borderRadius: 15,
+    // alignSelf: 'flex-end',
     justifyContent: 'space-between',
     // alignItems: 'center',
   },

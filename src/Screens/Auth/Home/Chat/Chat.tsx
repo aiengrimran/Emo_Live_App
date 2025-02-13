@@ -45,11 +45,12 @@ interface ChatProps {
   route: any;
 }
 export default function Chat({navigation, route}: ChatProps) {
+  const {chatUser} = useSelector((state: any) => state.users);
+
   const dispatch = useDispatch();
   const chatClient = ChatClient.getInstance();
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
   const {connected, messages} = useSelector((state: any) => state.chat);
-  const {chatUser} = useSelector((state: any) => state.users);
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
@@ -340,7 +341,7 @@ export default function Chat({navigation, route}: ChatProps) {
 
         {/* chat messages ... */}
 
-        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+        {/* <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
           <TouchableOpacity
             style={{backgroundColor: colors.accent, padding: 5}}>
             <Text style={{color: '#fff'}}>send Msg</Text>
@@ -351,7 +352,7 @@ export default function Chat({navigation, route}: ChatProps) {
             onPress={() => console.log(userMessages)}>
             getMessages
           </Text>
-        </View>
+        </View> */}
 
         <View style={styles.list}>
           <FlatList

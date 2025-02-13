@@ -20,12 +20,14 @@ import {UseSelector, useDispatch, useSelector} from 'react-redux';
 import {setConnected, setInitialized} from '../../../../store/slice/chatSlice';
 import {selectInbox} from '../../../../store/selectors/selectors';
 import axiosInstance from '../../../../Api/axiosConfig';
+import {setChatUser} from '../../../../store/slice/usersSlice';
 // import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 interface InboxProps {
   navigation: any;
 }
 export default function Inbox({navigation}: InboxProps) {
+  const dispatch = useDispatch();
   const {tokenMemo} = useContext(Context);
   const inbox = useSelector(selectInbox);
   const {token} = tokenMemo;
@@ -217,20 +219,20 @@ export default function Inbox({navigation}: InboxProps) {
           </TouchableOpacity>
         </View>
       </View>
-
+      {/* 
       <Text
-        style={{marginTop: 40, color: '#fff'}}
-        onPress={() => console.log(conversation)}>
+        style={{marginTop: 40, color: '#fff', marginBottom: 10}}
+        onPress={() => console.log(inbox)}>
         {' '}
         test user
-      </Text>
+      </Text> */}
       {error && <Text style={[appStyles.errorText]}>{error}</Text>}
       {/* <Text style={{color: '#fff', fontSize: 20}}>
         {JSON.stringify(conversation)}
       </Text> */}
-      <Text style={{color: '#fff'}} onPress={mergeData}>
+      {/* <Text style={{color: '#fff'}} onPress={mergeData}>
         mergeData
-      </Text>
+      </Text> */}
       <View style={{marginTop: 40}}>
         <View style={styles.userSection}>
           <TouchableOpacity style={styles.profile} onPress={getUsersFromAPI}>
@@ -244,22 +246,25 @@ export default function Inbox({navigation}: InboxProps) {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={conversation.finalConversation}
+          data={inbox}
+          contentContainerStyle={{paddingBottom: 50}}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({item}: any) => (
             <View style={styles.userSection}>
               <TouchableOpacity
                 style={styles.profile}
-                onPress={() =>
-                  navigation.navigate('Chat', {receiverUser: item})
-                }>
+                onPress={() => {
+                  dispatch(setChatUser(item.user));
+                  navigation.navigate('Chat');
+                }}>
                 <Image
                   style={{width: 50, height: 50, borderRadius: 25}}
                   loadingIndicatorSource={require('../../../../assets/images/place.jpg')}
                   source={
-                    item.avatar
+                    item.user.avatar
                       ? {
-                          uri: envVar.API_URL + 'display-avatar/' + item.id,
+                          uri:
+                            envVar.API_URL + 'display-avatar/' + item.user.id,
                           headers: {
                             Authorization: `Bearer ${token}`,
                           },
@@ -270,9 +275,9 @@ export default function Inbox({navigation}: InboxProps) {
                 />
                 <View style={{marginLeft: 20}}>
                   <Text style={styles.userText}>
-                    {item.first_name + ' ' + item.last_name}
+                    {item.user.first_name + ' ' + item.user.last_name}
                   </Text>
-                  {item.body.type == 'voice' ? (
+                  {item.latestMessage?.body.type == 'voice' ? (
                     <View style={{marginVertical: 5, flexDirection: 'row'}}>
                       <Icon
                         name={'microphone'}
@@ -282,10 +287,12 @@ export default function Inbox({navigation}: InboxProps) {
                       <Text style={{color: colors.complimentary}}>0:25</Text>
                     </View>
                   ) : (
-                    <Text style={styles.msgText}></Text>
+                    <Text style={styles.msgText}>
+                      {item.latestMessage?.body.content}
+                    </Text>
                   )}
                   <Text style={styles.msgTime}>
-                    {formatTime(item.localTime)}
+                    {formatTime(item.latestMessage.localTime)}
                   </Text>
                   {/* <Text style={styles.msgTime}>12:59 | 11 -04-2022 07:59</Text> */}
                 </View>

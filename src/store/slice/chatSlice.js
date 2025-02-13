@@ -13,9 +13,6 @@ const chatSlice = createSlice({
     chatRoomMessages: [],
   },
   reducers: {
-    setConnectionStatus(state, action) {
-      state.connected = action.payload;
-    },
     setModalInfo(state, action) {
       state.modalInfo.modal = action.payload.modal;
       state.modalInfo.isHost = action.payload.isHost;
@@ -97,7 +94,6 @@ const chatSlice = createSlice({
 });
 
 export const {
-  setConnectionStatus,
   setMessageStatus,
   setTokenRenewed,
   setMessages,

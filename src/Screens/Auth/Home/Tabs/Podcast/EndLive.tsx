@@ -52,11 +52,12 @@ export default function EndLive({
         url = url + '/guest';
       }
       console.log(url);
-      await axiosInstance.get(url);
-      setDisabled(false);
-      endPodcastForUser();
+      // await axiosInstance.get(url);
     } catch (error) {
       console.log(error);
+    } finally {
+      setDisabled(false);
+      endPodcastForUser();
     }
   };
 

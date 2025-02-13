@@ -24,7 +24,10 @@ import {
   ChatMessageEventListener,
   ChatMessageChatType,
 } from 'react-native-agora-chat';
-import {fetchUserDetails} from '../../../store/slice/usersSlice';
+import {
+  fetchUserDetails,
+  setChatLoggedIn,
+} from '../../../store/slice/usersSlice';
 import {colors} from '../../../styles/colors';
 import envVar from '../../../config/envVar';
 import {
@@ -45,7 +48,7 @@ export default function HomeB() {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
-  const {initialized, connected, tokenRenewed, error} = useSelector(
+  const {initialized, connected, tokenRenewed, chatLoggedIn} = useSelector(
     (state: any) => state.chat,
   );
   const {unread} = useSelector((state: any) => state.notification);
@@ -74,7 +77,7 @@ export default function HomeB() {
     chatClient
       .init(o)
       .then(() => {
-        if (!connected) {
+        if (!chatLoggedIn) {
           loginUser();
         }
         dispatch(setInitialized(true));
@@ -89,7 +92,6 @@ export default function HomeB() {
           },
           onConnected() {
             console.log('onConnected');
-            // setMessageListener();
             dispatch(setConnected(true));
           },
           onDisconnected() {
@@ -98,7 +100,8 @@ export default function HomeB() {
             console.log('onDisconnected:x');
           },
           onUserAuthenticationFailed() {
-            loginUser();
+            callApiForRenewToken();
+            // loginUser();
           },
         };
         chatClient.addConnectionListener(listener);
@@ -132,6 +135,7 @@ export default function HomeB() {
         onMessagesRecalled: messages => {},
       };
       return () => {
+        console.log('clearing listener');
         chatClient.chatManager.removeAllMessageListener();
         chatClient.chatManager.addMessageListener(msgListener);
       };
@@ -147,12 +151,12 @@ export default function HomeB() {
   // Logs in with an account ID and a token.
   const loginUser = async (retryCount = 0) => {
     if (await chatClient.isConnected()) {
-      dispatch(setConnected(true));
+      dispatch(setChatLoggedIn(true));
       true;
     }
     const isLoggedIn = await chatClient.isLoginBefore();
     if (isLoggedIn) {
-      dispatch(setConnected(true));
+      dispatch(setChatLoggedIn(true));
       console.log('User is already logged in.');
       return; // Prevent duplicate login
     }
@@ -164,6 +168,7 @@ export default function HomeB() {
         String(user.agora_chat_token),
       );
       console.log('login operation success.');
+      dispatch(setChatLoggedIn(true));
     } catch (error: any) {
       if (error.code === 2 || error.code === 300) {
         if (retryCount < MAX_RETRIES) {

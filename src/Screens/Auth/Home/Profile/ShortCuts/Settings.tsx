@@ -16,7 +16,11 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Context from '../../../../../Context/Context';
 import axiosInstance from '../../../../../Api/axiosConfig';
-
+import {setChatLoggedIn} from '../../../../../store/slice/usersSlice';
+import {
+  setConnected,
+  setInitialized,
+} from '../../../../../store/slice/chatSlice';
 export default function Settings({navigation}) {
   const chatClient = ChatClient.getInstance();
   const {userAuthInfo} = useContext(Context);
@@ -48,7 +52,9 @@ export default function Settings({navigation}) {
   const logoutUserFromAgoraChat = async () => {
     try {
       await chatClient.logout();
-      console.log('Logged out Successes !!');
+      setChatLoggedIn(false);
+      setConnected(false);
+      setInitialized(false);
     } catch (error) {
       console.log(error);
     }

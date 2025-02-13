@@ -11,17 +11,17 @@ import React, {useState, useRef, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Popular from './Navigations/Popular';
 import envVar from '../../../config/envVar';
-import {
-  updatePodcastListeners,
-  getUserInfoFromAPI,
-} from '../../../store/slice/podcastSlice';
+import {updatePodcastListeners} from '../../../store/slice/podcastSlice';
 import {ChatTextMessageBody} from 'react-native-agora-chat';
+import {fetchUserDetails} from '../../../store/slice/usersSlice';
 import {
   setUnreadCount,
   setUnreadNotification,
 } from '../../../store/slice/notificationSlice';
-import {updateStreamListeners} from '../../../store/slice/streamingSlice';
-import axios from 'axios';
+import {
+  setSingle,
+  updateStreamListeners,
+} from '../../../store/slice/streamingSlice';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -42,6 +42,7 @@ import Context from '../../../Context/Context';
 import axiosInstance from '../../../Api/axiosConfig';
 
 export default function Home({navigation}) {
+  const {userDetails} = useSelector((state: any) => state.users);
   const {tokenMemo} = useContext(Context);
   const dispatch = useDispatch();
   // const {token} = tokenMemo;
@@ -110,10 +111,13 @@ export default function Home({navigation}) {
   }));
 
   const test = () => {
-    // console.log('hii');
+    console.log('hii');
+    dispatch(setSingle(false));
+    // dispatch(fetchUserDetails([1, 14, 15]));
+
     // dispatch(updatePodcastListeners(6));
-    // dispatch(updateStreamListeners(5));
-    // navigation.navigate('LiveStreaming');
+    dispatch(updateStreamListeners(4));
+    navigation.navigate('LiveStreaming');
     // navigation.navigate('GoLive');
   };
   return (
@@ -134,7 +138,11 @@ export default function Home({navigation}) {
           />
         </View>
         <View style={styles.headerLeft}>
-          <Text style={styles.heading} onPress={getNotifications}>
+          <Text
+            style={styles.heading}
+            onPress={() => {
+              console.log(userDetails);
+            }}>
             Emo Live
           </Text>
           <TouchableOpacity

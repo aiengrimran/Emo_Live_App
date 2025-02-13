@@ -20,16 +20,35 @@ import {colors} from '../../../../styles/colors';
 import {useDispatch, useSelector} from 'react-redux';
 import {setLiveForm, setLiveFormFull} from '../../../../store/slice/usersSlice';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import Room9 from '../../../../assets/svg/room9Off.svg';
+import Room9On from '../../../../assets/svg/room9.svg';
+import {resetLiveStreaming, resetPodcastState} from './scripts/liveScripts';
+import {envVar} from './Podcast/podcastImport';
+import {
+  updatePodcastListeners,
+  setPodcast,
+} from '../../../../store/slice/podcastSlice';
 import {checkCamPermission} from '../../../../scripts';
-
+import {
+  updateStreamListeners,
+  setStream,
+  setSingle,
+} from '../../../../store/slice/streamingSlice';
+import axiosInstance from '../../../../Api/axiosConfig';
+import Context from '../../../../Context/Context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 interface StartLiveProps {
   navigation: any;
 }
 export default function StartLive({navigation}: StartLiveProps) {
   const dispatch = useDispatch();
+
+  const {userAuthInfo} = useContext(Context);
+  const {user, setUser} = userAuthInfo;
   const camRef = useRef<Camera>(null);
   const {liveForm} = useSelector((state: any) => state.users);
   const [beautySettings, setBeautySettings] = useState(false);
+  const [error, setError] = useState('');
   const [editor, setEditor] = useState<any>({
     device: '',
     ready: false,
@@ -37,6 +56,7 @@ export default function StartLive({navigation}: StartLiveProps) {
   });
   const [liveType, setLiveType] = useState('');
   const [modal, setModal] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const devices = useCameraDevices();
   // useEffect(() => {
   //   async function getPermission() {
@@ -86,6 +106,104 @@ export default function StartLive({navigation}: StartLiveProps) {
       console.log(error);
     }
   };
+  const startPodCast = async () => {
+    try {
+      // setUser
+      resetPodcastState(dispatch);
+      setLoading(true);
+      // setLoading(true);
+
+      const data = {
+        title: liveForm.title,
+        duration: liveForm.duration,
+        listeners: 9,
+        listeners_can_add: [],
+        type: 'PUBLIC',
+      };
+      console.log('starting podcast', data);
+
+      const url = envVar.API_URL + 'podcast/start';
+
+      const res = await axiosInstance.post(url, data);
+      console.log(res.data);
+      if (res.status == 201) {
+        setUser(() => res.data.user);
+        dispatch(updatePodcastListeners(9));
+        dispatch(setPodcast(res.data.podcast));
+        navigation.replace('GoLive');
+      }
+      // const res = await axiosInstance.post(url, JSON.stringify(data));
+    } catch (error: any) {
+      console.log(error);
+      setError('please check internet connection');
+      // console.log(error.response.data.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const submit = () => {
+    if (!liveForm.liveType) {
+      Alert.alert('Error', 'Please Select Live Type');
+      return;
+    }
+
+    switch (liveForm.liveType) {
+      case 'podcast':
+        startPodCast();
+        break;
+      case 'video':
+        startLive();
+        break;
+      default:
+        Alert.alert('Coming Soon !!');
+        break;
+    }
+  };
+  const startLive = async () => {
+    try {
+      let multi = !!liveForm.multi;
+      resetLiveStreaming(dispatch);
+      setLoading(true);
+
+      // setLoading(true);
+      const url = envVar.API_URL + 'stream/start';
+      const data = {
+        title: 'Some title',
+        duration: 10,
+        // listeners: guests,
+        listeners: multi ? 4 : 9,
+        listeners_can_add: [],
+        type: 'PUBLIC',
+      };
+
+      const res = await axiosInstance.post(url, data);
+      console.log(res.data);
+
+      if (res.status == 201) {
+        setUser((user: any) => ({
+          ...user,
+          agora_rtc_token: res.data.user.agora_rtc_token,
+        }));
+        await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+        if (!multi) {
+          dispatch(setSingle(true));
+        }
+        dispatch(updateStreamListeners(multi ? 4 : 9));
+        dispatch(setStream(res.data.stream));
+        navigation.replace('LiveStreaming');
+      }
+      // console.log(res.data);
+    } catch (error: any) {
+      console.log(error);
+      if (error.response) {
+        setError(error.response.data.message);
+        return;
+      }
+      setError('Please check internet connection');
+    } finally {
+      setLoading(false);
+    }
+  };
   // const device = devices.back;
 
   return (
@@ -99,8 +217,8 @@ export default function StartLive({navigation}: StartLiveProps) {
         source={require('../../../../assets/images/parts/flowerBg.jpg')}>
         <View
           style={{
-            height: '77%',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            height: '75%',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
           }}>
           <Text style={styles.heading}>Start Live</Text>
           {editor.ready && editor.device && (
@@ -113,40 +231,57 @@ export default function StartLive({navigation}: StartLiveProps) {
               preview={true}
             />
           )}
+
           {beautySettings && liveForm.liveType == 'video' && (
-            <View style={styles.filter}>
+            <>
               <TouchableOpacity
-                onPress={switchCamera}
-                style={{alignItems: 'center'}}>
-                <Icon
-                  name="camera-flip-outline"
-                  color={colors.complimentary}
-                  size={30}
-                />
-                <Text style={styles.filterTxt}>Switch Camera</Text>
+                style={styles.filter2}
+                onPress={() =>
+                  dispatch(
+                    setLiveForm({field: 'multi', value: !liveForm.multi}),
+                  )
+                }>
+                {liveForm.multi ? (
+                  <Room9On width={32} height={32} />
+                ) : (
+                  <Room9 width={32} height={32} />
+                )}
+                <Text style={styles.seatTxt}>9 Seat</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={capturePhoto}
-                style={{alignItems: 'center'}}>
-                <Icon
-                  name="emoticon-happy-outline"
-                  color={colors.complimentary}
-                  size={30}
-                />
-                <Text style={styles.filterTxt}>Sticker/Beautify</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{alignItems: 'center'}}>
-                <Icon name="mirror" color={colors.complimentary} size={30} />
-                <Text style={styles.filterTxt}>Mirror Camera</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.filter}>
+                <TouchableOpacity
+                  onPress={switchCamera}
+                  style={{alignItems: 'center'}}>
+                  <Icon
+                    name="camera-flip-outline"
+                    color={colors.complimentary}
+                    size={30}
+                  />
+                  <Text style={styles.filterTxt}>Switch Camera</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={capturePhoto}
+                  style={{alignItems: 'center'}}>
+                  <Icon
+                    name="emoticon-happy-outline"
+                    color={colors.complimentary}
+                    size={30}
+                  />
+                  <Text style={styles.filterTxt}>Sticker/Beautify</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{alignItems: 'center'}}>
+                  <Icon name="mirror" color={colors.complimentary} size={30} />
+                  <Text style={styles.filterTxt}>Mirror Camera</Text>
+                </TouchableOpacity>
+              </View>
+            </>
           )}
         </View>
 
         <View
           style={{
-            height: '23%',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            height: '25%',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
           }}>
           <View style={{alignItems: 'center'}}>
             <View style={{width: '100%', marginTop: 10}}>
@@ -175,32 +310,30 @@ export default function StartLive({navigation}: StartLiveProps) {
                   />
                 </View>
               )}
+              {liveForm.liveType == 'secured' && (
+                <View>
+                  <TextInput
+                    style={styles.secureInput}
+                    placeholder="PIN"
+                    placeholderTextColor={'grey'}
+                  />
+                </View>
+              )}
 
               <View style={{alignItems: 'center', width: '100%'}}>
                 <TouchableOpacity
-                  onPress={() => {
-                    if (!liveForm.liveType) {
-                      Alert.alert('Error', 'Please Select Live Type');
-                      return;
-                    }
-                    if (liveForm.liveType == 'podcast') {
-                      setModal(true);
-                      return;
-                    }
-                    if (liveForm.liveType == 'video') {
-                      dispatch(
-                        setLiveFormFull({
-                          liveType: 'video',
-                          type: 'PUBLIC',
-                          title: 'test title',
-                          duration: 20,
-                        }),
-                      );
-                      navigation.navigate('GoLive2');
-                    }
-                  }}
+                  disabled={loading}
+                  onPress={submit}
                   style={styles.btn}>
-                  <Text style={[appStyles.paragraph1]}>Go Live</Text>
+                  {loading ? (
+                    <ActivityIndicator
+                      animating={loading}
+                      size={'small'}
+                      color={colors.dominant}
+                    />
+                  ) : (
+                    <Text style={[appStyles.paragraph1]}>Go Live</Text>
+                  )}
                 </TouchableOpacity>
                 <View style={styles.tabs}>
                   <TouchableOpacity
@@ -238,11 +371,11 @@ export default function StartLive({navigation}: StartLiveProps) {
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    // onPress={() => {
-                    //   dispatch(
-                    //     setLiveForm({field: 'liveType', value: 'podcast'}),
-                    //   );
-                    // }}
+                    onPress={() => {
+                      dispatch(
+                        setLiveForm({field: 'liveType', value: 'secured'}),
+                      );
+                    }}
                     style={[
                       styles.tab,
                       liveForm.liveType == 'secured'
@@ -301,6 +434,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     // justifyContent: 'space-between',
   },
+  filter2: {
+    position: 'absolute', // Keeps it from affecting other elements
+    bottom: 60, // Adjust as needed
+    right: 60,
+    alignSelf: 'center',
+  },
   genderBtn: {
     borderColor: 'grey',
     justifyContent: 'center',
@@ -311,6 +450,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
+  seatTxt: {marginTop: 10, ...appStyles.bodyMd, color: colors.unknown},
   rightBtn: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -354,5 +494,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '90%',
     alignSelf: 'center',
+  },
+  secureInput: {
+    backgroundColor: colors.complimentary,
+    padding: 15,
+    borderRadius: 8,
+    width: '80%',
+    alignSelf: 'center',
+    color: colors.dominant,
   },
 });

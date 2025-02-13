@@ -33,14 +33,16 @@ import {
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+interface GoLiveProps {
+  navigation: any;
+}
 
-export default function GoLive2({navigation}) {
+export default function GoLive2({navigation}: GoLiveProps) {
   const {guests} = useSelector((state: any) => state.streaming);
   const {liveForm} = useSelector((state: any) => state.users);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useDispatch();
-
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {user, setUser} = userAuthInfo;
 
@@ -55,7 +57,7 @@ export default function GoLive2({navigation}) {
       setLoading(true);
       console.log(liveForm);
       if (liveForm.liveType == 'podcast') {
-        startPodCast();
+        // startPodCast();
         return;
       }
       // setLoading(true);
@@ -96,41 +98,6 @@ export default function GoLive2({navigation}) {
     }
   };
 
-  const startPodCast = async () => {
-    try {
-      // setUser
-      resetPodcastState(dispatch);
-      // setLoading(true);
-
-      const data = {
-        title: liveForm.title,
-        duration: liveForm.duration,
-        listeners: guests + 1,
-        listeners_can_add: [],
-        type: 'PUBLIC',
-      };
-      console.log('starting podcast', data);
-
-      const url = envVar.API_URL + 'podcast/start';
-
-      const res = await axiosInstance.post(url, data);
-      setLoading(false);
-      console.log(res.data);
-
-      if (res.status == 201) {
-        setUser(() => res.data.user);
-        dispatch(updatePodcastListeners(guests + 1));
-        dispatch(setPodcast(res.data.podcast));
-        navigation.navigate('GoLive');
-      }
-      // const res = await axiosInstance.post(url, JSON.stringify(data));
-    } catch (error: any) {
-      setLoading(false);
-      console.log(error);
-      setError('please check internet connection');
-      // console.log(error.response.data.message);
-    }
-  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>

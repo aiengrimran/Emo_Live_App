@@ -8,6 +8,7 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 import {
   setStreamListeners,
   setStream,
+  setSingle,
 } from '../../../../../store/slice/streamingSlice';
 import {
   setIsJoined,
@@ -55,6 +56,7 @@ export const getLiveUsers = (id, type) => {
 export const resetLiveStreaming = dispatch => {
   console.log('function run');
   dispatch(setIsJoined(false));
+  dispatch(setSingle(false));
   dispatch(setStreamListeners([]));
   dispatch(resetChatRoomMessage());
   dispatch(setStream(''));
