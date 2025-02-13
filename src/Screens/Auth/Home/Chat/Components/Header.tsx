@@ -22,7 +22,7 @@ export default function Header({navigation, token, connected}: HeaderProps) {
           <Icon name="arrow-left-thin" size={25} color={colors.complimentary} />
         </TouchableOpacity>
         <View style={{flexDirection: 'row', marginLeft: 10}}>
-          {/* <Image
+          <Image
             style={{width: 43, height: 43, borderRadius: 25}}
             source={
               chatUser.avatar
@@ -34,7 +34,7 @@ export default function Header({navigation, token, connected}: HeaderProps) {
                   }
                 : require('../../../../../assets/images/place.jpg')
             }
-          /> */}
+          />
           <View style={{marginLeft: 10}}>
             <Text style={chatStyles.user}>
               {chatUser.first_name + ' ' + chatUser.last_name}

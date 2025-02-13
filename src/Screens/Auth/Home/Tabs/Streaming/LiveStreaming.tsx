@@ -59,9 +59,12 @@ import {
   removeUserFromStream,
   getUserInfoFromAPI,
   getUserInfoFromAPIS,
+  setStream,
   updateStreamRoomId,
   setPrevUsersInStream,
+  removeUserFromSingleStream,
   setPrevUsersInSingleStream,
+  addStreamListenerS,
   updateUserCamera,
   updatedMuteUnmuteUser,
 } from '../../../../../store/slice/streamingSlice';
@@ -124,13 +127,17 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
+    // if (!isJoined) {
     setupVideoSDKEngine();
+    // }
+
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
       agoraEngineRef.current?.release();
     };
   }, []);
+  // }, [isJoined]);
 
   // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
@@ -142,23 +149,30 @@ export default function LiveStreaming({navigation}) {
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
-          // previewHostStream();
-          if (!single) {
+          if (single) {
+            if (stream.host !== user.id) {
+              dispatch(addStreamListenerS(user));
+              return;
+            }
+          } else {
+            if (stream.host !== user.id) {
+              dispatch(getUserInfoFromAPI(stream.host));
+              return;
+            }
+
             dispatch(setUserInState(user));
           }
           if (stream.host == user.id) {
             createUserChatRoom();
           } else {
-            dispatch(getUserInfoFromAPI(stream.host));
-            userJoinChatRoom(stream.chat_room_id);
-          }
-          if (_connection.localUid !== stream.host) {
             getStreamActiveUsers();
+            userJoinChatRoom(stream.chat_room_id);
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
-          if (uid !== user.id) {
+          if (uid !== user.id && !single) {
             dispatch(getUserInfoFromAPI(uid));
+            return;
           }
           if (single) {
             dispatch(getUserInfoFromAPIS(uid));
@@ -166,8 +180,12 @@ export default function LiveStreaming({navigation}) {
           // setRemoteUid(uid);
         },
         onLeaveChannel(connection, stats) {
-          console.log('user leave channel ,///');
+          console.log('leave changel ...');
           if (connection.localUid !== stream.host) {
+            if (single) {
+              dispatch(removeUserFromSingleStream(connection.localUid));
+              return;
+            }
             dispatch(removeUserFromStream(connection.localUid));
           }
           // if (connection.localUid === podcast.host) {
@@ -178,12 +196,16 @@ export default function LiveStreaming({navigation}) {
           console.log('new function', 'user has leaved the');
         },
 
-        onUserOffline: (_connection: RtcConnection, uid: number) => {
+        onUserOffline: (connection: RtcConnection, uid: number) => {
           if (uid === stream.host) {
             hostEndedPodcast();
             return;
           }
           if (uid !== stream.host) {
+            if (single) {
+              dispatch(removeUserFromSingleStream(uid));
+              return;
+            }
             dispatch(removeUserFromStream(uid));
           }
         },
@@ -350,8 +372,6 @@ export default function LiveStreaming({navigation}) {
         console.log('Not connected, logging in first...');
         return;
       }
-      Alert.alert('chat room', 'Creating ');
-
       const chatRoom = await chatClient.roomManager.createChatRoom(
         'Stream Starting',
         'Hi',
@@ -394,12 +414,14 @@ export default function LiveStreaming({navigation}) {
 
   const saveChatRoomId = async (roomId: string, retryCount = 0) => {
     try {
-      const url = envVar.LOCAL_URL + 'stream/save-roomId';
+      const url = envVar.API_URL + 'stream/save-roomId';
       const data = {
         chatRoomId: roomId,
         id: stream.id,
       };
-      const res = await axios.post(url, JSON.stringify(data));
+      const res = await axiosInstance.post(url, data);
+      dispatch(setStream(res.data.stream));
+
       console.log(res.data);
     } catch (error) {
       console.log(error);
@@ -421,6 +443,7 @@ export default function LiveStreaming({navigation}) {
       if (agoraEngineRef.current) {
         // Toggle mute/unmute for the remote user
         agoraEngineRef.current.muteLocalAudioStream(item.muted);
+        console.log(item.user.id, single);
         dispatch(updatedMuteUnmuteUser({id: item.user.id, single}));
       }
     } catch (error) {
@@ -454,6 +477,7 @@ export default function LiveStreaming({navigation}) {
       destroyEngine();
       setTimeout(() => {
         dispatch(setLeaveModal(false));
+        dispatch(setStream(''));
         navigation.navigate('HomeB');
       }, 400);
     } catch (error) {
@@ -484,8 +508,6 @@ export default function LiveStreaming({navigation}) {
   const toggleCamera = () => {
     try {
       if (agoraEngineRef.current) {
-        console.log('toogle camera');
-        // Toggle mute/unmute for the remote user
         const res = agoraEngineRef.current.switchCamera();
         console.log(res);
       }

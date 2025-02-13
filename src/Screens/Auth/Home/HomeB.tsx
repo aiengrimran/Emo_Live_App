@@ -92,7 +92,7 @@ export default function HomeB() {
           },
           onConnected() {
             console.log('onConnected');
-            Alert.alert('phone connected');
+            // Alert.alert('phone connected');
             dispatch(setConnected(true));
           },
           onDisconnected() {

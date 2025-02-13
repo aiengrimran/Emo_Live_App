@@ -47,17 +47,18 @@ export default function Header({
   // const {podcast} = useSelector((state: any) => state.podcast);
   // const {stream} = useSelector((state: any) => state.streaming);
   const {loading, isJoined} = useSelector((state: any) => state.users);
-  let host = '';
+  // let host = '';
 
-  // const [host, setHost] = useState(
-  //   liveEvent.host == user.id ? user : liveEvent.user,
-  // );
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setTime(prevTime => prevTime + 1); // Increment time by 1 second
-  //   }, 1000);
-  //   return () => clearInterval(interval); // Cleanup interval on unmount
-  // }, []);
+  const [host, setHost] = useState(
+    liveEvent.host == user.id ? user : liveEvent.user,
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(prevTime => prevTime + 1); // Increment time by 1 second
+    }, 1000);
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, []);
   // Convert time to mm:ss format
   const formatTime = timeInSeconds => {
     const minutes = Math.floor(timeInSeconds / 60);
@@ -93,21 +94,23 @@ export default function Header({
           style={{width: 28, height: 28, borderRadius: 15}}
         />
         <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
-          {host.first_name}
-          {/* {user.last_name} */}
+          {host.first_name + ' ' + host.last_name}
         </Text>
         <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
           <Text
-            onPress={() => dispatch(setSingle(true))}
+            // onPress={() => dispatch(setSingle(true))}
             style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
             LV:1
           </Text>
         </View>
-        {host.id != user.id && (
+        {host.id !== user.id && (
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => {
-              dispatch(updatedMuteUnmuteUser({type: 'single', id: 1}));
+              // console.log(user);
+              // console.log(liveEvent);
+              console.log(host, 'ssss');
+              // dispatch(updatedMuteUnmuteUser({type: 'single', id: 1}));
               // Alert.alert('Coming Soon', '!!');
             }}>
             <Icon name="plus" color="#fff" size={20} />

@@ -14,8 +14,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
 import {
+  setSingle,
   setStream,
   setStreams,
+  addStreamListenerS,
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
 import envVar from '../../../../config/envVar';
@@ -68,16 +70,20 @@ export default function Live({navigation, flatListRef}: LiveProps) {
         id: item.id,
       };
       const res = await axiosInstance.post(url, data);
-      setLoading(false);
-      // console.log(res.data);
       setUser(res.data.user);
-      dispatch(updateStreamListeners(item.listeners));
       dispatch(setStream(item));
+      if (item.single) {
+        dispatch(setSingle(true));
+        dispatch(addStreamListenerS(item.user));
+      } else {
+        dispatch(updateStreamListeners(item.listeners));
+      }
+
       navigation.navigate('LiveStreaming');
     } catch (error) {
-      setLoading(false);
-
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 

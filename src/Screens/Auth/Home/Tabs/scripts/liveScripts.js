@@ -8,6 +8,7 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 import {
   setStreamListeners,
   setStream,
+  resetSingleStreamListeners,
   setSingle,
 } from '../../../../../store/slice/streamingSlice';
 import {
@@ -21,8 +22,8 @@ export const resetPodcastState = dispatch => {
   dispatch(setIsJoined(false));
   dispatch(setPodcastListeners([]));
   dispatch(resetChatRoomMessage());
-  dispatch(setPodcast(''));
   dispatch(setLiveStatus('IDLE'));
+  dispatch(setPodcast(''));
 };
 
 export const getPodcastUsers = async id => {
@@ -59,6 +60,7 @@ export const resetLiveStreaming = dispatch => {
   dispatch(setSingle(false));
   dispatch(setStreamListeners([]));
   dispatch(resetChatRoomMessage());
-  dispatch(setStream(''));
+  dispatch(resetSingleStreamListeners([]));
+  // dispatch(setStream(''));
   dispatch(setLiveStatus('IDLE'));
 };

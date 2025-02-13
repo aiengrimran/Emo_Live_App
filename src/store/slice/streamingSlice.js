@@ -55,40 +55,20 @@ export const getUserInfoFromAPIS = createAsyncThunk(
   async (id, {getState, dispatch}) => {
     // async (id: number, {getState, dispatch}) => {
     try {
-      console.log(id, 'user id from stream');
-      const {streamListeners} = getState().streaming;
+      const {streamListenersS} = getState().streaming;
       // Check if user already exists in the list
-      const currentUsers = streamListeners;
+      const currentUsers = streamListenersS;
 
       if (currentUsers.some(item => item.user?.id === id)) return;
 
       // Fetch user data from API
       const {data} = await axiosInstance.post('users-info', {users: [id]});
-
       if (data.users?.[0]) {
-        // Find an empty slot where `occupied` is false and `user` is not assigned
-        const emptyRoomIndex = currentUsers.findIndex(
-          item => !item.occupied && !item.user,
-        );
-
-        if (emptyRoomIndex !== -1) {
-          // Create a new array with updated user information (immutably)
-          const updatedUsers = currentUsers.map((item, index) =>
-            index === emptyRoomIndex
-              ? {...item, user: data.users[0], occupied: true}
-              : item,
-          );
-
-          // Dispatch an action to update the state
-          dispatch(setStreamListeners(updatedUsers));
-          console.log('I should have');
-          dispatch({
-            type: 'users/setGuestUser',
-            payload: {user: data.users?.[0], state: true},
-          });
-        } else {
-          console.warn('No empty rooms available');
-        }
+        dispatch(addStreamListenerS(data.users?.[0]));
+        dispatch({
+          type: 'users/setGuestUser',
+          payload: {user: data.users?.[0], state: true},
+        });
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -102,6 +82,8 @@ const streamingSlice = createSlice({
     guests: null,
     rtcTokenRenewed: false,
     stream: '',
+    loading: true,
+    error: '',
     streamListeners: [],
     streamListenersS: [],
     streams: [],
@@ -124,6 +106,9 @@ const streamingSlice = createSlice({
         camOn: true,
       }));
       state.streamListeners = hosts;
+    },
+    resetSingleStreamListeners: (state, {payload}) => {
+      state.streamListenersS = payload;
     },
     addStreamListenerS: (state, {payload}) => {
       // Get the last seat number from the current state
@@ -299,6 +284,7 @@ export const {
   setUserInState,
   updatedMuteUnmuteUser,
   addStreamListenerS,
+  resetSingleStreamListeners,
   removeUserFromSingleStream,
   setPrevUsersInSingleStream,
   setSingle,

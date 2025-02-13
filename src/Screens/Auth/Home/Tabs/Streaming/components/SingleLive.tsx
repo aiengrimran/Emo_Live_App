@@ -20,6 +20,7 @@ import {singleLiveHosts} from '../../../../../../store/selectors/selectors';
 import envVar from '../../../../../../config/envVar';
 import {users} from './users';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {appStyles} from '../streamingImport';
 
 interface SingleLiveProps {
   user: any;
@@ -59,15 +60,26 @@ export default function SingleLive({
           backgroundColor: 'green',
           flex: 1,
         }}>
-        {isJoined ? (
+        <Text onPress={() => console.log(host)}>dd</Text>
+        {/* <Text style={{color: '#fff'}}>{JSON.stringify(host.user.avatar)}</Text> */}
+        {isJoined && host ? (
           <>
             {host.camOn ? (
-              <RtcSurfaceView
-                canvas={{uid: stream.host == user.id ? 0 : stream.host}}
-              />
+              <React.Fragment key={stream.host}>
+                <RtcSurfaceView
+                  canvas={{uid: stream.host == user.id ? 0 : stream.host}}
+                />
+              </React.Fragment>
             ) : (
-              <View>
+              <View
+                style={{
+                  alignItems: 'center',
+                  height: deviceHeight * 0.5,
+                  justifyContent: 'center',
+                  width: '80%',
+                }}>
                 <Image
+                  style={[appStyles.userAvatar]}
                   source={
                     host.user.avatar
                       ? {
@@ -80,6 +92,9 @@ export default function SingleLive({
                       : require('../../../../../../assets/images/place.jpg')
                   }
                 />
+                <Text style={styles.hostTxt}>
+                  {host.user.first_name + ' ' + host.user.last_name}
+                </Text>
               </View>
             )}
 
@@ -96,16 +111,14 @@ export default function SingleLive({
                   style={{marginVertical: 20}}
                   onPress={() => toggleMute(host)}>
                   <Icon
-                    // name={host.muted ? 'microphone-off' : 'microphone'}
-                    name={'microphone'}
+                    name={host.muted ? 'microphone-off' : 'microphone'}
                     size={25}
                     color={colors.complimentary}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity style={{}} onPress={() => offCamera(host)}>
                   <Icon
-                    name={'camera-outline'}
-                    // name={host.camOn ? 'camera-off-outline' : 'camera-outline'}
+                    name={host.camOn ? 'camera-off-outline' : 'camera-outline'}
                     size={25}
                     color={colors.complimentary}
                   />
@@ -249,5 +262,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     alignSelf: 'center',
     color: colors.complimentary,
+  },
+  hostTxt: {
+    ...appStyles.regularTxtMd,
+    color: colors.complimentary,
+    marginTop: 10,
   },
 });
