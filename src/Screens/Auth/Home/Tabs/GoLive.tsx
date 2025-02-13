@@ -553,6 +553,7 @@ export default function GoLive({navigation}: any) {
 
         {!sheet && (
           <BottomSection
+            single={false}
             roomId={podcast.chat_room_id}
             handleOpenSheet={handleOpenSheet}
           />

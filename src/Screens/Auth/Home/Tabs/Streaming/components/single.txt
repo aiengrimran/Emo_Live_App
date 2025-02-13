@@ -39,18 +39,8 @@ export default function SingleLive({
 }: SingleLiveProps) {
   //
   const dispatch = useDispatch();
-  // const hosts = useSelector(singleLiveHosts);
-
-  const {stream, streamListenersS} = useSelector(
-    (state: any) => state.streaming,
-  );
-  const guest = streamListenersS.filter(
-    (item: any) => item.user.id !== stream.host,
-  );
-  const host = streamListenersS.find(
-    (item: any) => item.user.id == stream.host,
-  );
-
+  const {stream} = useSelector((state: any) => state.streaming);
+  const hosts = useSelector(singleLiveHosts);
   // cons
   return (
     <View style={styles.container}>
@@ -58,68 +48,88 @@ export default function SingleLive({
         style={{
           backgroundColor: 'green',
           flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-around',
         }}>
-        {isJoined ? (
-          <>
-            {host.camOn ? (
-              <RtcSurfaceView
-                canvas={{uid: stream.host == user.id ? 0 : stream.host}}
-              />
-            ) : (
-              <View>
-                <Image
-                  source={
-                    host.user.avatar
-                      ? {
-                          uri:
-                            envVar.API_URL + 'display-avatar/' + host.user.id,
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }
-                      : require('../../../../../../assets/images/place.jpg')
-                  }
-                />
-              </View>
-            )}
-
-            {stream.host == user.id && (
-              <View style={styles.control}>
-                <TouchableOpacity style={{}} onPress={() => toggleCamera()}>
-                  <Icon
-                    name="camera-flip-outline"
-                    size={25}
-                    color={colors.complimentary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{marginVertical: 20}}
-                  onPress={() => toggleMute(host)}>
-                  <Icon
-                    // name={host.muted ? 'microphone-off' : 'microphone'}
-                    name={'microphone'}
-                    size={25}
-                    color={colors.complimentary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity style={{}} onPress={() => offCamera(host)}>
-                  <Icon
-                    name={'camera-outline'}
-                    // name={host.camOn ? 'camera-off-outline' : 'camera-outline'}
-                    size={25}
-                    color={colors.complimentary}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-          </>
-        ) : (
-          <></>
-        )}
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(addStreamListenerS(users[0]));
+            console.log(hosts);
+          }}>
+          add 1
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(addStreamListenerS(users[1]));
+            console.log(hosts);
+          }}>
+          add 2
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(addStreamListenerS(users[2]));
+            console.log(hosts);
+          }}>
+          add 3
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(addStreamListenerS(users[3]));
+            console.log(hosts);
+          }}>
+          add 4
+        </Text>
+      </View>
+      <View
+        style={{
+          backgroundColor: 'green',
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+        }}>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(removeUserFromSingleStream(1));
+            console.log(hosts);
+          }}>
+          remove 1
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(removeUserFromSingleStream(13));
+            console.log(hosts);
+          }}>
+          remove 2
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(removeUserFromSingleStream(14));
+            console.log(hosts);
+          }}>
+          remove 3
+        </Text>
+        <Text
+          style={{color: '#fff'}}
+          onPress={() => {
+            dispatch(removeUserFromSingleStream(15));
+            console.log(hosts);
+          }}>
+          remove 4
+        </Text>
+        {isJoined ? <RtcSurfaceView canvas={{uid: user.id}} /> : <></>}
       </View>
       <View style={styles.guest}>
         <FlatList
-          data={guest}
+          data={hosts}
+          // style={}
+          // contentContainerStyle={{padding: 20}}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({item}) => (
             <View style={styles.screen1}>
@@ -130,7 +140,7 @@ export default function SingleLive({
                     {item.camOn ? (
                       <RtcSurfaceView
                         canvas={{
-                          uid: user.id == item.user.id ? 0 : item.user.id,
+                          uid: item.user.id,
                         }}
                         style={styles.videoView}
                       />
@@ -223,6 +233,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70,
   },
+  screen2: {
+    marginTop: 20,
+    backgroundColor: 'black',
+    height: deviceHeight * 0.15,
+    borderColor: colors.yellow,
+    borderWidth: 5,
+    borderRadius: 5,
+  },
   screen1: {
     marginBottom: 10,
     backgroundColor: 'black',
@@ -237,12 +255,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: 'red',
   },
-  control: {
-    alignItems: 'center',
-    top: 10,
-    left: 20,
-    position: 'absolute',
-  },
   userTxt: {
     position: 'absolute',
     bottom: 10,
@@ -251,3 +263,4 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
   },
 });
+// <View style={styles.screen2}></View> */}

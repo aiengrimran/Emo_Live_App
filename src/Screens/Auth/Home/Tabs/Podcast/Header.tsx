@@ -16,6 +16,10 @@ import IconM from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setLoading} from '../../../../../store/slice/usersSlice';
 import {useSelector, useDispatch} from 'react-redux';
+import {
+  setSingle,
+  updatedMuteUnmuteUser,
+} from '../../../../../store/slice/streamingSlice';
 import axiosInstance from '../../../../../Api/axiosConfig';
 import {envVar} from '../Streaming/streamingImport';
 
@@ -93,7 +97,9 @@ export default function Header({
           {/* {user.last_name} */}
         </Text>
         <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
-          <Text style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
+          <Text
+            onPress={() => dispatch(setSingle(true))}
+            style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
             LV:1
           </Text>
         </View>
@@ -101,7 +107,8 @@ export default function Header({
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => {
-              Alert.alert('Coming Soon', '!!');
+              dispatch(updatedMuteUnmuteUser({type: 'single', id: 1}));
+              // Alert.alert('Coming Soon', '!!');
             }}>
             <Icon name="plus" color="#fff" size={20} />
           </TouchableOpacity>

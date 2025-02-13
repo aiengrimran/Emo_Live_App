@@ -3,6 +3,8 @@ import {createSelector} from 'reselect';
 // Input selector: Extracts the messagesByConversation object from the state
 const selectMessagesByConversation = state => state.chat.messagesByConversation;
 const selectUserDetails = state => state.users.userDetails;
+const singleListeners = state => state.streaming.streamListenersS;
+const stream = state => state.streaming.stream;
 
 // Memoized selector: Retrieves messages for a specific conversation
 export const selectMessagesForConversation = createSelector(
@@ -41,6 +43,31 @@ export const selectInbox = createSelector(
     return inbox.sort(
       (a, b) => b.latestMessage.serverTime - a.latestMessage.serverTime,
     );
+  },
+);
+
+// export const singleLiveHosts = createSelector(
+//   [singleListeners, stream],
+//   (singleHosts, stream) => {
+//     return singleHosts.filter(item => item?.user.id !== stream.host);
+//   },
+// );
+export const singleLiveHosts = createSelector(
+  [singleListeners, stream], // Input selectors
+  (singleHosts, stream) => {
+    // Ensure singleHosts is an array and stream.host is defined
+    if (!Array.isArray(singleHosts)) {
+      console.warn('singleHosts is not an array');
+      return [];
+    }
+
+    if (!stream || !stream.host) {
+      // console.warn('stream or stream.host is undefined');
+      return singleHosts; // Return all hosts if stream.host is not available
+    }
+
+    // Filter out the host matching stream.host
+    return singleHosts.filter(item => item?.user?.id !== stream.host);
   },
 );
 

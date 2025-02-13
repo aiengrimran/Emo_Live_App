@@ -24,13 +24,18 @@ import {useDispatch, useSelector} from 'react-redux';
 import Context from '../../../../Context/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Popular({navigation}) {
+interface LiveProps {
+  navigation: any;
+  flatListRef: any;
+}
+
+export default function Live({navigation, flatListRef}: LiveProps) {
   const {tokenMemo, userAuthInfo} = useContext(Context);
-  const {streams} = useSelector(state => state.streaming);
+  const {streams} = useSelector((state: any) => state.streaming);
   const {token} = tokenMemo;
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     // getStream();
@@ -80,11 +85,15 @@ export default function Popular({navigation}) {
     <View>
       <View style={{marginTop: 20}}>
         <View style={{alignSelf: 'center'}}>
-          <ActivityIndicator
-            animating={loading}
-            color={colors.accent}
-            size={'small'}
-          />
+          {loading ? (
+            <ActivityIndicator
+              animating={loading}
+              color={colors.accent}
+              size={'small'}
+            />
+          ) : (
+            <></>
+          )}
         </View>
         <TouchableOpacity onPress={getStream}>
           <Text style={{marginVertical: 10, color: colors.complimentary}}>
@@ -96,11 +105,12 @@ export default function Popular({navigation}) {
             height: Dimensions.get('window').height * 0.63,
           }}>
           <FlatList
+            ref={flatListRef}
             data={streams}
             keyExtractor={(item: any) => item.id?.toString()}
             numColumns={2}
             contentContainerStyle={{
-              paddingBottom: 120,
+              paddingBottom: 5,
             }}
             renderItem={({item}: any) => (
               <TouchableOpacity

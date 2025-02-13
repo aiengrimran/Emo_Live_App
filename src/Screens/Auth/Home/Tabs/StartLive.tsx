@@ -31,6 +31,7 @@ import {
 import {checkCamPermission} from '../../../../scripts';
 import {
   updateStreamListeners,
+  addStreamListenerS,
   setStream,
   setSingle,
 } from '../../../../store/slice/streamingSlice';
@@ -186,9 +187,11 @@ export default function StartLive({navigation}: StartLiveProps) {
         }));
         await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
         if (!multi) {
+          dispatch(addStreamListenerS(res.data.user));
           dispatch(setSingle(true));
+        } else {
+          dispatch(updateStreamListeners(9));
         }
-        dispatch(updateStreamListeners(multi ? 4 : 9));
         dispatch(setStream(res.data.stream));
         navigation.replace('LiveStreaming');
       }

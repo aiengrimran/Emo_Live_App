@@ -92,6 +92,7 @@ export default function HomeB() {
           },
           onConnected() {
             console.log('onConnected');
+            Alert.alert('phone connected');
             dispatch(setConnected(true));
           },
           onDisconnected() {
@@ -145,9 +146,6 @@ export default function HomeB() {
     }
   }, [connected]);
 
-  const connection = () => {
-    chatClient.isConnected();
-  };
   // Logs in with an account ID and a token.
   const loginUser = async (retryCount = 0) => {
     if (await chatClient.isConnected()) {

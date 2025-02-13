@@ -46,11 +46,11 @@ export default function Search({navigation}: SearchScreenProps) {
       setLoading(true);
       const res = await axiosInstance.get('/chat/active-users');
       dispatch(updateUsers(res.data.users));
-
-      setLoading(false);
+      console.log(res.data);
     } catch (error) {
-      setLoading(false);
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   const followUser = async (item: any) => {
@@ -112,7 +112,11 @@ export default function Search({navigation}: SearchScreenProps) {
           placeholderTextColor={colors.dark_gradient}
         />
         {searchLoader ? (
-          <ActivityIndicator size={'small'} color={'blue'} />
+          <ActivityIndicator
+            animating={searchLoader}
+            size={'small'}
+            color={'blue'}
+          />
         ) : (
           <TouchableOpacity onPress={getUsers} style={{marginLeft: 20}}>
             {/* <TouchableOpacity onPress={searchAccount} style={{marginLeft: 20}}> */}
@@ -125,6 +129,7 @@ export default function Search({navigation}: SearchScreenProps) {
       )}
       {loading ? (
         <ActivityIndicator
+          animating={loading}
           style={[appStyles.indicatorStyle]}
           size="large"
           color={colors.accent}
@@ -132,8 +137,9 @@ export default function Search({navigation}: SearchScreenProps) {
       ) : (
         <View style={{marginTop: 40}}>
           <TouchableOpacity
+            onPress={getUsers}
             style={{padding: 10, backgroundColor: colors.accent}}>
-            <Text onPress={getUsers}>getUsers</Text>
+            <Text>getUsers</Text>
           </TouchableOpacity>
           <FlatList
             data={searchUsers.length ? searchUsers : users}

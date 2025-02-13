@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   Image,
+  FlatList,
 } from 'react-native';
 import React, {useState, useRef, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -48,6 +49,7 @@ export default function Home({navigation}) {
   // const {token} = tokenMemo;
   const {connected} = useSelector((state: any) => state.chat);
   const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef(null);
   const [tab, setTab] = useState(1);
   const translateX = useSharedValue(0);
 
@@ -88,20 +90,42 @@ export default function Home({navigation}) {
     scrollViewRef.current?.scrollTo({x: scrollToOffset, animated: true});
   };
   // Gesture for swiping left
+  // const swipeGesture = Gesture.Pan()
+  //   .simultaneousWithExternalGesture(flatListRef)
+  //   .minDistance(20)
+  //   .onUpdate(event => {
+  //     translateX.value = event.translationX;
+  //   })
+  //   .onEnd(() => {
+  //     if (translateX.value < -90) {
+  //       runOnJS(updateTab)('right');
+  //       // Trigger tab change on significant swipe
+  //     }
+  //     if (translateX.value > 90) {
+  //       runOnJS(updateTab)('left');
+  //       // Trigger tab change on significant swipe
+  //     }
+  //     // Reset swipe animation
+  //     translateX.value = withTiming(0);
+  //   });
   const swipeGesture = Gesture.Pan()
+    .simultaneousWithExternalGesture(flatListRef) // Allow FlatList to handle vertical scroll
+    .minDistance(18) // Minimum distance for any gesture to trigger
+    .onStart(() => {
+      // console.log('Gesture started');
+    })
     .onUpdate(event => {
-      translateX.value = event.translationX;
+      if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
+        // Horizontal swipe detected
+        translateX.value = event.translationX;
+      }
     })
     .onEnd(() => {
       if (translateX.value < -100) {
         runOnJS(updateTab)('right');
-        // Trigger tab change on significant swipe
-      }
-      if (translateX.value > 100) {
+      } else if (translateX.value > 100) {
         runOnJS(updateTab)('left');
-        // Trigger tab change on significant swipe
       }
-      // Reset swipe animation
       translateX.value = withTiming(0);
     });
 
@@ -112,17 +136,15 @@ export default function Home({navigation}) {
 
   const test = () => {
     console.log('hii');
-    dispatch(setSingle(false));
+    dispatch(setSingle(true));
     // dispatch(fetchUserDetails([1, 14, 15]));
 
     // dispatch(updatePodcastListeners(6));
-    dispatch(updateStreamListeners(4));
+    // dispatch(updateStreamListeners(4));
     navigation.navigate('LiveStreaming');
     // navigation.navigate('GoLive');
   };
   return (
-    // <ReanimatedSwipeable>
-
     <View style={styles.container}>
       <View style={styles.screenTop}>
         <View style={{width: '40%'}}>
@@ -147,10 +169,8 @@ export default function Home({navigation}) {
           </Text>
           <TouchableOpacity
             onPress={() => {
-              // test();
-              navigation.navigate('Notifications');
-              // dispatch(updateStreamListeners(6));
-              // navigation.navigate('LiveStreaming');
+              test();
+              // navigation.navigate('Notifications');
             }}>
             {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
@@ -218,7 +238,7 @@ export default function Home({navigation}) {
           {tab == 1 ? (
             <Popular navigation={navigation} />
           ) : tab == 2 ? (
-            <Live navigation={navigation} />
+            <Live navigation={navigation} flatListRef={flatListRef} />
           ) : tab == 3 ? (
             <NewHost />
           ) : tab == 4 ? (
@@ -229,8 +249,6 @@ export default function Home({navigation}) {
         </Animated.View>
       </GestureDetector>
     </View>
-
-    // </ReanimatedSwipeable>
   );
 }
 

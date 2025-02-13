@@ -42,7 +42,7 @@ export default function LiveStreaming() {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);

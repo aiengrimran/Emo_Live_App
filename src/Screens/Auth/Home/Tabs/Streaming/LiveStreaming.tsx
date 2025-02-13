@@ -58,8 +58,10 @@ import {
   setUserInState,
   removeUserFromStream,
   getUserInfoFromAPI,
+  getUserInfoFromAPIS,
   updateStreamRoomId,
   setPrevUsersInStream,
+  setPrevUsersInSingleStream,
   updateUserCamera,
   updatedMuteUnmuteUser,
 } from '../../../../../store/slice/streamingSlice';
@@ -122,7 +124,7 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // setupVideoSDKEngine();
+    setupVideoSDKEngine();
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
@@ -141,7 +143,9 @@ export default function LiveStreaming({navigation}) {
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           // previewHostStream();
-          dispatch(setUserInState(user));
+          if (!single) {
+            dispatch(setUserInState(user));
+          }
           if (stream.host == user.id) {
             createUserChatRoom();
           } else {
@@ -153,12 +157,11 @@ export default function LiveStreaming({navigation}) {
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
-          console.log(
-            'Remote user ' + uid + ' joined',
-            Platform.OS == 'ios' ? 'IOS' : 'Android',
-          );
           if (uid !== user.id) {
             dispatch(getUserInfoFromAPI(uid));
+          }
+          if (single) {
+            dispatch(getUserInfoFromAPIS(uid));
           }
           // setRemoteUid(uid);
         },
@@ -218,6 +221,10 @@ export default function LiveStreaming({navigation}) {
       // console.log(podcast.id, 'getting podcast users ....');
       const users = await getLiveUsers(stream.id, 'stream');
       if (users.length > 0) {
+        if (single) {
+          dispatch(setPrevUsersInSingleStream(users));
+          return;
+        }
         dispatch(setPrevUsersInStream(users));
       }
     } catch (error) {
@@ -414,7 +421,7 @@ export default function LiveStreaming({navigation}) {
       if (agoraEngineRef.current) {
         // Toggle mute/unmute for the remote user
         agoraEngineRef.current.muteLocalAudioStream(item.muted);
-        dispatch(updatedMuteUnmuteUser(item.user.id));
+        dispatch(updatedMuteUnmuteUser({id: item.user.id, single}));
       }
     } catch (error) {
       console.error('Error toggling mute:', error);
@@ -429,7 +436,7 @@ export default function LiveStreaming({navigation}) {
         } else {
           agoraEngineRef.current.enableVideo();
         }
-        dispatch(updateUserCamera(item.user.id));
+        dispatch(updateUserCamera({id: item.user.id, single}));
       }
     } catch (error) {
       console.error('Error toggling mute:', error);
@@ -527,8 +534,18 @@ export default function LiveStreaming({navigation}) {
               connected={connected}
             />
           </View>
-          <View style={{height: deviceHeight * 0.95}}>
-            {isJoined && <SingleLive user={user} />}
+          <View style={{height: deviceHeight * 0.9}}>
+            {
+              <SingleLive
+                token={token}
+                user={user}
+                isJoined={isJoined}
+                toggleMute={toggleMute}
+                offCamera={offCamera}
+                toggleCamera={toggleCamera}
+              />
+            }
+            {/* {isJoined && <SingleLive user={user} />} */}
           </View>
           {!sheet && (
             <BottomSection
