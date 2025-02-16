@@ -22,6 +22,7 @@ export const store = configureStore({
           'chat/setChatRoomMessages',
           'chat/setMessageStatus',
           'chat/setSentMessage',
+          'chat/addRoomMessage',
         ],
         ignoredPaths: [
           'chat.messages',

@@ -17,6 +17,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import liveStyles from './styles/liveStyles';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+
 const deviceWidth = Dimensions.get('window').width;
 
 import React, {
@@ -456,111 +458,113 @@ export default function GoLive({navigation}: any) {
     dispatch(setLeaveModal(true));
   };
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        style={styles.image}
-        source={require('../../../../assets/images/LiveBg.png')}>
-        {/* ************ Header Start ************ */}
-        <Header
-          user={user}
-          navigation={navigation}
-          token={token}
-          liveEvent={podcast}
-          envVar={envVar}
-          leavePodcast={leavePodcast}
-          connected={connected}
-        />
+    <SafeAreaView edges={['top']} style={{flex: 1, backgroundColor: colors.LG}}>
+      <View style={styles.container}>
+        <ImageBackground
+          style={styles.image}
+          source={require('../../../../assets/images/LiveBg.png')}>
+          {/* ************ Header Start ************ */}
+          <Header
+            user={user}
+            navigation={navigation}
+            token={token}
+            liveEvent={podcast}
+            envVar={envVar}
+            leavePodcast={leavePodcast}
+            connected={connected}
+          />
 
-        {/* ************ Header end ************ */}
-        {/* ************ second row ************ */}
-        <PodcastStatus />
-        {/* ************ second row ************ */}
+          {/* ************ Header end ************ */}
+          {/* ************ second row ************ */}
+          <PodcastStatus />
+          {/* ************ second row ************ */}
 
-        <View>
-          <FlatList
-            data={podcastListeners}
-            numColumns={4}
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={{
-              alignItems: 'center',
-            }}
-            renderItem={({item, index}) => (
-              <View style={[styles.podcastHost]}>
-                {item.user ? (
-                  <PodcastGuest
-                    muteUnmuteUser={muteUnmuteUser}
-                    token={token}
-                    handleOpenSheet2={handleOpenSheet2}
-                    item={item}
-                    dispatch={dispatch}
-                  />
-                ) : (
-                  <View style={{alignItems: 'center'}}>
-                    <View style={styles.emptySeat}>
-                      <Icon name="sofa-single" color={'#CDC6CE'} size={20} />
+          <View>
+            <FlatList
+              data={podcastListeners}
+              numColumns={4}
+              keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={{
+                alignItems: 'center',
+              }}
+              renderItem={({item, index}) => (
+                <View style={[styles.podcastHost]}>
+                  {item.user ? (
+                    <PodcastGuest
+                      muteUnmuteUser={muteUnmuteUser}
+                      token={token}
+                      handleOpenSheet2={handleOpenSheet2}
+                      item={item}
+                      dispatch={dispatch}
+                    />
+                  ) : (
+                    <View style={{alignItems: 'center'}}>
+                      <View style={styles.emptySeat}>
+                        <Icon name="sofa-single" color={'#CDC6CE'} size={20} />
+                      </View>
+
+                      <Text
+                        style={[
+                          appStyles.paragraph1,
+                          {color: colors.complimentary, textAlign: 'center'},
+                        ]}>
+                        {item.seatNo}
+                      </Text>
                     </View>
-
-                    <Text
-                      style={[
-                        appStyles.paragraph1,
-                        {color: colors.complimentary, textAlign: 'center'},
-                      ]}>
-                      {item.seatNo}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
+                  )}
+                </View>
+              )}
+            />
+          </View>
+          <EndLive
+            user={user}
+            endPodcastForUser={endPodcastForUser}
+            navigation={navigation}
+            id={podcast.id}
+            live={false}
           />
-        </View>
-        <EndLive
-          user={user}
-          endPodcastForUser={endPodcastForUser}
-          navigation={navigation}
-          id={podcast.id}
-          live={false}
-        />
 
-        <BottomSheet
-          index={-1}
-          enablePanDownToClose={true}
-          // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
-          snapPoints={['60%']}
-          ref={bottomSheetRef}
-          handleStyle={{
-            backgroundColor: colors.LG,
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: colors.complimentary,
-          }}
-          onChange={handleSheetChanges}>
-          <BottomSheetView style={styles.contentContainer}>
-            {sheetType == 'gifts' ? (
-              <Gifts />
-            ) : sheetType == 'avatar' ? (
-              <AvatarSheet
-                navigation={navigation}
-                token={token}
-                envVar={envVar}
-              />
-            ) : sheetType == 'users' ? (
-              <Users />
-            ) : (
-              <Tools />
-            )}
-          </BottomSheetView>
-        </BottomSheet>
+          <BottomSheet
+            index={-1}
+            enablePanDownToClose={true}
+            // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
+            snapPoints={['60%']}
+            ref={bottomSheetRef}
+            handleStyle={{
+              backgroundColor: colors.LG,
+            }}
+            handleIndicatorStyle={{
+              backgroundColor: colors.complimentary,
+            }}
+            onChange={handleSheetChanges}>
+            <BottomSheetView style={styles.contentContainer}>
+              {sheetType == 'gifts' ? (
+                <Gifts />
+              ) : sheetType == 'avatar' ? (
+                <AvatarSheet
+                  navigation={navigation}
+                  token={token}
+                  envVar={envVar}
+                />
+              ) : sheetType == 'users' ? (
+                <Users />
+              ) : (
+                <Tools />
+              )}
+            </BottomSheetView>
+          </BottomSheet>
 
-        {!sheet && (
-          <BottomSection
-            single={false}
-            roomId={podcast.chat_room_id}
-            handleOpenSheet={handleOpenSheet}
-          />
-        )}
-      </ImageBackground>
-      {liveStatus == 'LOADING' && <LiveLoading />}
-    </View>
+          {!sheet && (
+            <BottomSection
+              single={false}
+              roomId={podcast.chat_room_id}
+              handleOpenSheet={handleOpenSheet}
+            />
+          )}
+        </ImageBackground>
+        {liveStatus == 'LOADING' && <LiveLoading />}
+      </View>
+    </SafeAreaView>
   );
 }
 

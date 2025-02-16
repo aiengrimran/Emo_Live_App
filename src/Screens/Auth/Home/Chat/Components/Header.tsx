@@ -10,9 +10,15 @@ interface HeaderProps {
   navigation: any;
   token: string;
   connected: boolean;
+  logout: any;
 }
 
-export default function Header({navigation, token, connected}: HeaderProps) {
+export default function Header({
+  navigation,
+  token,
+  connected,
+  logout,
+}: HeaderProps) {
   const {chatUser} = useSelector((state: any) => state.users);
 
   return (
@@ -51,6 +57,7 @@ export default function Header({navigation, token, connected}: HeaderProps) {
       <View style={{flexDirection: 'row'}}>
         <TouchableOpacity
           onPress={() => {
+            logout();
             // console.log(list);
           }}>
           <Icon

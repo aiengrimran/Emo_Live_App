@@ -35,7 +35,7 @@
     "react-native-ota-hot-update": "^2.0.7",
     "react-native-permissions": "^5.2.1",
     "react-native-reanimated": "^3.16.5",
-    "react-native-safe-area-context": "^5.0.0",
+    "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.3.0",
     "react-native-svg": "^15.10.1",
     "react-native-vector-icons": "^10.2.0",

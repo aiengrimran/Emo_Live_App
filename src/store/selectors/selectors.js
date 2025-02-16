@@ -26,7 +26,8 @@ export const selectInbox = createSelector(
       if (messages.length > 0) {
         const latestMessage = messages[messages.length - 1];
         const user = userDetails[conversationId] || {
-          name: 'Unknown',
+          first_name: 'test',
+          last_name: 'hello',
           avatar: null,
         };
 

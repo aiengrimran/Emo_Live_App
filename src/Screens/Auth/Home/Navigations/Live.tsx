@@ -78,7 +78,6 @@ export default function Live({navigation, flatListRef}: LiveProps) {
       } else {
         dispatch(updateStreamListeners(item.listeners));
       }
-
       navigation.navigate('LiveStreaming');
     } catch (error) {
       console.log(error);
@@ -120,6 +119,7 @@ export default function Live({navigation, flatListRef}: LiveProps) {
             }}
             renderItem={({item}: any) => (
               <TouchableOpacity
+                disabled={loading}
                 style={styles.PodcastUser}
                 onPress={() => joinStream(item)}>
                 <View

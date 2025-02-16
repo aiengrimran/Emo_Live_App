@@ -1,22 +1,18 @@
 // Imports dependencies.
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import {
-  Alert,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
   ChatClient,
   ChatOptions,
-  ChatMessageEventListener,
   ChatMessageChatType,
-  ChatConnectEventListener,
   ChatMessage,
 } from 'react-native-agora-chat';
 import envVar from '../config/envVar';
@@ -27,7 +23,7 @@ const App = () => {
   // Replaces <your appKey> with your app key.
   const appKey = '611258830#1451592';
   // Replaces <your userId> with your user ID.
-  const [username, setUsername] = React.useState<any>(
+  const [username, setUsername] = React.useState(
     Platform.OS == 'android' ? 1 : 2,
   );
   // Replaces <your agoraToken> with your Agora token.
@@ -36,15 +32,10 @@ const App = () => {
   );
   const [targetId, setTargetId] = React.useState('');
   const [isInitialized, setIsInitialized] = React.useState(false);
-  const [connected, setConnected] = React.useState(false);
   const [content, setContent] = React.useState('');
-
   const [logText, setWarnText] = React.useState('Show log area');
   const chatClient = ChatClient.getInstance();
   const chatManager = chatClient.chatManager;
-
-  const chatClientRef = useRef(chatClient);
-  const chatManagerRef = useRef(chatManager);
   // Outputs console logs.
   useEffect(() => {
     logText.split('\n').forEach((value, index, array) => {
@@ -72,96 +63,65 @@ const App = () => {
     });
   };
   useEffect(() => {
-    let initializedOnce = false; // Prevents duplicate initialization
-
-    if (!isInitialized && !initializedOnce) {
-      console.log('Network available, initializing chat SDK...Home');
-      // Initialize the chat SDK here
-      initializedOnce = true;
-
-      initializedAgoraChat();
-    }
-    return () => {
-      // chatClient.removeAllConnectionListener();
-    };
-  }, [isInitialized, chatManagerRef.current, chatClientRef.current]);
-
-  const initializedAgoraChat = () => {
-    let o = new ChatOptions({
-      autoLogin: true,
-      appKey: envVar.AGORA_CHAT_KEY,
-    });
-    chatClient.removeAllConnectionListener();
-    chatClient
-      .init(o)
-      .then(() => {
-        setIsInitialized(true);
-        let listener: ChatConnectEventListener = {
-          onTokenWillExpire() {
-            Alert.alert('Token Expired', 'Token will expired soon');
-          },
-          onTokenDidExpire() {
-            console.log('token did expire');
-          },
-          onConnected() {
-            setConnected(true);
-            console.log('onConnected');
-            // Alert.alert('phone connected');
-          },
-          onDisconnected() {
-            setConnected(false);
-            // Alert.alert('Disconnected', 'Disconnected from agora');
-            console.log('onDisconnected:x');
-          },
-          onUserAuthenticationFailed() {
-            console.log('done ...');
-            // loginUser();
-          },
-        };
-        chatClient.addConnectionListener(listener);
-      })
-      .catch(error => {
-        console.log(
-          'init fail: x' +
-            (error instanceof Object ? JSON.stringify(error) : error),
-        );
-      });
-  };
-
-  useEffect(() => {
     // Registers listeners for messaging.
     const setMessageListener = () => {
-      // Alert.alert('Message listern is running');
-      let msgListener: ChatMessageEventListener = {
-        onMessagesReceived(messagesReceived: Array<ChatMessage>): void {
-          console.log('message Received ...', messagesReceived);
-          Alert.alert('Message Received', '1');
+      let msgListener = {
+        onMessagesReceived(messages) {
+          for (let index = 0; index < messages.length; index++) {
+            rollLog('received msgId: ' + messages[index].msgId);
+          }
         },
-        onMessagesRead: messages => {
-          console.log('onMessagesRead: ' + JSON.stringify(messages));
-        },
+        onCmdMessagesReceived: messages => {},
+        onMessagesRead: messages => {},
+        onGroupMessageRead: groupMessageAcks => {},
         onMessagesDelivered: messages => {},
         onMessagesRecalled: messages => {},
+        onConversationsUpdate: () => {},
+        onConversationRead: (from, to) => {},
       };
-      return () => {
-        console.log('clearing listener');
-        // chatClient.chatManager.removeAllMessageListener();
-        // chatClient.chatManager.addMessageListener(msgListener);
-      };
+      chatManager.removeAllMessageListener();
+      chatManager.addMessageListener(msgListener);
     };
-    if (connected) {
-      setMessageListener();
-    }
-  }, [connected]);
-
-  const getConversation = async () => {
-    try {
-      const conv = await chatClient.chatManager.getAllConversations();
-      console.log(conv);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    // Initializes the SDK.
+    // Initializes any interface before calling it.
+    const init = () => {
+      console.log('initialzing sddkkkkkkk');
+      let o = new ChatOptions({
+        autoLogin: true,
+        appKey: appKey,
+      });
+      chatClient.removeAllConnectionListener();
+      chatClient
+        .init(o)
+        .then(() => {
+          rollLog('init success');
+          setIsInitialized(true);
+          let listener = {
+            onTokenWillExpire() {
+              rollLog('token expire.');
+            },
+            onTokenDidExpire() {
+              rollLog('token did expire');
+            },
+            onConnected() {
+              rollLog('onConnected');
+              setMessageListener();
+            },
+            onDisconnected(errorCode) {
+              rollLog('onDisconnected:' + errorCode);
+            },
+          };
+          chatClient.addConnectionListener(listener);
+        })
+        .catch(error => {
+          rollLog(
+            'init fail: ' +
+              (error instanceof Object ? JSON.stringify(error) : error),
+          );
+        });
+    };
+    init();
+  }, [chatClient, chatManager, appKey]);
 
   // Logs in with an account ID and a token.
   const login = () => {
@@ -227,27 +187,6 @@ const App = () => {
         rollLog('send fail: ' + JSON.stringify(reason));
       });
   };
-
-  const singleConv = async () => {
-    try {
-      const conv = await chatClient.chatManager.getLatestMessage(String(2), 0);
-      console.log(conv);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const roomConv = async () => {
-    try {
-      const conv = await chatClient.chatManager.getLatestMessage(
-        String(271954198200327),
-        2,
-      );
-      console.log(conv);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   // Renders the UI.
   return (
     <SafeAreaView>
@@ -274,15 +213,12 @@ const App = () => {
           />
         </View>
         <View style={styles.buttonCon}>
-          <TouchableOpacity onPress={login} style={styles.eachBtn}>
-            <Text style={styles.text}>SIGN IN</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.eachBtn} onPress={logout}>
-            <Text style={styles.text}>SIGN OUT</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.eachBtn} onPress={getConversation}>
-            <Text style={styles.text}>get Conv</Text>
-          </TouchableOpacity>
+          <Text style={styles.eachBtn} onPress={login}>
+            SIGN IN
+          </Text>
+          <Text style={styles.eachBtn} onPress={logout}>
+            SIGN OUT
+          </Text>
         </View>
         <View style={styles.inputCon}>
           <TextInput
@@ -302,24 +238,11 @@ const App = () => {
             value={content}
           />
         </View>
-        <TouchableOpacity onPress={sendmsg} style={styles.buttonCon}>
-          <Text style={styles.btn2}>SEND TEXT</Text>
-        </TouchableOpacity>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: 'red',
-            width: '90%',
-          }}>
-          <TouchableOpacity onPress={singleConv} style={styles.buttonCon2}>
-            <Text style={styles.btn2}>singl Con</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={roomConv} style={styles.buttonCon2}>
-            <Text style={styles.btn2}>room Conv</Text>
-          </TouchableOpacity>
+        <View style={styles.buttonCon}>
+          <Text style={styles.btn2} onPress={sendmsg}>
+            SEND TEXT
+          </Text>
         </View>
-
         <View>
           <Text style={styles.logText} multiline={true}>
             {logText}
@@ -349,7 +272,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   inputCon: {
-    paddingVertical: 20,
     marginLeft: '5%',
     width: '90%',
     height: 60,
@@ -372,24 +294,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  buttonCon2: {
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-    width: 200,
-    // height: 26,
-  },
   eachBtn: {
     height: 40,
     width: '28%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#6200ED',
-    borderRadius: 5,
-  },
-  text: {
     lineHeight: 40,
+    textAlign: 'center',
     color: '#fff',
     fontSize: 16,
+    backgroundColor: '#6200ED',
+    borderRadius: 5,
   },
   btn2: {
     height: 40,

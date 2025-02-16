@@ -40,7 +40,7 @@ export default function Search({navigation}) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // getUnreadMessages();
+    getUnreadMessages();
   }, []);
 
   const onCheckGitVersion = () => {
@@ -109,21 +109,7 @@ export default function Search({navigation}) {
       },
     });
   };
-  const createAgoraChatToken = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get('/agora/user/create-token');
-      console.log(res.data);
-      let user = res.data.user;
-      // setUser(user);
-      // await AsyncStorage.setItem('user', JSON.stringify(user));
-      scripts.clearError(setError, setLoading);
-    } catch (error: any) {
-      scripts.clearError(setError, setLoading);
-      setError(error.message);
-      console.log(error);
-    }
-  };
+
   const getUnreadMessages = async () => {
     try {
       const count = await chatClient.chatManager.getUnreadCount();

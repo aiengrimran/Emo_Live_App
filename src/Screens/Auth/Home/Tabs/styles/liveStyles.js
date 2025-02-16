@@ -1,6 +1,7 @@
 import {colors} from '../../../../../styles/colors';
 import {Platform, StyleSheet} from 'react-native';
 import appStyles from '../../../../../styles/styles';
+import {useSelector} from 'react-redux';
 const liveStyles = StyleSheet.create({
   chatAvatar: {width: 50, height: 50, borderRadius: 25},
   sofa: {
@@ -24,7 +25,8 @@ const liveStyles = StyleSheet.create({
   },
   action: {
     flexDirection: 'row',
-    width: '38%',
+    marginLeft: 10,
+    width: '36%',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -86,15 +88,13 @@ const liveStyles = StyleSheet.create({
     alignSelf: 'center',
   },
   btn1: {
-    position: 'absolute',
+    // position: 'absolute',
     flexDirection: 'row',
-    bottom: Platform.OS == 'android' ? 10 : 25,
-    width: '99%',
     alignSelf: 'center',
+    // bottom: 10,
+    // bottom: Platform.OS == 'ios' ? 30 : 10,
     borderRadius: 15,
-    // alignSelf: 'flex-end',
     justifyContent: 'space-between',
-    // alignItems: 'center',
   },
   usersList: {
     marginTop: 20,

@@ -8,6 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
+  Dimensions,
 } from 'react-native';
 import React, {useEffect, useState, useContext} from 'react';
 import appStyles from '../../../../styles/styles';
@@ -21,7 +22,7 @@ import {
 } from '../../../../store/slice/usersSlice';
 import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
-
+const deviceHeight = Dimensions.get('window').height;
 interface SearchScreenProps {
   navigation: any;
 }
@@ -38,7 +39,7 @@ export default function Search({navigation}: SearchScreenProps) {
   const [searchUsers, setSearchUsers] = useState([]);
 
   useEffect(() => {
-    // getUsers();
+    getUsers();
   }, []);
 
   const getUsers = async () => {
@@ -101,7 +102,7 @@ export default function Search({navigation}: SearchScreenProps) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginTop: Platform.OS == 'ios' ? 60 : 0,
+          marginTop: Platform.OS == 'ios' ? 50 : 0,
         }}>
         <TextInput
           style={styles.input}
@@ -135,56 +136,56 @@ export default function Search({navigation}: SearchScreenProps) {
           color={colors.accent}
         />
       ) : (
-        <View style={{marginTop: 40}}>
-          <TouchableOpacity
-            onPress={getUsers}
-            style={{padding: 10, backgroundColor: colors.accent}}>
-            <Text>getUsers</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={searchUsers.length ? searchUsers : users}
-            keyExtractor={item => item.id?.toString()}
-            renderItem={({item}: any) => (
-              <View style={styles.userSection}>
-                <TouchableOpacity
-                  onPress={() => {
-                    dispatch(updateVisitProfile(item));
-                    navigation.navigate('UserProfile');
-                  }}
-                  style={styles.profile}>
-                  <Image
-                    style={{width: 50, height: 50, borderRadius: 25}}
-                    source={
-                      item.avatar
-                        ? {
-                            uri: envVar.API_URL + 'display-avatar/' + item.id,
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
-                          }
-                        : require('../../../../assets/images/place.jpg')
-                    }
-                  />
-                  <View style={{marginLeft: 20}}>
-                    <Text style={styles.userText}>
-                      {item.first_name + ' ' + item.last_name}
+        <View style={{marginTop: 20}}>
+          <View style={{height: deviceHeight * 0.8}}>
+            <FlatList
+              refreshing={loading}
+              data={searchUsers.length ? searchUsers : users}
+              onRefresh={getUsers}
+              contentContainerStyle={{paddingBottom: 20}}
+              keyExtractor={item => item.id?.toString()}
+              renderItem={({item}: any) => (
+                <View style={styles.userSection}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      dispatch(updateVisitProfile(item));
+                      navigation.navigate('UserProfile');
+                    }}
+                    style={styles.profile}>
+                    <Image
+                      style={{width: 50, height: 50, borderRadius: 25}}
+                      source={
+                        item.avatar
+                          ? {
+                              uri: envVar.API_URL + 'display-avatar/' + item.id,
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            }
+                          : require('../../../../assets/images/place.jpg')
+                      }
+                    />
+                    <View style={{marginLeft: 20}}>
+                      <Text style={styles.userText}>
+                        {item.first_name + ' ' + item.last_name}
+                      </Text>
+                      <Text style={styles.userDesc}>ID: {item.id}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => followUser(item)}
+                    style={[
+                      styles.followBtn,
+                      item.is_followed && {backgroundColor: '#494759'},
+                    ]}>
+                    <Text style={styles.btnText}>
+                      {item.is_followed ? 'Following' : 'Follow'}
                     </Text>
-                    <Text style={styles.userDesc}>ID: {item.id}</Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => followUser(item)}
-                  style={[
-                    styles.followBtn,
-                    item.is_followed && {backgroundColor: '#494759'},
-                  ]}>
-                  <Text style={styles.btnText}>
-                    {item.is_followed ? 'Following' : 'Follow'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
         </View>
       )}
     </View>

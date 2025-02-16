@@ -1,22 +1,25 @@
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet, Dimensions} from 'react-native';
 import {colors} from '../../../../../../styles/colors';
+const deviceHeight = Dimensions.get('window').height;
 import {appStyles} from '../../Podcast/podcastImport';
 const styles = StyleSheet.create({
   singleLive: {
-    backgroundColor: colors.LG,
-    position: 'absolute',
+    position: 'relative',
     alignSelf: 'center',
     width: '100%',
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    bottom: Platform.OS == 'ios' ? deviceHeight * 0.385 : deviceHeight * 0.35,
+    padding: 10,
+    zIndex: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   messages: {
-    height: '60%',
-    marginTop: 10,
-    bottom: 120,
+    // height: '30%',
+    backgroundColor: 'red',
+    // marginTop: 10,
   },
 
   sheetMessage: {
+    position: 'relative',
     flexDirection: 'row',
     width: '95%',
     paddingHorizontal: 20,
@@ -25,7 +28,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   guest: {
-    marginTop: 20,
+    marginTop: 10,
     paddingVertical: 10,
     width: '95%',
     paddingLeft: 10,
@@ -37,6 +40,12 @@ const styles = StyleSheet.create({
     padding: 4,
     alignItems: 'center',
     flexDirection: 'row',
+  },
+  userJoin: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    backgroundColor: colors.yellow,
+    borderRadius: 9,
   },
 });
 export default styles;

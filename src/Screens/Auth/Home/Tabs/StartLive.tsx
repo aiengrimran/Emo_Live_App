@@ -172,7 +172,7 @@ export default function StartLive({navigation}: StartLiveProps) {
         title: 'Some title',
         duration: 10,
         // listeners: guests,
-        listeners: multi ? 4 : 9,
+        listeners: multi ? 9 : 4,
         single: !multi,
         listeners_can_add: [],
         type: 'PUBLIC',

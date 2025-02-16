@@ -17,6 +17,8 @@ import {
 } from '../../../../../../store/slice/streamingSlice';
 const deviceHeight = Dimensions.get('window').height;
 import {singleLiveHosts} from '../../../../../../store/selectors/selectors';
+// import sing
+import {singleStyles} from '../../styles/singleStyles';
 import envVar from '../../../../../../config/envVar';
 import {users} from './users';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -60,8 +62,6 @@ export default function SingleLive({
           backgroundColor: 'green',
           flex: 1,
         }}>
-        <Text onPress={() => console.log(host)}>dd</Text>
-        {/* <Text style={{color: '#fff'}}>{JSON.stringify(host.user.avatar)}</Text> */}
         {isJoined && host ? (
           <>
             {host.camOn ? (
@@ -71,13 +71,7 @@ export default function SingleLive({
                 />
               </React.Fragment>
             ) : (
-              <View
-                style={{
-                  alignItems: 'center',
-                  height: deviceHeight * 0.5,
-                  justifyContent: 'center',
-                  width: '80%',
-                }}>
+              <View style={styles.avatar}>
                 <Image
                   style={[appStyles.userAvatar]}
                   source={
@@ -170,43 +164,41 @@ export default function SingleLive({
                     <Text style={styles.userTxt}>
                       {item.user.first_name + ' ' + item.user.last_name}
                     </Text>
-                    {/* {item.user.id == user.id && ( */}
-                    <>
-                      <TouchableOpacity
-                        style={{position: 'absolute', right: 5, top: 3}}
-                        onPress={() => toggleCamera()}>
-                        <Icon
-                          name="camera-flip-outline"
-                          size={20}
-                          color={colors.complimentary}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{position: 'absolute', left: 2, top: 3}}
-                        onPress={() => toggleMute(item)}>
-                        <Icon
-                          name={item.muted ? 'microphone-off' : 'microphone'}
-                          size={20}
-                          color={colors.complimentary}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{
-                          position: 'absolute',
-                          right: 5,
-                          bottom: 3,
-                        }}
-                        onPress={() => offCamera(item)}>
-                        <Icon
-                          name={
-                            item.camOn ? 'camera-off-outline' : 'camera-outline'
-                          }
-                          size={20}
-                          color={colors.complimentary}
-                        />
-                      </TouchableOpacity>
-                    </>
-                    {/* )} */}
+                    {item.user.id == user.id && (
+                      <>
+                        <TouchableOpacity
+                          style={styles.otherCam}
+                          onPress={() => toggleCamera()}>
+                          <Icon
+                            name="camera-flip-outline"
+                            size={20}
+                            color={colors.complimentary}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.audioInputBtn}
+                          onPress={() => toggleMute(item)}>
+                          <Icon
+                            name={item.muted ? 'microphone-off' : 'microphone'}
+                            size={20}
+                            color={colors.complimentary}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.offCam}
+                          onPress={() => offCamera(item)}>
+                          <Icon
+                            name={
+                              item.camOn
+                                ? 'camera-off-outline'
+                                : 'camera-outline'
+                            }
+                            size={20}
+                            color={colors.complimentary}
+                          />
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </React.Fragment>
                 </>
               ) : (
@@ -225,44 +217,7 @@ export default function SingleLive({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative',
-    // backgroundColor: colors.LG,
-  },
-  guest: {
-    width: '40%',
-    alignSelf: 'flex-end',
-    position: 'absolute',
-    top: 70,
-  },
-  screen1: {
-    marginBottom: 10,
-    backgroundColor: 'black',
-    height: deviceHeight * 0.15,
-    borderColor: colors.yellow,
-    borderWidth: 5,
-    borderRadius: 5,
-  },
-  videoView: {
-    width: '100%',
-    flex: 1,
-    height: '100%',
-    backgroundColor: 'red',
-  },
-  control: {
-    alignItems: 'center',
-    top: 10,
-    left: 20,
-    position: 'absolute',
-  },
-  userTxt: {
-    position: 'absolute',
-    bottom: 10,
-    textAlign: 'center',
-    alignSelf: 'center',
-    color: colors.complimentary,
-  },
+  ...singleStyles,
   hostTxt: {
     ...appStyles.regularTxtMd,
     color: colors.complimentary,

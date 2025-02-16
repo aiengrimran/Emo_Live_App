@@ -67,44 +67,27 @@ export default function Popular({navigation}) {
       };
       const res = await axiosInstance.post(url, data);
       // console.log(res.data);
-      setLoading(false);
       dispatch(updatePodcastListeners(item.listeners));
       setUser(res.data.user);
       dispatch(setPodcast(item));
       navigation.navigate('GoLive');
     } catch (error) {
-      setLoading(false);
       console.log(error);
       // console.log(item);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={{flex: 1}}>
       <View style={{marginTop: 20}}>
-        <View style={{alignSelf: 'center'}}>
-          {loading ? (
-            <>
-              <ActivityIndicator
-                // animating={true}
-                animating={loading}
-                color={colors.accent}
-                size={'small'}
-              />
-            </>
-          ) : (
-            <Text>hello</Text>
-          )}
-        </View>
-        <TouchableOpacity onPress={getPodcast}>
-          <Text style={{marginVertical: 10, color: colors.complimentary}}>
-            GetPodcasts
-          </Text>
-        </TouchableOpacity>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
         <View>
           <FlatList
             data={podcasts}
+            refreshing={loading}
+            onRefresh={getPodcast}
             keyExtractor={(item: any) => item.id?.toString()}
             numColumns={2}
             contentContainerStyle={{

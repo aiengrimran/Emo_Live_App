@@ -61,7 +61,7 @@ export default function UserProfile({navigation}) {
       <TouchableOpacity
         style={{
           marginLeft: 30,
-          top: 40,
+          top: Platform.OS == 'ios' ? 60 : 40,
           position: 'absolute',
         }}
         onPress={() => navigation.goBack()}>

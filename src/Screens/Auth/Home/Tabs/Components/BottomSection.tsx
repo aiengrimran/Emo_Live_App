@@ -5,6 +5,8 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
   Animated,
   StyleSheet,
@@ -15,7 +17,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../../styles/styles';
 import {setGuestUser} from '../../../../../store/slice/usersSlice';
 import liveStyles from '../styles/liveStyles';
-import {setChatRoomMessages} from '../../../../../store/slice/chatSlice';
+import {
+  setChatRoomMessages,
+  addRoomMessage,
+} from '../../../../../store/slice/chatSlice';
 import bottomStyles from './styles/bottomStyles';
 import {
   ChatClient,
@@ -33,7 +38,7 @@ interface BottomSectionProps {
 
 const BottomSection = ({
   handleOpenSheet,
-  roomId,
+  roomId = '122',
   single,
 }: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
@@ -57,27 +62,24 @@ const BottomSection = ({
       duration: 500, // Fade in duration (0.5 seconds)
       useNativeDriver: true, // Use native driver for better performance
     }).start(() => {
-      console.log('i am start', 'value => ', fadeAnim);
-
       // After fading in, start fading out after 3 seconds
       setTimeout(() => {
+        dispatch(setGuestUser({state: null, user: null}));
         Animated.timing(fadeAnim, {
           toValue: 0, // Fully transparent
           duration: 2500, // Fade out duration (2.5 seconds)
           useNativeDriver: true,
         }).start();
         // update state
-        dispatch(setGuestUser({state: null, user: ''}));
       }, 3000); // Wait 3 seconds before starting the fade-out
     });
   };
 
   const sendChatRoomMessage = async () => {
-    if (!roomId) {
-      Alert.alert('Slow network', 'Chat room is not created');
-      return;
-    }
-    console.log(message);
+    // if (!roomId) {
+    //   Alert.alert('Slow network', 'Chat room is not created');
+    //   return;
+    // }
     try {
       let msg;
       msg = ChatMessage.createTextMessage(
@@ -86,10 +88,13 @@ const BottomSection = ({
         ChatMessageChatType.ChatRoom,
       );
       setMessage('');
+      // console.log(msg);
+      // return;
 
-      let roomMessage = [...chatRoomMessages];
-      roomMessage.push(msg);
-      dispatch(setChatRoomMessages(roomMessage));
+      // let roomMessage = [...chatRoomMessages];
+      // roomMessage.push(msg);
+      // dispatch(addRoomMessage(msg));
+      // return;
       const callback = new (class {
         onProgress(localMsgId: any, progress: any) {
           console.log(`send message process: ${localMsgId}, ${progress}`);
@@ -129,14 +134,18 @@ const BottomSection = ({
   return (
     <View
       style={[
-        {
-          flex: 1,
-          padding: 10,
-        },
-        single && bottomStyles.singleLive,
+        single
+          ? bottomStyles.singleLive
+          : {
+              flex: 1,
+              padding: 10,
+            },
       ]}>
-      {/* <View style={{position: 'absolute', bottom: '5%'}}> */}
-      <View style={[styles.sheetMessage, single && {bottom: 130}]}>
+      <View
+        style={[
+          styles.sheetMessage,
+          // single && {position: 'relative', bottom: 40},
+        ]}>
         <Text
           onPress={fadeInAndOut}
           style={[appStyles.bodyMd, {color: colors.yellow, lineHeight: 20}]}>
@@ -148,18 +157,27 @@ const BottomSection = ({
           </Text>
         </Text>
       </View>
-      {guestUser.joined && (
+      <View style={{position: 'relative'}}>
         <Animated.View
-          style={{
-            opacity: fadeAnim, // Bind the opacity to animated value
-          }}>
+          style={[
+            {
+              position: 'absolute',
+              width: '100%',
+              zIndex: 2,
+              opacity: fadeAnim, // Bind the opacity to animated value
+            },
+            single && {},
+          ]}>
           <JoinUser guestUser={guestUser} />
         </Animated.View>
-      )}
-      <View style={[single && styles.messages]}>
+      </View>
+
+      {/* )} */}
+      <View style={[single ? {height: '30%'} : {height: '46%'}]}>
         <FlatList
           data={chatRoomMessages}
-          keyExtractor={(item: any) => item?.msgId.toString()}
+          contentContainerStyle={{paddingBottom: 10}}
+          keyExtractor={item => item.localTime.toString()}
           renderItem={({item}: any) => (
             <View style={styles.list}>
               <View>
@@ -182,7 +200,20 @@ const BottomSection = ({
           )}
         />
       </View>
-      <View style={[styles.btn1]}>
+      <View
+        style={[
+          styles.btn1,
+          single
+            ? {
+                marginTop: 10,
+                // bottom: Platform.OS == 'ios' ? 10 : 40,
+              }
+            : {
+                position: 'absolute',
+                bottom: Platform.OS == 'ios' ? 30 : 10,
+              },
+        ]}>
+        {/* <View style={[styles.btn1, single && {bottom: 30}]}> */}
         <TextInput
           style={[
             styles.inputBox,
@@ -191,11 +222,15 @@ const BottomSection = ({
               borderColor: colors.complimentary,
             },
           ]}
+          autoCapitalize="none"
+          spellCheck={false}
+          autoCorrect={false}
           onChangeText={setMessage}
           value={message}
           placeholder="Say hello ...."
           placeholderTextColor={single ? colors.complimentary : 'grey'}
         />
+
         <View style={styles.action}>
           {/* <TouchableOpacity> */}
           <TouchableOpacity onPress={sendChatRoomMessage}>
@@ -209,12 +244,11 @@ const BottomSection = ({
             />
           </TouchableOpacity>
 
-          <TouchableOpacity>
-            <IconM
-              name="emoji-emotions"
-              color={colors.complimentary}
-              size={24}
-            />
+          <TouchableOpacity
+            onPress={() => {
+              console.log(chatRoomMessages);
+            }}>
+            <Icon name="emoticon" color={colors.yellow} size={24} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleOpenSheet('gifts')}>
             <Image
@@ -237,20 +271,20 @@ const styles = StyleSheet.create({
     color: colors.complimentary,
     ...appStyles.bodyRg,
   },
+  main: {
+    // flex: 1,
+    padding: 10,
+    // height: 100,
+    // backgroundColor: 'red',
+  },
 });
 
 const JoinUser = ({guestUser}: any) => {
   return (
     <View style={styles.guest}>
-      <View
-        style={{
-          paddingHorizontal: 10,
-          paddingVertical: 2,
-          backgroundColor: colors.yellow,
-          borderRadius: 9,
-        }}>
+      <View style={styles.userJoin}>
         <Text style={[appStyles.small, {color: colors.dominant}]}>
-          Official{' '}
+          Official
         </Text>
       </View>
       <View style={{marginLeft: 10, flexDirection: 'row'}}>

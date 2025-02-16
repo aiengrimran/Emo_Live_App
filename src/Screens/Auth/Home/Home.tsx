@@ -20,7 +20,9 @@ import {
   setUnreadNotification,
 } from '../../../store/slice/notificationSlice';
 import {
+  addStreamListenerS,
   setSingle,
+  setStream,
   updateStreamListeners,
 } from '../../../store/slice/streamingSlice';
 import Animated, {
@@ -44,7 +46,8 @@ import axiosInstance from '../../../Api/axiosConfig';
 
 export default function Home({navigation}) {
   const {userDetails} = useSelector((state: any) => state.users);
-  const {tokenMemo} = useContext(Context);
+  const {tokenMemo, userAuthInfo} = useContext(Context);
+  const {user} = userAuthInfo;
   const dispatch = useDispatch();
   // const {token} = tokenMemo;
   const {connected} = useSelector((state: any) => state.chat);
@@ -85,29 +88,9 @@ export default function Home({navigation}) {
 
     setTab(newTab);
 
-    // Calculate scroll position dynamically
     const scrollToOffset = (newTab - 1) * 140; // Assuming 140px width per tab
     scrollViewRef.current?.scrollTo({x: scrollToOffset, animated: true});
   };
-  // Gesture for swiping left
-  // const swipeGesture = Gesture.Pan()
-  //   .simultaneousWithExternalGesture(flatListRef)
-  //   .minDistance(20)
-  //   .onUpdate(event => {
-  //     translateX.value = event.translationX;
-  //   })
-  //   .onEnd(() => {
-  //     if (translateX.value < -90) {
-  //       runOnJS(updateTab)('right');
-  //       // Trigger tab change on significant swipe
-  //     }
-  //     if (translateX.value > 90) {
-  //       runOnJS(updateTab)('left');
-  //       // Trigger tab change on significant swipe
-  //     }
-  //     // Reset swipe animation
-  //     translateX.value = withTiming(0);
-  //   });
   const swipeGesture = Gesture.Pan()
     .simultaneousWithExternalGesture(flatListRef) // Allow FlatList to handle vertical scroll
     .minDistance(18) // Minimum distance for any gesture to trigger
@@ -135,12 +118,14 @@ export default function Home({navigation}) {
   }));
 
   const test = () => {
-    console.log('hii');
-    dispatch(setSingle(true));
+    // dispatch(setStream(stream));
+    console.log(userDetails);
+
     // dispatch(fetchUserDetails([1, 14, 15]));
 
     // dispatch(updatePodcastListeners(6));
-    // dispatch(updateStreamListeners(4));
+    return;
+    // dispatch(updateStreamListeners(9));
     navigation.navigate('LiveStreaming');
     // navigation.navigate('GoLive');
   };

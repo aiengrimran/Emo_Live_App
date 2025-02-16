@@ -5,28 +5,50 @@ export const fetchUserDetails = createAsyncThunk(
   async (ids, {getState}) => {
     try {
       const {userDetails} = getState().users;
+
+      // Ensure `id` is always an array
+      // const ids = Array.isArray(id) ? id : [id];
+
+      // Filter out IDs that are already present in `userDetails`
       const newIds = ids.filter(
-        id => !Object.keys(userDetails).some(key => userDetails[key].id == id),
+        id => !userDetails.some(user => user.id === id),
       );
-      // const newIds = ids.filter(
-      //   id => !Object.keys(userDetails).some(key => userDetails[key] == id),
-      // );
-      console.log(newIds);
+
       // If no new IDs, return early
       if (newIds.length === 0) return;
+
       // Fetch user data from API for new IDs
-      console.log('i am calling network for user id ', newIds);
       const {data} = await axiosInstance.post('users-info', {users: newIds});
 
-      if (data.users?.[0]) {
-        return data.users;
-      }
+      // Return the fetched user data
+      return data.users;
     } catch (error) {
       console.error('Error fetching user info:', error);
       throw error; // Re-throw the error to handle it in the component if needed
     }
   },
 );
+
+// export const fetchUserDetails2 = createAsyncThunk(
+//   'users/fetchUserDetails2',
+//   async (id, {getState}) => {
+//     try {
+//       const {userDetails} = getState().users;
+//       // Fetch user data from API
+//       // check if userDetails don't have that
+//       if (userDetails.some(item => item === id)) return;
+//       const user = userDetails.find(userId => userId == id);
+//       if (user) return;
+//       id.!isTypeOfArray
+//       [id]
+//       const {data} = await axiosInstance.post('users-info', {users: id});
+//       return data.users;
+//     } catch (error) {
+//       console.error('Error fetching user info:', error);
+//       throw error; // Re-throw the error to handle it in the component if needed
+//     }
+//   },
+// );
 
 const initialState = {
   users: [],
@@ -106,14 +128,6 @@ export const managerSlice = createSlice({
     setRTCTokenRenewed: (state, action) => {
       state.rtcTokenRenewed = action.payload;
     },
-    test: (state, {payload}) => {
-      payload.forEach(user => {
-        state.userDetails[user.id] = user;
-      });
-    },
-    resetD: (state, {payload}) => {
-      state.userDetails = {};
-    },
   },
   extraReducers: builder => {
     builder
@@ -121,11 +135,10 @@ export const managerSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchUserDetails.fulfilled, (state, {payload}) => {
+      .addCase(fetchUserDetails.fulfilled, (state, action) => {
         state.loading = false;
         // Merge the fetched user details into the existing userDetails object
-        payload.forEach(user => {
-          // console.log(user.id);
+        action.payload.forEach(user => {
           state.userDetails[user.id] = user;
         });
       })
@@ -144,8 +157,6 @@ export const {
   setRTCTokenRenewed,
   setUserDetails,
   setIsJoined,
-  resetD,
-  test,
   setSelectedGuest,
   setLiveForm,
   setChatLoggedIn,

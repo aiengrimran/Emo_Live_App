@@ -105,15 +105,12 @@ export default function Chat({navigation, route}: ChatProps) {
   // Sends a text message to somebody.
   const sendMsg = async () => {
     try {
-      if (!connected) console.log('Perform initialization first.', chatUser.id);
+      if (!connected || chatUser.id) return;
       let msg;
       if (message.type == 'text') {
         msg = ChatMessage.createTextMessage(
-          // String(2),
-          // String(50),
           String(chatUser.id),
           message.content,
-          ChatMessageChatType.PeerChat,
         );
       }
       if (message.type == 'voice') {
@@ -136,7 +133,7 @@ export default function Chat({navigation, route}: ChatProps) {
       }));
       const callback = new (class {
         onProgress(locaMsgId: string, progress: string) {
-          console.log(`send message process: ${locaMsgId}, ${progress}`);
+          // console.log(`send message process: ${locaMsgId}, ${progress}`);
           let payload = {
             conversationId: chatUser.id,
             status: 1,
@@ -145,7 +142,7 @@ export default function Chat({navigation, route}: ChatProps) {
           dispatch(setMessageStatus(payload));
         }
         onError(locaMsgId: string, error: any) {
-          console.log(error);
+          // console.log(error);
           if (error.code == 201) {
             dispatch(setConnected(false));
           }
@@ -157,7 +154,7 @@ export default function Chat({navigation, route}: ChatProps) {
           dispatch(setMessageStatus(payload));
         }
         onSuccess(message: any) {
-          console.log('sent', message);
+          // console.log('sent', message);
           let payload = {
             conversationId: message.conversationId,
             status: 2,
@@ -333,11 +330,24 @@ export default function Chat({navigation, route}: ChatProps) {
     }
   };
 
+  const logout = async () => {
+    try {
+      const res = await chatClient.logout();
+      dispatch(setConnected(false));
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <View style={chatStyles.container}>
       {/* Header */}
       <>
-        <Header navigation={navigation} token={token} connected={connected} />
+        <Header
+          navigation={navigation}
+          token={token}
+          logout={logout}
+          connected={connected}
+        />
 
         {/* chat messages ... */}
 

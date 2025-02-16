@@ -72,48 +72,6 @@ export default function HomeB() {
   //     chatClient.reconnect();
   //   }
   // });
-  useEffect(() => {
-    if (!initialized && !connected) {
-      console.log('Network available, initializing chat SDK...Home');
-
-      initializedAgoraChat(); // Your function to initialize Agora Chat
-
-      setInitialized(true);
-    }
-
-    const connectionListener: ChatConnectEventListener = {
-      onTokenWillExpire() {
-        callApiForRenewToken();
-        // Alert.alert('Token Expired', 'Token will expired soon');
-      },
-      onTokenDidExpire() {
-        callApiForRenewToken();
-        console.log('token did expire');
-      },
-      onConnected() {
-        console.log('onConnected');
-        // Alert.alert('phone connected');
-        dispatch(setConnected(true));
-      },
-      onDisconnected() {
-        dispatch(setConnected(false));
-        dispatch(setTokenRenewed(false));
-        // Alert.alert('Disconnected', 'Disconnected from agora');
-        console.log('onDisconnected:x');
-      },
-      onUserAuthenticationFailed() {
-        callApiForRenewToken();
-        // loginUser();
-      },
-    };
-    if (initialized) {
-      chatClient.addConnectionListener(connectionListener);
-    }
-
-    return () => {
-      chatClient.removeConnectionListener(connectionListener); // ✅ Only remove this listener, not all
-    };
-  }, [initialized, connected]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -128,6 +86,31 @@ export default function HomeB() {
           loginUser();
         }
         dispatch(setInitialized(true));
+        let listener: ChatConnectEventListener = {
+          onTokenWillExpire() {
+            callApiForRenewToken();
+            // Alert.alert('Token Expired', 'Token will expired soon');
+          },
+          onTokenDidExpire() {
+            callApiForRenewToken();
+            console.log('token did expire');
+          },
+          onConnected() {
+            console.log('onConnected');
+            // Alert.alert('phone connected');
+            dispatch(setConnected(true));
+          },
+          onDisconnected() {
+            dispatch(setConnected(false));
+            // Alert.alert('Disconnected', 'Disconnected from agora');
+            console.log('onDisconnected:x');
+          },
+          onUserAuthenticationFailed() {
+            callApiForRenewToken();
+            // loginUser();
+          },
+        };
+        chatClient.addConnectionListener(listener);
       })
       .catch(error => {
         console.log(

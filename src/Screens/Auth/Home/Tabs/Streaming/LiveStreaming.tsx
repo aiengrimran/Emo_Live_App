@@ -7,10 +7,14 @@ import {
   BackHandler,
   ImageBackground,
   ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
+  // SafeAreaView,
+  StatusBar,
   Image,
   Alert,
   TextInput,
+  StatusBarStyle,
   Dimensions,
 } from 'react-native';
 import React, {
@@ -22,6 +26,7 @@ import React, {
 } from 'react';
 import appStyles from '../../../../../styles/styles';
 import IconM from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import Streams from './Streams';
 import BottomSection from '../Components/BottomSection';
 import AvatarSheet from '../Components/AvatarSheet';
@@ -87,6 +92,8 @@ import axiosInstance from '../../../../../Api/axiosConfig';
 const MAX_RETRIES = 5;
 const deviceHeight = Dimensions.get('window').height;
 
+const STYLES = ['default', 'dark-content', 'light-content'] as const;
+
 export default function LiveStreaming({navigation}) {
   const chatClient = ChatClient.getInstance();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -103,6 +110,9 @@ export default function LiveStreaming({navigation}) {
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
   const [sheet, setSheet] = useState<boolean>(false);
+  const [statusBarStyle, setStatusBarStyle] = useState<StatusBarStyle>(
+    STYLES[0],
+  );
   const [sheetType, setSheetType] = useState<string | null>('');
   const dispatch = useDispatch();
 
@@ -537,15 +547,53 @@ export default function LiveStreaming({navigation}) {
   }, []);
   // Render a single host view
   return (
-    <View style={styles.container}>
-      {single ? (
-        <View
-          style={{
-            position: 'relative',
-            flex: 1,
-            backgroundColor: colors.LG,
-          }}>
-          <View>
+    <SafeAreaView edges={['top']} style={{flex: 1, backgroundColor: colors.LG}}>
+      <StatusBar
+        barStyle="light-content" // Text color: 'dark-content' or 'light-content'
+        hidden={false} // Whether the status bar should be hidden or not
+      />
+      <View style={styles.container}>
+        {single ? (
+          <View
+            style={{
+              position: 'relative',
+              flex: 1,
+              backgroundColor: colors.LG,
+            }}>
+            <View style={{position: 'relative'}}>
+              <Header
+                user={user}
+                navigation={navigation}
+                token={token}
+                liveEvent={stream}
+                envVar={envVar}
+                leavePodcast={leaveStream}
+                connected={connected}
+              />
+            </View>
+            <View style={{height: deviceHeight * 1, position: 'relative'}}>
+              <SingleLive
+                token={token}
+                user={user}
+                isJoined={isJoined}
+                toggleMute={toggleMute}
+                offCamera={offCamera}
+                toggleCamera={toggleCamera}
+              />
+              {/* {isJoined && <SingleLive user={user} />} */}
+            </View>
+            {!sheet && (
+              <BottomSection
+                single={true}
+                roomId={stream.chat_room_id}
+                handleOpenSheet={handleOpenSheet}
+              />
+            )}
+          </View>
+        ) : (
+          <ImageBackground
+            style={styles.image}
+            source={require('../../../../../assets/images/LiveBg.png')}>
             <Header
               user={user}
               navigation={navigation}
@@ -555,222 +603,176 @@ export default function LiveStreaming({navigation}) {
               leavePodcast={leaveStream}
               connected={connected}
             />
-          </View>
-          <View style={{height: deviceHeight * 0.9}}>
-            {
-              <SingleLive
-                token={token}
-                user={user}
-                isJoined={isJoined}
-                toggleMute={toggleMute}
-                offCamera={offCamera}
-                toggleCamera={toggleCamera}
-              />
-            }
-            {/* {isJoined && <SingleLive user={user} />} */}
-          </View>
-          {!sheet && (
-            <BottomSection
-              single={true}
-              roomId={stream.chat_room_id}
-              handleOpenSheet={handleOpenSheet}
-            />
-          )}
-
-          {/* <Text>Single Live</Text> */}
-        </View>
-      ) : (
-        <ImageBackground
-          style={styles.image}
-          source={require('../../../../../assets/images/LiveBg.png')}>
-          <Header
-            user={user}
-            navigation={navigation}
-            token={token}
-            liveEvent={stream}
-            envVar={envVar}
-            leavePodcast={leaveStream}
-            connected={connected}
-          />
-          <StreamStatus />
-          <Text>{JSON.stringify(single)}</Text>
-
-          {/* <TouchableOpacity
-          style={{backgroundColor: 'red', padding: 10}}
-          onPress={() => dispatch(updateStreamListeners(3))}>
-          <Text>update room</Text>
-        </TouchableOpacity> */}
-
-          <View
-            style={{
-              height:
-                streamListeners.length > 6
-                  ? deviceWidth * 0.963
-                  : streamListeners.length > 3
-                  ? deviceWidth * 0.7
-                  : deviceWidth * 0.4,
-            }}>
-            <FlatList
-              data={streamListeners}
-              contentContainerStyle={{paddingBottom: 40}}
-              renderItem={({item}) => (
-                <View style={styles.hostView}>
-                  {item.user ? (
-                    <>
-                      <React.Fragment key={item.user.id}>
-                        {item.camOn ? (
-                          <RtcSurfaceView
-                            canvas={{
-                              uid: user.id == item.user.id ? 0 : item.user.id,
-                            }}
-                            style={styles.videoView}
-                          />
-                        ) : (
-                          <View style={{backgroundColor: colors.accent}}>
-                            <Image
-                              source={
-                                item.user.avatar
-                                  ? {
-                                      uri:
-                                        envVar.API_URL +
-                                        'display-avatar/' +
-                                        item.user.id,
-                                      headers: {
-                                        Authorization: `Bearer ${token}`,
-                                      },
-                                    }
-                                  : require('../../../../../assets/images/place.jpg')
-                              }
-                            />
-                          </View>
-                        )}
-
-                        <Text style={styles.userTxt}>
-                          {item.user.first_name + ' ' + item.user.last_name}
-                        </Text>
-                        {item.user.id == user.id && (
-                          <>
-                            <TouchableOpacity
-                              style={{position: 'absolute', right: 5, top: 3}}
-                              onPress={() => toggleCamera()}>
-                              <Icon
-                                name="camera-flip-outline"
-                                size={20}
-                                color={colors.complimentary}
-                              />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={{position: 'absolute', left: 2, top: 3}}
-                              onPress={() => toggleMute(item)}>
-                              <Icon
-                                name={
-                                  item.muted ? 'microphone-off' : 'microphone'
-                                }
-                                size={20}
-                                color={colors.complimentary}
-                              />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={{
-                                position: 'absolute',
-                                right: 5,
-                                bottom: 3,
+            <StreamStatus />
+            <View
+              style={{
+                height:
+                  streamListeners.length > 6
+                    ? deviceWidth * 0.963
+                    : streamListeners.length > 3
+                    ? deviceWidth * 0.7
+                    : deviceWidth * 0.4,
+              }}>
+              <FlatList
+                data={streamListeners}
+                contentContainerStyle={{paddingBottom: 40}}
+                renderItem={({item}) => (
+                  <View style={styles.hostView}>
+                    {item.user ? (
+                      <>
+                        <React.Fragment key={item.user.id}>
+                          {item.camOn ? (
+                            <RtcSurfaceView
+                              canvas={{
+                                uid: user.id == item.user.id ? 0 : item.user.id,
                               }}
-                              onPress={() => offCamera(item)}>
-                              <Icon
-                                name={
-                                  item.camOn
-                                    ? 'camera-off-outline'
-                                    : 'camera-outline'
+                              style={styles.videoView}
+                            />
+                          ) : (
+                            <View style={{backgroundColor: colors.accent}}>
+                              <Image
+                                source={
+                                  item.user.avatar
+                                    ? {
+                                        uri:
+                                          envVar.API_URL +
+                                          'display-avatar/' +
+                                          item.user.id,
+                                        headers: {
+                                          Authorization: `Bearer ${token}`,
+                                        },
+                                      }
+                                    : require('../../../../../assets/images/place.jpg')
                                 }
-                                size={20}
-                                color={colors.complimentary}
                               />
-                            </TouchableOpacity>
-                          </>
-                        )}
-                      </React.Fragment>
-                    </>
-                  ) : (
-                    <View style={{alignItems: 'center'}}>
-                      <TouchableOpacity>
-                        <Icon name="sofa-single" color={'#CDC6CE'} size={60} />
-                        <Text
-                          style={[
-                            appStyles.bodyMd,
-                            {color: colors.complimentary},
-                          ]}>
-                          Apply to join
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              )}
-              keyExtractor={(item, index) => index.toString()}
-              numColumns={3}
-            />
-          </View>
-          {!sheet && (
-            <BottomSection
-              single={single}
-              roomId={stream.chat_room_id}
-              handleOpenSheet={handleOpenSheet}
-            />
-          )}
-        </ImageBackground>
-      )}
-      <EndLive
-        user={user}
-        endPodcastForUser={endPodcastForUser}
-        navigation={navigation}
-        id={stream.id}
-        live={true}
-      />
-      <BottomSheet
-        index={-1}
-        enablePanDownToClose={true}
-        // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
-        snapPoints={['60%']}
-        ref={bottomSheetRef}
-        handleStyle={{
-          backgroundColor: colors.LG,
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: colors.complimentary,
-        }}
-        onChange={handleSheetChanges}>
-        <BottomSheetView style={styles.contentContainer}>
-          {sheetType == 'gifts' ? (
-            <Gifts />
-          ) : sheetType == 'avatar' ? (
-            <AvatarSheet
-              navigation={navigation}
-              token={token}
-              envVar={envVar}
-            />
-          ) : sheetType == 'users' ? (
-            <Users />
-          ) : (
-            <Tools />
-          )}
-        </BottomSheetView>
-      </BottomSheet>
+                            </View>
+                          )}
 
-      {liveStatus == 'LOADING' && <LiveLoading />}
-    </View>
+                          <Text style={styles.userTxt}>
+                            {item.user.first_name + ' ' + item.user.last_name}
+                          </Text>
+                          {item.user.id == user.id && (
+                            <>
+                              <TouchableOpacity
+                                style={{position: 'absolute', right: 5, top: 3}}
+                                onPress={() => toggleCamera()}>
+                                <Icon
+                                  name="camera-flip-outline"
+                                  size={20}
+                                  color={colors.complimentary}
+                                />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={{position: 'absolute', left: 2, top: 3}}
+                                onPress={() => toggleMute(item)}>
+                                <Icon
+                                  name={
+                                    item.muted ? 'microphone-off' : 'microphone'
+                                  }
+                                  size={20}
+                                  color={colors.complimentary}
+                                />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={{
+                                  position: 'absolute',
+                                  right: 5,
+                                  bottom: 3,
+                                }}
+                                onPress={() => offCamera(item)}>
+                                <Icon
+                                  name={
+                                    item.camOn
+                                      ? 'camera-off-outline'
+                                      : 'camera-outline'
+                                  }
+                                  size={20}
+                                  color={colors.complimentary}
+                                />
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </React.Fragment>
+                      </>
+                    ) : (
+                      <View style={{alignItems: 'center'}}>
+                        <TouchableOpacity>
+                          <Icon
+                            name="sofa-single"
+                            color={'#CDC6CE'}
+                            size={60}
+                          />
+                          <Text
+                            style={[
+                              appStyles.bodyMd,
+                              {color: colors.complimentary},
+                            ]}>
+                            Apply to join
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                numColumns={3}
+              />
+            </View>
+            {/* <KeyboardAvoidingView> */}
+            {!sheet && (
+              <BottomSection
+                single={single}
+                roomId={stream.chat_room_id}
+                handleOpenSheet={handleOpenSheet}
+              />
+            )}
+            {/* </KeyboardAvoidingView> */}
+          </ImageBackground>
+        )}
+        <EndLive
+          user={user}
+          endPodcastForUser={endPodcastForUser}
+          navigation={navigation}
+          id={stream.id}
+          live={true}
+        />
+        <BottomSheet
+          index={-1}
+          enablePanDownToClose={true}
+          // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
+          snapPoints={['60%']}
+          ref={bottomSheetRef}
+          handleStyle={{
+            backgroundColor: colors.LG,
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: colors.complimentary,
+          }}
+          onChange={handleSheetChanges}>
+          <BottomSheetView style={styles.contentContainer}>
+            {sheetType == 'gifts' ? (
+              <Gifts />
+            ) : sheetType == 'avatar' ? (
+              <AvatarSheet
+                navigation={navigation}
+                token={token}
+                envVar={envVar}
+              />
+            ) : sheetType == 'users' ? (
+              <Users />
+            ) : (
+              <Tools />
+            )}
+          </BottomSheetView>
+        </BottomSheet>
+
+        {liveStatus == 'LOADING' && <LiveLoading />}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    // backgroundColor: '#B0BCBF',
-    // flexGrow: 0.5,
-    // alignItems: 'center',
-    // backgroundColor: 'rgba(255, 255, 255, 0.3)', // Transparent white
-    // height: 30,
-  },
-
   ...liveStyles,
   muteButton: {
     position: 'absolute',

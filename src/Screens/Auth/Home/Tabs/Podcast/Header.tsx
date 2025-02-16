@@ -17,8 +17,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setLoading} from '../../../../../store/slice/usersSlice';
 import {useSelector, useDispatch} from 'react-redux';
 import {
+  getUserInfoFromAPIS,
+  removeUserFromSingleStream,
   setSingle,
-  updatedMuteUnmuteUser,
 } from '../../../../../store/slice/streamingSlice';
 import axiosInstance from '../../../../../Api/axiosConfig';
 import {envVar} from '../Streaming/streamingImport';
@@ -47,6 +48,7 @@ export default function Header({
   // const {podcast} = useSelector((state: any) => state.podcast);
   // const {stream} = useSelector((state: any) => state.streaming);
   const {loading, isJoined} = useSelector((state: any) => state.users);
+  const {single} = useSelector((state: any) => state.streaming);
   // let host = '';
 
   const [host, setHost] = useState(
@@ -78,7 +80,7 @@ export default function Header({
     }
   };
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, single && styles.header2]}>
       <View style={styles.userInfo}>
         <Image
           source={
@@ -91,14 +93,14 @@ export default function Header({
                 }
               : require('../../../../../assets/images/place.jpg')
           }
-          style={{width: 28, height: 28, borderRadius: 15}}
+          style={styles.avatar}
         />
         <Text style={[appStyles.regularTxtMd, {color: colors.complimentary}]}>
           {host.first_name + ' ' + host.last_name}
         </Text>
-        <View style={{backgroundColor: '#08FEF8', padding: 2, borderRadius: 1}}>
+        <View style={styles.level}>
           <Text
-            // onPress={() => dispatch(setSingle(true))}
+            onPress={() => dispatch(setSingle(!single))}
             style={{color: 'black', fontSize: 6, fontWeight: '500'}}>
             LV:1
           </Text>
@@ -109,7 +111,7 @@ export default function Header({
             onPress={() => {
               // console.log(user);
               // console.log(liveEvent);
-              console.log(host, 'ssss');
+              // console.log(host, 'ssss');
               // dispatch(updatedMuteUnmuteUser({type: 'single', id: 1}));
               // Alert.alert('Coming Soon', '!!');
             }}>
@@ -122,22 +124,17 @@ export default function Header({
         size={'small'}
         color={colors.accent}
       />
-      <View
-        style={{
-          flexDirection: 'row',
-          width: '35%',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
+      <View style={styles.right}>
         <View>
-          <Text style={[appStyles.bodyMd, {color: colors.complimentary}]}>
+          <Text
+            onPress={() => dispatch(removeUserFromSingleStream(1))}
+            style={[appStyles.bodyMd, {color: colors.complimentary}]}>
             Duration:{' '}
             <Text style={[{color: colors.golden}]}>{formatTime(time)}</Text>
             {/* Duration: <Text style={[{color: colors.golden}]}>10:34</Text> */}
           </Text>
         </View>
         <TouchableOpacity onPress={leavePodcast}>
-          {/* <TouchableOpacity onPress={() => navigation.navigate('HomeB')}> */}
           <Icon
             name="close"
             size={25}
@@ -152,10 +149,8 @@ export default function Header({
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: Platform.OS == 'ios' ? 40 : 0,
     flexDirection: 'row',
     padding: 10,
-    width: '98%',
     justifyContent: 'space-between',
   },
   userInfo: {
@@ -164,9 +159,23 @@ const styles = StyleSheet.create({
     width: '40%',
     alignItems: 'center',
   },
+  avatar: {width: 28, height: 28, borderRadius: 15},
   addBtn: {
     padding: 2,
     backgroundColor: '#F00044',
     borderRadius: 20,
+  },
+  level: {backgroundColor: '#08FEF8', padding: 2, borderRadius: 1},
+  right: {
+    flexDirection: 'row',
+    width: '35%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  header2: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    zIndex: 2,
+    position: 'absolute',
+    width: '100%',
   },
 });
