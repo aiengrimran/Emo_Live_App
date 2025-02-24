@@ -8,10 +8,13 @@ import {
   Alert,
   ScrollView,
   Image,
+  NativeModule,
   LayoutAnimation,
   Platform,
   Modal,
+  NativeModules,
 } from 'react-native';
+const {ScreenAwake} = NativeModules;
 import React, {useContext, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import hotUpdate from 'react-native-ota-hot-update';
@@ -21,6 +24,7 @@ import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
 import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
+import {formatNumber} from '../../../../utils/generalScript';
 import scripts from '../../../../scripts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -119,26 +123,22 @@ export default function Search({navigation}) {
       console.log(error);
     }
   };
-  const temp = async () => {
-    console.log(user);
-  };
-  const logout = async () => {
+  const refreshUser = async () => {
     try {
-      const res = await axiosInstance.get('/logout');
-      console.log(res.data);
-
-      const keys = await AsyncStorage.getAllKeys();
-      await AsyncStorage.multiRemove(keys);
-      await AsyncStorage.removeItem('user');
-      userAuthInfo.setUser(null);
-      console.log('All keys removed from AsyncStorage');
+      setLoading(true);
+      const url = 'user/info';
+      const res = await axiosInstance.get(url);
+      setUser(res.data.user);
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
     } catch (error) {
       console.log(error);
-      console.error('Error removing keys from AsyncStorage:', error);
+    } finally {
+      setLoading(false);
     }
   };
-  const logToken = () => {
-    console.log('dd');
+  const temp = async () => {
+    console.log('i am clicked');
+    console.log(ScreenAwake);
   };
   return (
     <View style={styles.container}>
@@ -158,11 +158,28 @@ export default function Search({navigation}) {
               Check VIP
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('EditProfile')}
-            style={styles.editBtn}>
-            <Icon name="account-edit" color={colors.complimentary} size={25} />
-          </TouchableOpacity>
+          <View
+            style={{
+              top: Platform.OS == 'ios' ? 80 : 20,
+              flexDirection: 'row',
+              position: 'absolute',
+              right: 20,
+              justifyContent: 'space-between',
+              width: '25%',
+            }}>
+            <TouchableOpacity onPress={refreshUser} style={styles.refresh}>
+              <Icon name="refresh" color={colors.complimentary} size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EditProfile')}
+              style={styles.editBtn}>
+              <Icon
+                name="account-edit"
+                color={colors.complimentary}
+                size={20}
+              />
+            </TouchableOpacity>
+          </View>
 
           <View
             style={{
@@ -238,25 +255,36 @@ export default function Search({navigation}) {
             <View>
               <View style={styles.account}>
                 <View style={styles.info}>
-                  <Text style={styles.accountStatus}>23m</Text>
+                  <Text style={styles.accountStatus}>
+                    {formatNumber(user.followers)}
+                  </Text>
                   <Text style={styles.infoText}>Fans</Text>
                 </View>
                 <View style={styles.info}>
-                  <Text style={styles.accountStatus}>154</Text>
+                  <Text style={styles.accountStatus}>
+                    {formatNumber(user.following)}
+                  </Text>
                   <Text style={styles.infoText}>Following</Text>
                 </View>
                 <View style={styles.info}>
-                  <Text style={styles.accountStatus}>42</Text>
+                  <Text style={styles.accountStatus}>
+                    {formatNumber(user.friends)}
+                  </Text>
                   <Text style={styles.infoText}>Friends</Text>
                 </View>
               </View>
               <View style={styles.secondRow}>
                 <View style={styles.info}>
-                  <Text style={styles.accountStatus}>1435</Text>
+                  <Text style={styles.accountStatus}>
+                    {formatNumber(user.wallet?.diamonds)}
+                  </Text>
                   <Text style={styles.infoText}>Diamond</Text>
                 </View>
                 <View style={styles.info}>
-                  <Text style={styles.accountStatus}>247.4k</Text>
+                  <Text style={styles.accountStatus}>
+                    {formatNumber(user.wallet?.beans)}
+                  </Text>
+                  {/* <Text style={styles.accountStatus}>247.4k</Text> */}
                   <Text style={styles.infoText}>Beans</Text>
                 </View>
               </View>
@@ -516,6 +544,7 @@ const styles = StyleSheet.create({
   },
   info: {
     width: '25%',
+    alignItems: 'center',
   },
   progress: {
     height: 10,
@@ -560,6 +589,7 @@ const styles = StyleSheet.create({
   },
   accountStatus: {
     ...appStyles.headline2,
+    // marginLeft:5,
     color: colors.complimentary,
   },
   genderTxt: {
@@ -628,14 +658,20 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   editBtn: {
-    flexDirection: 'row',
-    width: '20%',
-    position: 'absolute',
-    top: Platform.OS == 'ios' ? 70 : 20,
-    right: 0,
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 16,
+    justifyContent: 'center',
+    width: 35,
+    height: 35,
+    borderRadius: 20,
+    backgroundColor: colors.accent,
+  },
+  refresh: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 35,
+    height: 35,
+    borderRadius: 20,
+    backgroundColor: colors.lines,
   },
   icon: {
     borderWidth: 1,

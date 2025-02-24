@@ -3,164 +3,423 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  BackHandler,
   Image,
   TextInput,
+  Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
+import mainStyles from './style/mainStyle';
+import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import Gifts from '../Tabs/Podcast/Gifts';
+import AvatarSheet from '../Tabs/Components/AvatarSheet';
+import Users from '../Tabs/Podcast/Users';
+import Tools from '../Tabs/Podcast/Tools';
+import {
+  checkCamPermission,
+  checkMicrophonePermission,
+} from '../../../../scripts';
+import axiosInstance from '../../../../Api/axiosConfig';
+import envVar from '../../../../config/envVar';
+import EndLive from '../Tabs/Podcast/EndLive';
+import LiveLoading from '../Tabs/Components/LiveLoading';
+// import { AxiosInstance } from 'axios';
+
+import {
+  createAgoraRtcEngine,
+  ChannelProfileType,
+  ClientRoleType,
+  IRtcEngine,
+  AudienceLatencyLevelType,
+  RtcSurfaceView,
+  RtcConnection,
+  IRtcEngineEventHandler,
+  ConnectionStateType,
+  ConnectionChangedReasonType,
+  VideoSourceType,
+} from 'react-native-agora';
+import {ChatClient} from 'react-native-agora-chat';
+import {useSelector, useDispatch} from 'react-redux';
+import {setLeaveModal} from '../../../../store/slice/podcastSlice';
+import {setLiveStatus, setIsJoined} from '../../../../store/slice/usersSlice';
+import {resetBattle} from '../Tabs/scripts/liveScripts';
+import PKHeader from './components/PKHeader';
 import {colors} from '../../../../styles/colors';
-export default function LiveBattle({navigation}) {
+import BattleInfo from './components/BattleInfo';
+// import PKB from './components/BattleInfo';
+import Context from '../../../../Context/Context';
+import PKBottom from './components/PKBottom';
+import {
+  setBattle,
+  setUserInBattle,
+} from '../../../../store/slice/PK/battleSlice';
+import {
+  getUserInfoFromAPI,
+  saveBattleRoomId,
+} from '../../../../store/slice/PK/battleAsync';
+import SupportViewers from './components/SupportViewers';
+import Comment from './components/Comment';
+const MAX_RETRIES = 5;
+const deviceHeight = Dimensions.get('window').height;
+
+interface LiveBattle {
+  navigation: any;
+}
+export default function LiveBattle({navigation}: LiveBattle) {
+  const chatClient = ChatClient.getInstance();
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
+  const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
+  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {battle, roomId} = useSelector((state: any) => state.battle);
+  const {isJoined, loading, liveStatus} = useSelector(
+    (state: any) => state.users,
+  );
+
+  const {user, setUser} = userAuthInfo;
+  const {token} = tokenMemo;
+  const [sheet, setSheet] = useState<boolean>(false);
+
+  const [sheetType, setSheetType] = useState<string | null>('');
+  const dispatch = useDispatch();
+
+  const {connected} = useSelector((state: any) => state.chat);
+
+  useEffect(() => {
+    if (!isJoined) return;
+
+    const backAction = () => {
+      dispatch(setLeaveModal(true));
+      return true; // Prevent default back action
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [isJoined, dispatch]);
+  // Generate a list of hosts
+
+  useEffect(() => {
+    // Initialize the engine when the App starts
+    // if (!isJoined) {
+    setupVideoSDKEngine();
+    // }
+
+    // Release memory when the App is closed
+    return () => {
+      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      agoraEngineRef.current?.release();
+    };
+  }, []);
+
+  // Define the setupVideoSDKEngine method called when the App starts
+  const setupVideoSDKEngine = async () => {
+    try {
+      // Create RtcEngine after obtaining device permissions
+
+      console.log('initializing engine');
+      agoraEngineRef.current = createAgoraRtcEngine();
+      const agoraEngine = agoraEngineRef.current;
+      eventHandler.current = {
+        onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
+          if (battle.user1_id !== user.id) {
+            dispatch(getUserInfoFromAPI(battle.user1_id));
+            return;
+          }
+          dispatch(setUserInBattle(user));
+
+          if (battle.user1_id == user.id) {
+            createUserChatRoom();
+          } else {
+            // getStreamActiveUsers();
+            userJoinChatRoom(battle.chat_room_id);
+          }
+        },
+        onUserJoined: (_connection: RtcConnection, uid: number) => {
+          if (uid !== user.id) {
+            dispatch(getUserInfoFromAPI(uid));
+            return;
+          }
+          // setRemoteUid(uid);
+        },
+        onLeaveChannel(connection, stats) {
+          console.log('leave channel ...');
+          if (connection.localUid !== battle.user1_id) {
+            // dispatch(removeUserFromStream(connection.localUid));
+          }
+          // if (connection.localUid === podcast.host) {
+          //   console.log('host is lefting podcast');
+          //   hostEndedPodcast();
+          //   return;
+          // }
+          console.log('new function', 'user has leaved the');
+        },
+
+        onUserOffline: (connection: RtcConnection, uid: number) => {
+          if (uid === battle.user1_id) {
+            hostEndedPodcast();
+            return;
+          }
+          Alert.alert('User id goes offline', String(uid));
+          // if (uid !== stream.host) {
+          //   dispatch(removeUserFromStream(uid));
+          // }
+        },
+        onConnectionStateChanged: (
+          _connection: RtcConnection,
+          state: ConnectionStateType,
+          reason: ConnectionChangedReasonType,
+        ) => {
+          console.log('state', state, 'reason', reason);
+          handelConnection(state);
+        },
+      };
+
+      // Register the event handler
+      agoraEngine.registerEventHandler(eventHandler.current);
+      // Initialize the engine
+      agoraEngine.initialize({
+        channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+        appId: envVar.AGORA_APP_ID,
+      });
+      agoraEngine.enableLocalAudio(true);
+      agoraEngine.enableLocalVideo(true);
+      userJoinChannel();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const hostEndedPodcast = async () => {
+    // dispatch(setHostLeftPodcast(true));
+    dispatch(setLeaveModal(true));
+  };
+  const handelConnection = (state: number) => {
+    switch (state) {
+      case 3:
+        dispatch(setLiveStatus('CONNECTED'));
+        dispatch(setIsJoined(true));
+        break;
+      case 4:
+        dispatch(setLiveStatus('LOADING'));
+        break;
+      case 5:
+        dispatch(setLiveStatus('IDLE'));
+        dispatch(setIsJoined(false));
+        leaveAgoraChannel();
+        break;
+      case 1:
+        dispatch(setLiveStatus('IDLE'));
+        dispatch(setIsJoined(false));
+        console.log('disconnected');
+        break;
+      default:
+        break;
+    }
+  };
+  const leaveAgoraChannel = async () => {
+    try {
+      if (agoraEngineRef.current) {
+        agoraEngineRef.current.leaveChannel(); // Leave the channel
+        dispatch(setIsJoined(false));
+        console.log('Left the Agora channel successfully');
+      } else {
+        console.log('Agora engine is not initialized');
+      }
+    } catch (error) {
+      console.log('Error leaving the channel:', error);
+    }
+  };
+  const userJoinChannel = async () => {
+    console.log('Connecting...', isJoined, user.id, battle.user1_id);
+    // return;
+    const permission = checkPermission();
+    if (!permission) {
+      console.log('permssion required');
+      return;
+    }
+
+    // Exit if already joined
+    if (isJoined) {
+      console.log('User is already in the channel.');
+      return;
+    }
+
+    try {
+      // Check if Agora engine is initialized
+      if (!agoraEngineRef.current) {
+        throw new Error('Agora engine is not initialized.');
+      }
+      let result1;
+      if ([battle.user1_id, battle.user2_id].includes(user.id)) {
+        // if (user.id == battle.user1_id ||battle.user2_id) {
+        console.log('Joining stream as a host...');
+        result1 = agoraEngineRef.current.joinChannel(
+          String(user.agora_rtc_token),
+          String(battle.channel),
+          user.id,
+          {
+            clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+            publishMicrophoneTrack: true,
+            autoSubscribeAudio: true,
+            publishCameraTrack: true,
+            autoSubscribeVideo: true,
+          },
+        );
+      } else {
+        console.log('Joining as an audience...');
+        result1 = agoraEngineRef.current.joinChannel(
+          String(user.agora_rtc_token),
+          String(battle.channel),
+          user.id,
+          {
+            clientRoleType: ClientRoleType.ClientRoleAudience,
+            // clientRoleType: ClientRoleType.ClientRoleAudience,
+            // publishMicrophoneTrack: true,
+            autoSubscribeAudio: true,
+            // publishCameraTrack: true,
+            autoSubscribeVideo: true,
+            audienceLatencyLevel:
+              AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
+          },
+        );
+      }
+      // Check if joinChannel was successful
+      if (result1 < 0) {
+        throw new Error(`Failed to join channel. Error code: ${result1}`);
+      }
+      if (result1 == 0) {
+        console.log('Successfully joined the channel x');
+        // setIsJoined(true); // Update joined state
+      }
+    } catch (error: any) {
+      console.error('Failed to join the channel:', error.message);
+      throw new Error('Unable to connect to the channel. Please try again.');
+    }
+  };
+
+  const checkPermission = async () => {
+    const cam = await checkCamPermission();
+    const microphone = await checkMicrophonePermission();
+    if (cam || microphone) {
+      return true;
+    }
+    Alert.alert('Permission Required', 'Unable to start Live');
+  };
+
+  const createUserChatRoom = async (retryCount = 0) => {
+    try {
+      if (!connected) {
+        console.log('Not connected, logging in first...');
+        return;
+      }
+      const chatRoom = await chatClient.roomManager.createChatRoom(
+        'Stream Starting',
+        'Hi',
+        'welcome',
+        [],
+        5,
+      );
+
+      const roomId = chatRoom.roomId;
+      dispatch(saveBattleRoomId(roomId));
+      userJoinChatRoom(roomId);
+      // dispatch(updateStreamRoomId(roomId));
+      console.log(roomId, 'Chat room created successfully');
+    } catch (error: any) {
+      console.log('Error creating chat room:', error);
+
+      if (error.code === 2 || error.code === 300) {
+        if (retryCount < MAX_RETRIES) {
+          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+          console.log(`Retrying in ${delay / 1000} seconds...`);
+          setTimeout(() => createUserChatRoom(retryCount + 1), delay);
+        } else {
+          Alert.alert(
+            'Network Error',
+            'Failed to create chat room after multiple attempts.',
+          );
+        }
+      }
+    }
+  };
+
+  const userJoinChatRoom = async (roomId: any) => {
+    try {
+      if (roomId) return;
+      await chatClient.roomManager.joinChatRoom(roomId);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const leaveStream = () => {
+    dispatch(setLeaveModal(true));
+  };
+  // Function to handle open Bottom Sheet
+  const handleOpenSheet = useCallback((type: string) => {
+    setSheet(true);
+    setSheetType(type);
+    bottomSheetRef.current?.expand();
+  }, []);
+
+  const endPodcastForUser = async () => {
+    try {
+      if (battle.chat_room_id) {
+        if (battle.user1_id == user.id) {
+          chatClient.roomManager.destroyChatRoom(battle.chat_room_id || roomId);
+        } else {
+          await chatClient.roomManager.leaveChatRoom(battle.chat_room_id);
+        }
+      }
+      destroyEngine();
+      setTimeout(() => {
+        dispatch(setLeaveModal(false));
+        dispatch(setBattle(''));
+        navigation.navigate('HomeB');
+      }, 400);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const destroyEngine = () => {
+    resetBattle(dispatch);
+    try {
+      agoraEngineRef.current?.leaveChannel();
+      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      agoraEngineRef.current?.release();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index < 0) setSheet(false);
+  }, []);
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          marginTop: Platform.OS == 'ios' ? 60 : 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-          borderRadius: 3,
-          padding: 4,
-          backgroundColor: '#1C041C',
-        }}>
-        <View
-          style={{
-            height: 50,
-            width: 50,
-            borderRadius: 25,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#F7C3CB',
-          }}>
-          <Image
-            style={{height: 40, width: 40, borderRadius: 20}}
-            source={require('../../../../assets/images/male/james.jpeg')}
-          />
-        </View>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <View style={{marginLeft: 10}}>
-            <Text style={{color: '#E7DADF'}}>Love. Lizzy L.</Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 5,
-              }}>
-              <Icon name="heart" color="#B1A6AB" size={12} />
-              <Text style={{color: '#B1A6AB', marginLeft: 3}}>37.4k</Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              marginLeft: 10,
-              width: 60,
-              borderRadius: 20,
-              height: 40,
-              backgroundColor: '#fff',
-              alignItems: 'center',
-            }}>
-            <Icon name="heart-cog" color="#FFA84F" size={35} />
-          </View>
-          <View style={{flexDirection: 'row', marginLeft: 10}}>
-            <Image
-              style={{
-                height: 40,
-                width: 40,
-                borderRadius: 20,
-                borderWidth: 3,
-                borderColor: '#FBFBD0',
-              }}
-              source={require('../../../../assets/images/live/girl3.jpg')}
-            />
-            <Image
-              style={{
-                height: 40,
-                width: 40,
-                borderRadius: 20,
-                borderWidth: 3,
-                borderColor: '#FBFBD0',
-              }}
-              source={require('../../../../assets/images/live/girl7.jpg')}
-            />
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="human-male" color="#AB9EAC" size={20} />
-            <Text style={{color: '#AB9EAC'}}>270</Text>
-          </View>
-          <TouchableOpacity
-            style={{marginLeft: 10}}
-            onPress={() => navigation.goBack()}>
-            <Icon name="close" color="#fff" size={30} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <PKHeader
+        liveEvent={battle}
+        token={token}
+        user={user}
+        leavePodcast={leaveStream}
+        navigation={navigation}
+      />
 
       {/* match info */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-        }}>
-        <View style={{flexDirection: 'row'}}>
-          <Icon name="axe-battle" size={12} color={'#FDC506'} />
-          <Text style={styles.info}>LIVE Match</Text>
-        </View>
-        <View style={{flexDirection: 'row'}}>
-          <Icon name="fire" size={12} color={'#FDC506'} />
-          <Text style={styles.info}>Weekly Ranking</Text>
-        </View>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Icon
-            name="microsoft-internet-explorer"
-            color={'#FF64DF'}
-            size={12}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={styles.info}>Explore</Text>
-            <Icon name="chevron-right" size={12} color={colors.complimentary} />
-          </View>
-        </View>
-      </View>
-      <View style={{flexDirection: 'row', borderRadius: 6}}>
-        <View style={{backgroundColor: '#2c0619', width: '50%'}}>
-          {/* < */}
-          <View
-            style={{
-              borderBottomWidth: 1,
-              flexDirection: 'row',
-              paddingBottom: 10,
-              justifyContent: 'space-between',
-            }}>
-            <Image
-              style={{height: 40, width: 40}}
-              source={require('../../../../assets/images/live/gift-box.png')}
-            />
-            <View>
-              <Text style={{color: '#BA9783', fontSize: 20}}>
-                0<Text style={{color: '#fff'}}>/1</Text>
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={{
-            width: '50%',
-            backgroundColor: '#7F1D17',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            padding: 5,
-            borderRadius: 8,
-          }}>
-          <Text style={styles.heading}>Live Trending is Here!</Text>
-          <Image
-            style={{height: 40, width: 40}}
-            source={require('../../../../assets/images/live/angel.png')}
-          />
-          {/* emoji */}
-        </View>
-      </View>
+      <BattleInfo />
       <View style={{flexDirection: 'row'}}>
         <View style={{backgroundColor: '#e93d53', width: '60%'}}>
           <Text style={styles.countLeft}>1221312</Text>
@@ -170,47 +429,33 @@ export default function LiveBattle({navigation}) {
         </View>
       </View>
       <View style={{position: 'relative'}}>
-        {/* style={{backgroundColor: 'red', width: '99%', position: 'relative'}}> */}
-        <View
-          style={{
-            backgroundColor: '#36332e',
-            width: '40%',
-            alignSelf: 'center',
-            // top: ,
-            padding: 2,
-            alignItems: 'center',
-            position: 'absolute',
-            borderBottomEndRadius: 12,
-            zIndex: 3,
-            borderBottomStartRadius: 12,
-          }}>
+        <View style={styles.duration}>
           <Text style={{color: colors.complimentary}}>
-            V<Text style={{color: '#6E5ED4'}}>S</Text> 2:05
+            V<Text style={{color: '#6E5ED4'}}>S</Text>{' '}
+            {battle.duration || '10:20'}
           </Text>
         </View>
+        {/* *** main **** */}
         <View style={{flexDirection: 'row'}}>
-          <View style={{width: '50%', height: 30}}>
-            <Image
-              style={{
-                height: 300,
-                width: '100%',
-                resizeMode: 'stretch',
-                // resizeMode: 'contain',
-                margin: 'auto', // Center the image
-              }}
-              // style={{height: 300}}
-              source={require('../../../../assets/images/male/james.jpeg')}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                left: 15,
-                top: 15,
-                paddingHorizontal: 15,
-                paddingVertical: 3,
-                backgroundColor: '#756B61',
-                borderRadius: 10,
-              }}>
+          <View
+            style={{
+              width: '50%',
+              backgroundColor: colors.LR,
+              height: deviceHeight * 0.35,
+            }}>
+            {isJoined ? (
+              <RtcSurfaceView
+                canvas={{uid: battle.user1_id == user.id ? 0 : battle.user1_id}}
+              />
+            ) : (
+              <View style={{alignItems: 'center', marginTop: 140}}>
+                <Text style={{color: colors.complimentary}}>
+                  Connecting....
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.winLeft}>
               <Text style={[appStyles.regularTxtMd, {color: '#F8E4B6'}]}>
                 WIN
                 <Text style={[appStyles.bodyMd, {color: '#fff'}]}>x 1</Text>
@@ -218,26 +463,21 @@ export default function LiveBattle({navigation}) {
             </View>
           </View>
           <View style={{width: '50%', position: 'relative'}}>
-            <Image
-              style={{
-                height: 300,
-                width: '100%',
-                resizeMode: 'stretch',
-                margin: 'auto', // Center the image
-              }}
-              // style={{height: 300}}
-              source={require('../../../../assets/images/live/girl3.jpg')}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                right: 15,
-                top: 15,
-                paddingHorizontal: 15,
-                paddingVertical: 3,
-                backgroundColor: '#756B61',
-                borderRadius: 10,
-              }}>
+            {isJoined ? (
+              <RtcSurfaceView
+                canvas={{
+                  uid: battle.user2_id == user.id ? 0 : battle.user2_id,
+                }}
+              />
+            ) : (
+              <View style={{alignItems: 'center', marginTop: 140}}>
+                <Text style={{color: colors.complimentary}}>
+                  Connecting....
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.winRight}>
               <Text style={[appStyles.regularTxtMd, {color: '#F8E4B6'}]}>
                 WIN
                 <Text style={[appStyles.bodyMd, {color: '#fff'}]}>x 10</Text>
@@ -245,279 +485,79 @@ export default function LiveBattle({navigation}) {
             </View>
           </View>
         </View>
-        {/* live support viewers */}
-        <View
-          style={{
-            backgroundColor: '#251444',
-            height: 60,
-            width: '100%',
-            // Shadow for iOS
-            shadowColor: '#000', // Shadow color
-            shadowOffset: {width: 0, height: 2}, // Shadow offset (x, y)
-            shadowOpacity: 0.2, // Shadow opacity
-            shadowRadius: 4, // Shadow blur radius
-
-            // Shadow for Android
-            elevation: 5, // Elevation for Android
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingHorizontal: 5,
-              paddingTop: 5,
-            }}>
-            <View style={{flexDirection: 'row'}}>
-              <Image
-                style={styles.liveViewerLeft}
-                source={require('../../../../assets/images/live/girl2.jpg')}
-              />
-              <Image
-                source={require('../../../../assets/images/live/girl6.jpg')}
-                style={styles.liveViewerLeft}
-              />
-              <Image
-                source={require('../../../../assets/images/live/girl7.jpg')}
-                style={styles.liveViewerLeft}
-              />
-            </View>
-            <View style={{flexDirection: 'row'}}>
-              <Image
-                style={styles.liveViewerRight}
-                source={require('../../../../assets/images/live/girl2.jpg')}
-              />
-              <Image
-                source={require('../../../../assets/images/live/girl6.jpg')}
-                style={styles.liveViewerRight}
-              />
-              <Image
-                source={require('../../../../assets/images/live/girl7.jpg')}
-                style={styles.liveViewerRight}
-              />
-            </View>
-          </View>
-        </View>
 
         {/* end */}
 
+        {/* live support viewers */}
+        <SupportViewers />
+        {/* end */}
+
         {/* comment section */}
-        <View style={{marginTop: 10, padding: 4}}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <View style={styles.avatar}>
-              <Icon
-                name="heart-outline"
-                size={15}
-                color={colors.complimentary}
-              />
-            </View>
-            <View style={styles.accountFirst}>
-              <Icon name="diamond" size={12} color={colors.complimentary} />
-              <Text style={{color: colors.complimentary}}>24</Text>
-            </View>
-            <View style={styles.accountSecond}>
-              <Icon name="heart" size={12} color={'#FFAA5B'} />
-              <Text style={{color: colors.complimentary}}>||</Text>
-            </View>
-            <Text style={styles.comments}>
-              <Text style={styles.commentsName}>Erickson Villiola</Text> No
-              roses
-            </Text>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <View style={styles.avatar}>
-              <Image
-                style={{height: '100%', width: '100%', borderRadius: 20}}
-                source={require('../../../../assets/images/live/girl3.jpg')}
-              />
-              {/* <Icon
-                  name="heart-outline"
-                  size={15}
-                  color={colors.complimentary}
-                /> */}
-            </View>
-            <View style={styles.accountFirst}>
-              <Icon name="diamond" size={12} color={colors.complimentary} />
-              <Text style={{color: colors.complimentary}}>24</Text>
-            </View>
-            <View style={styles.accountSecond}>
-              <Icon name="heart" size={12} color={'#FFAA5B'} />
-              <Text style={{color: colors.complimentary}}>||</Text>
-            </View>
-            <Text style={styles.comments}>
-              <Text style={styles.commentsName}>shinzpu wp sasageuo</Text>{' '}
-              reached
-            </Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <View style={styles.avatar}>
-              <Icon
-                name="heart-outline"
-                size={12}
-                color={colors.complimentary}
-              />
-            </View>
-            <View style={styles.accountFirst}>
-              <Icon name="diamond" size={12} color={colors.complimentary} />
-              <Text style={{color: colors.complimentary}}>24</Text>
-            </View>
-            <View style={styles.accountSecond}>
-              <Icon name="heart" size={12} color={'#FFAA5B'} />
-              <Text style={{color: colors.complimentary}}>||</Text>
-            </View>
-            <Text style={{color: '#fff', marginLeft: 5}}>
-              <Text style={styles.commentsName}>Mama Bear & CO.</Text> Like the
-              LIVE
-            </Text>
-          </View>
-        </View>
+        <Comment />
+        {/* end */}
       </View>
 
       {/* battle input */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          position: 'absolute',
-          bottom: 30,
-          width: '92%',
-          alignSelf: 'center',
-          marginHorizontal: 10,
-        }}>
-        <TouchableOpacity style={{width: '15%', marginLeft: 5}}>
-          <View style={styles.subIcon}>
-            <Icon name="star" size={15} color="#fff" />
-          </View>
-          <Text style={styles.btnTxt}>Subsc...</Text>
-        </TouchableOpacity>
-        <TextInput
-          placeholderTextColor="#B9B3C2"
-          placeholder="Add com..."
-          style={{
-            backgroundColor: '#28203A',
-            borderRadius: 20,
-            width: '40%',
-            padding: 10,
-          }}
+      {!sheet && (
+        <PKBottom
+          roomId={battle.chat_room_id}
+          handleOpenSheet={handleOpenSheet}
         />
-        <TouchableOpacity style={{width: '12%'}}>
-          <Icon name="poll" color={colors.complimentary} size={25} />
-          <Text style={styles.btnTxt}>Poll</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{width: '12%'}}>
-          <Icon name="flower-outline" color="#F35058" size={25} />
-          <Text style={styles.btnTxt}>Rose</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{width: '12%'}}>
-          <Icon name="gift" color="#F97CA1" size={25} />
-          <Text style={styles.btnTxt}>Gift</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{width: '12%'}}>
-          <Icon name="share-outline" color={colors.complimentary} size={25} />
-          <Text style={styles.btnTxt}>78</Text>
-        </TouchableOpacity>
-      </View>
+      )}
 
       {/* end */}
+
+      {/* ****** ******** external ********  ********  */}
+
+      <EndLive
+        user={user}
+        endPodcastForUser={endPodcastForUser}
+        navigation={navigation}
+        id={battle.id}
+        live={false}
+        PK={true}
+        battle={battle}
+      />
+
+      {/* sheet  */}
+
+      <BottomSheet
+        index={-1}
+        enablePanDownToClose={true}
+        // snapPoints={[sheetType == 'avatar' ? '45%' : '60%']}
+        snapPoints={['60%']}
+        ref={bottomSheetRef}
+        handleStyle={{
+          backgroundColor: colors.LG,
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: colors.complimentary,
+        }}
+        onChange={handleSheetChanges}>
+        <BottomSheetView style={styles.contentContainer}>
+          {sheetType == 'gifts' ? (
+            <Gifts />
+          ) : sheetType == 'avatar' ? (
+            <AvatarSheet
+              navigation={navigation}
+              token={token}
+              envVar={envVar}
+            />
+          ) : sheetType == 'users' ? (
+            <Users />
+          ) : (
+            <Tools />
+          )}
+        </BottomSheetView>
+      </BottomSheet>
+
+      {liveStatus == 'LOADING' && <LiveLoading />}
+
+      {/* ********  ******** end ********  ********  */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.LG,
-    // padding: 5,
-    // justifyContent: 'center',
-    // alignItems: 'center',
-  },
-  count: {
-    ...appStyles.bodyMd,
-    marginRight: 30,
-    color: colors.complimentary,
-  },
-  heading: {
-    ...appStyles.regularTxtMd,
-    width: '60%',
-
-    color: colors.complimentary,
-  },
-  countLeft: {
-    marginLeft: 12,
-    ...appStyles.bodyMd,
-    color: colors.complimentary,
-  },
-  comments: {
-    ...appStyles.bodyMd,
-    color: colors.complimentary,
-    marginLeft: 10,
-  },
-  commentsName: {
-    color: '#8d819f',
-  },
-  info: {
-    marginLeft: 5,
-    color: colors.complimentary,
-    ...appStyles.bodyMd,
-  },
-  avatar: {
-    backgroundColor: '#564558',
-    width: 30,
-    height: 30,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  accountFirst: {
-    marginLeft: 10,
-    backgroundColor: '#4454CF',
-    flexDirection: 'row',
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    borderRadius: 4,
-    justifyContent: 'center',
-  },
-  liveViewerLeft: {
-    height: 30,
-    width: 30,
-    borderRadius: 20,
-    borderWidth: 4,
-    borderColor: '#BEC8C5',
-  },
-  subIcon: {
-    marginLeft: 8,
-    backgroundColor: '#F9B04F',
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    borderRadius: 10,
-    justifyContent: 'center',
-  },
-  liveViewerRight: {
-    height: 30,
-    width: 30,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#CDAB6C',
-  },
-  accountSecond: {
-    backgroundColor: '#A64B36',
-    marginLeft: 5,
-    paddingHorizontal: 10,
-    // textAlign: 'center',
-    flexDirection: 'row',
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnTxt: {
-    marginTop: 5,
-    color: colors.complimentary,
-    ...appStyles.bodyMd,
-  },
+  ...mainStyles,
 });

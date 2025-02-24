@@ -41,8 +41,7 @@ export default function Popular({navigation}) {
     try {
       dispatch(setPodcasts([]));
       setLoading(true);
-      const url = envVar.API_URL + 'podcast/active';
-      const res = await axiosInstance.get(url);
+      const res = await axiosInstance.get('podcast/active');
       setLoading(false);
       console.log(res.data);
 
@@ -60,7 +59,7 @@ export default function Popular({navigation}) {
   const joinPodcast = async (item: any) => {
     try {
       setLoading(true);
-      const url = envVar.API_URL + 'podcast/join';
+      const url = 'podcast/join';
       const data = {
         channel: item.channel,
         id: item.id,

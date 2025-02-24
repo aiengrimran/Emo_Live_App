@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
-  Dimensions,
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -94,6 +93,7 @@ export default function Landing({navigation}: any) {
       setToken(res.data.access_token);
       setLoading(false);
     } catch (error: any) {
+      console.log(error);
       if (error.request) {
         setError('please check internet connection');
       }

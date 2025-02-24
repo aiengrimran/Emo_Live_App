@@ -38,7 +38,7 @@ interface BottomSectionProps {
 
 const BottomSection = ({
   handleOpenSheet,
-  roomId = '122',
+  roomId,
   single,
 }: BottomSectionProps) => {
   const chatClient = ChatClient.getInstance();
@@ -76,10 +76,10 @@ const BottomSection = ({
   };
 
   const sendChatRoomMessage = async () => {
-    // if (!roomId) {
-    //   Alert.alert('Slow network', 'Chat room is not created');
-    //   return;
-    // }
+    if (!roomId) {
+      Alert.alert('Slow network', 'Chat room is not created');
+      return;
+    }
     try {
       let msg;
       msg = ChatMessage.createTextMessage(
@@ -88,12 +88,10 @@ const BottomSection = ({
         ChatMessageChatType.ChatRoom,
       );
       setMessage('');
-      // console.log(msg);
-      // return;
 
       // let roomMessage = [...chatRoomMessages];
       // roomMessage.push(msg);
-      // dispatch(addRoomMessage(msg));
+      dispatch(addRoomMessage(msg));
       // return;
       const callback = new (class {
         onProgress(localMsgId: any, progress: any) {
@@ -120,7 +118,6 @@ const BottomSection = ({
             return roomMessage; // Keep other messages unchanged
           });
           dispatch(setChatRoomMessages(updated));
-
           // console.log('send message success: ' + message.localMsgId);
         }
       })();

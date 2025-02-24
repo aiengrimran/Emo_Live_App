@@ -47,7 +47,7 @@ export default function Live({navigation, flatListRef}: LiveProps) {
       setLoading(true);
       dispatch(setStreams([]));
 
-      const url = envVar.API_URL + 'stream/active';
+      const url = 'stream/active';
       const res = await axiosInstance.get(url);
       setLoading(false);
       console.log(res.data);
@@ -64,7 +64,7 @@ export default function Live({navigation, flatListRef}: LiveProps) {
   const joinStream = async (item: any) => {
     try {
       setLoading(true);
-      const url = envVar.API_URL + 'stream/join';
+      const url = 'stream/join';
       const data = {
         channel: item.channel,
         id: item.id,

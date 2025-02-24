@@ -16,6 +16,10 @@ import {
   setLiveStatus,
 } from '../../../../../store/slice/usersSlice';
 import {resetChatRoomMessage} from '../../../../../store/slice/chatSlice';
+import {
+  setBattle,
+  setBattleHosts,
+} from '../../../../../store/slice/PK/battleSlice';
 
 export const resetPodcastState = dispatch => {
   console.log('function run');
@@ -62,5 +66,12 @@ export const resetLiveStreaming = dispatch => {
   dispatch(resetChatRoomMessage());
   dispatch(resetSingleStreamListeners([]));
   // dispatch(setStream(''));
+  dispatch(setLiveStatus('IDLE'));
+};
+export const resetBattle = dispatch => {
+  dispatch(setIsJoined(false));
+  dispatch(setBattleHosts([]));
+  dispatch(setBattle(''));
+  dispatch(resetChatRoomMessage());
   dispatch(setLiveStatus('IDLE'));
 };

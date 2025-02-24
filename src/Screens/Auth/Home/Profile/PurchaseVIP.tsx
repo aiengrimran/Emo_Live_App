@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   Platform,
+  Alert,
 } from 'react-native';
 import React, {useState, useRef, useCallback} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -15,20 +16,27 @@ import {colors} from '../../../../styles/colors';
 import Easypaisa from '../../../../assets/svg/easy.svg';
 import TradeMark from '../../../../assets/svg/trademark.svg';
 import axiosInstance from '../../../../Api/axiosConfig';
+import {useDispatch, useSelector} from 'react-redux';
 
-export default function PurchaseVIP({navigation}) {
-  const [tab, setTab] = useState(1);
-  const [card, setCard] = useState(2);
+interface PurchaseProps {
+  navigation: any;
+}
+export default function PurchaseVIP({navigation}: PurchaseProps) {
+  const {purchase} = useSelector((state: any) => state.account);
+  const dispatch = useDispatch();
+
   const [form, setForm] = useState({
     loading: false,
     phone: '',
-    error: '',
+    error: null,
   });
 
   const makePayment = async () => {
     try {
+      console.log(purchase);
+      Alert.alert('Error', 'EasyPaisa Merchant Account Required');
+      return;
       setForm({...form, loading: false});
-
       const url = '';
       const res = await axiosInstance.post('/');
       console.log(res.data);
@@ -45,14 +53,6 @@ export default function PurchaseVIP({navigation}) {
     }, 3000);
   };
 
-  // Function to handle open Bottom Sheet
-
-  const updateCard = (valTab: number) => {
-    setCard(valTab);
-  };
-  const updateTab = (valTab: number) => {
-    setTab(valTab);
-  };
   return (
     <View style={styles.container}>
       <View style={appStyles.backBtn}>
@@ -91,9 +91,7 @@ export default function PurchaseVIP({navigation}) {
               placeholderTextColor="#737380"
             />
           </View>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => navigation.navigate('Coin')}>
+          <TouchableOpacity style={styles.btn} onPress={makePayment}>
             <Text style={[appStyles.paragraph1, {color: colors.complimentary}]}>
               Pay Upto 150000
             </Text>

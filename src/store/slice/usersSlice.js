@@ -22,8 +22,27 @@ export const fetchUserDetails = createAsyncThunk(
         return data.users;
       }
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      console.log('Error fetching user info:', error);
       throw error; // Re-throw the error to handle it in the component if needed
+    }
+  },
+);
+export const getUsers = createAsyncThunk(
+  'users/getUsers',
+  async (_, {dispatch}) => {
+    try {
+      dispatch(setLoading(true));
+      // If no new IDs, return early
+      // Fetch user data from API for new IDs
+      const {data} = await axiosInstance.get('/chat/active-users');
+      dispatch(updateUsers(data.users));
+    } catch (error) {
+      console.log('Error fetching user info:', error);
+      dispatch(setError('Some error: internet issue'));
+
+      throw error; // Re-throw the error to handle it in the component if needed
+    } finally {
+      dispatch(setLoading(false));
     }
   },
 );
@@ -65,6 +84,9 @@ export const managerSlice = createSlice({
     },
     setUserDetails: (state, {payload}) => {
       state.userDetails = payload;
+    },
+    setError: (state, {payload}) => {
+      state.error = payload;
     },
     setSelectedGuest: (state, action) => {
       state.selectedGuest = action.payload;
@@ -145,6 +167,7 @@ export const {
   setUserDetails,
   setIsJoined,
   resetD,
+  setError,
   test,
   setSelectedGuest,
   setLiveForm,

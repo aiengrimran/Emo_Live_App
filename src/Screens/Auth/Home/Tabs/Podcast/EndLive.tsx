@@ -28,6 +28,8 @@ interface EndLiveProps {
   navigation: any;
   id: any;
   live: boolean;
+  PK: boolean;
+  battle: any;
 }
 export default function EndLive({
   user,
@@ -35,6 +37,8 @@ export default function EndLive({
   navigation,
   id,
   live = false,
+  PK = false,
+  battle,
 }: EndLiveProps) {
   const dispatch = useDispatch();
   const [disabled, setDisabled] = useState(false);
@@ -47,12 +51,21 @@ export default function EndLive({
     try {
       dispatch(setLiveStatus('IDLE'));
       setDisabled(true);
-      let url = envVar.API_URL + (live ? 'stream' : 'podcast') + '/end/' + id;
-      if (user.id !== podcast.host || user.id !== stream.host) {
-        url = url + '/guest';
+      let url = 'end/' + id;
+      if (PK) {
+        url = 'battle/' + url;
+        if ([battle.user1_id, battle.user2_id].includes(user.id)) {
+          url = url + '/guest';
+        }
+      } else {
+        url = (live ? 'stream/' : 'podcast/') + url;
+        if (user.id !== podcast.host || user.id !== stream.host) {
+          url = url + '/guest';
+        }
       }
-      console.log(url);
-      // await axiosInstance.get(url);
+
+      // console.log(url);
+      await axiosInstance.get(url);
     } catch (error) {
       console.log(error);
     } finally {
@@ -60,6 +73,27 @@ export default function EndLive({
       endPodcastForUser();
     }
   };
+  // const endPodcast = async () => {
+  //   try {
+  //     dispatch(setLiveStatus('IDLE'));
+  //     setDisabled(true);
+  //     let url =
+  //     if (battle) {
+
+  //     }
+  //     url = (live ? 'stream' : 'podcast') + '/end/' + id;
+  //     if (user.id !== podcast.host || user.id !== stream.host) {
+  //       url = url + '/guest';
+  //     }
+  //     // console.log(url);
+  //     await axiosInstance.get(url);
+  //   } catch (error) {
+  //     console.log(error);
+  //   } finally {
+  //     setDisabled(false);
+  //     endPodcastForUser();
+  //   }
+  // };
 
   const cancelLeave = () => {
     dispatch(setLeaveModal(false));

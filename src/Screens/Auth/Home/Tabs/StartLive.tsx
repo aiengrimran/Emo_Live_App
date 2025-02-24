@@ -123,13 +123,13 @@ export default function StartLive({navigation}: StartLiveProps) {
       };
       console.log('starting podcast', data);
 
-      const url = envVar.API_URL + 'podcast/start';
+      const url = 'podcast/start';
 
       const res = await axiosInstance.post(url, data);
       console.log(res.data);
       if (res.status == 201) {
         setUser(() => res.data.user);
-        dispatch(updatePodcastListeners(9));
+        dispatch(updatePodcastListeners(8));
         dispatch(setPodcast(res.data.podcast));
         navigation.replace('GoLive');
       }
@@ -167,12 +167,12 @@ export default function StartLive({navigation}: StartLiveProps) {
       setLoading(true);
 
       // setLoading(true);
-      const url = envVar.API_URL + 'stream/start';
+      const url = 'stream/start';
       const data = {
         title: 'Some title',
         duration: 10,
         // listeners: guests,
-        listeners: multi ? 9 : 4,
+        listeners: multi ? 8 : 4,
         single: !multi,
         listeners_can_add: [],
         type: 'PUBLIC',

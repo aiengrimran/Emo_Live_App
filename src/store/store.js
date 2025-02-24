@@ -4,15 +4,19 @@ import chatReducer from './slice/chatSlice';
 import notificationReducer from './slice/notificationSlice';
 import podcastReducer from './slice/podcastSlice';
 import streamingReducer from './slice/streamingSlice';
+import accountReducer from './slice/accountSlice';
+import battleReducer from './slice/PK/battleSlice';
 // import {composeWithDevTools} from 'redux-devtools-extension';
 
 export const store = configureStore({
   reducer: {
     users: usersReducer,
+    account: accountReducer,
     chat: chatReducer,
     notification: notificationReducer,
     podcast: podcastReducer,
     streaming: streamingReducer,
+    battle: battleReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

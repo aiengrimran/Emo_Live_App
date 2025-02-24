@@ -1,8 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
-import envVar from '../../config/envVar';
 import {Alert} from 'react-native';
 import axiosInstance from '../../Api/axiosConfig';
-import axios from 'axios';
 
 export const getUserInfoFromAPI = createAsyncThunk(
   'streaming/getUserInfoFromAPI',

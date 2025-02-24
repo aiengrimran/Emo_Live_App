@@ -1,6 +1,7 @@
 export default env = {
   API_URL: 'https://www.emolivestreaming.online/api/',
   LOCAL_URL: 'http://localhost:8000/api/',
+  LOCAL_TOKEN: '',
   ZALKIP_TOKEN:
     '007eJxTYGDM4VA6nvRI9nt6bXZ5r9XXyAsq329xvT7RX/8vPFvpF48CQ3KSobmFhallWpqBoYmBQYqFQUqyiUFKqqG5eVpqSlIyx8z16Q2BjAwth+sZGBlYgZiRAcRXYTBKMTU3tDQ10E02TTLVNTRMTdNNtEg21zWyTLawSEw0TDRLSQUAoV0oWw==',
   IMRAN_TOKEN:

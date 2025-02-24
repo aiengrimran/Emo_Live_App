@@ -18,6 +18,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {
   updateUsers,
+  getUsers,
+  setLoading,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
 import Context from '../../../../Context/Context';
@@ -30,38 +32,28 @@ export default function Search({navigation}: SearchScreenProps) {
   const {userAuthInfo, tokenMemo} = useContext(Context);
   const {token} = tokenMemo;
   const dispatch = useDispatch();
-  const users = useSelector((state: any) => state.users.users);
+  const {users, loading} = useSelector((state: any) => state.users);
 
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [searchLoader, setSearchLoader] = useState(false);
   const [query, setQuery] = useState('');
   const [searchUsers, setSearchUsers] = useState([]);
 
   useEffect(() => {
-    getUsers();
+    // getUsers();
+    dispatch(getUsers());
   }, []);
 
-  const getUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get('/chat/active-users');
-      dispatch(updateUsers(res.data.users));
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
   const followUser = async (item: any) => {
     try {
+      dispatch(setLoading(true));
+
       const url = item.is_followed
         ? '/user/un-follow-user/' + item.id
         : '/user/follow-user/' + item.id;
       setLoading(true);
       const res = await axiosInstance.get(url);
-      setLoading(false);
+      dispatch(setLoading(false));
       dispatch(updateUsers(res.data.users));
     } catch (error: any) {
       console.log(error);

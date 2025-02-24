@@ -61,7 +61,7 @@ export default function GoLive2({navigation}: GoLiveProps) {
         return;
       }
       // setLoading(true);
-      const url = envVar.API_URL + 'stream/start';
+      const url = 'stream/start';
       const data = {
         title: 'Some title',
         duration: 10,

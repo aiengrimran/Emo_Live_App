@@ -12,6 +12,8 @@ import {
   setLocalConv,
   setTokenRenewed,
 } from '../../../store/slice/chatSlice';
+import notifee from '@notifee/react-native';
+
 import NetInfo, {useNetInfo, refresh} from '@react-native-community/netinfo';
 import axiosInstance from '../../../Api/axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,9 +41,13 @@ import {
 } from '../../../store/slice/chatSlice';
 import {useSelector, useDispatch} from 'react-redux';
 import appStyles from '../../../styles/styles';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+
 const MAX_RETRIES = 3;
 
 export default function HomeB() {
+  const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
+
   const dispatch = useDispatch();
   const chatClient = ChatClient.getInstance();
   const chatManager = chatClient.chatManager;
@@ -52,68 +58,81 @@ export default function HomeB() {
     useSelector((state: any) => state.chat);
   const {unread} = useSelector((state: any) => state.notification);
 
+  // useEffect(() => {
+  //   let initializedOnce = false; // Prevents duplicate initialization
+
+  //   if (!initialized && !initializedOnce && !connected) {
+  //     console.log('Network available, initializing chat SDK...Home');
+  //     // Initialize the chat SDK here
+  //     initializedOnce = true;
+
+  //     // initializedAgoraChat();
+  //   }
+  //   return () => {
+  //     // chatClient.removeAllConnectionListener();
+  //   };
+  // }, [initialized, connected]);
+
   useEffect(() => {
-    let initializedOnce = false; // Prevents duplicate initialization
-
-    if (!initialized && !initializedOnce && !connected) {
-      console.log('Network available, initializing chat SDK...Home');
-      // Initialize the chat SDK here
-      initializedOnce = true;
-
-      initializedAgoraChat();
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new AudioRecorderPlayer();
     }
     return () => {
-      // chatClient.removeAllConnectionListener();
+      // Clean up the audio player instance on component unmount
+      audioPlayerRef.current?.stopPlayer();
+      audioPlayerRef.current = null;
     };
-  }, [initialized, connected]);
+  }, []);
   // NetInfo.addEventListener(state => {
   //   if (!state.isConnected) {
   //     console.log('Network lost, reconnecting chat...');
   //     chatClient.reconnect();
   //   }
+
   // });
-  useEffect(() => {
-    if (!initialized && !connected) {
-      console.log('Network available, initializing chat SDK...Home');
 
-      initializedAgoraChat(); // Your function to initialize Agora Chat
+  // useEffect(() => {
+  //   if (!initialized && !connected) {
+  //     console.log('Network available, initializing chat SDK...Home');
 
-      setInitialized(true);
-    }
+  //     initializedAgoraChat(); // Your function to initialize Agora Chat
 
-    const connectionListener: ChatConnectEventListener = {
-      onTokenWillExpire() {
-        callApiForRenewToken();
-        // Alert.alert('Token Expired', 'Token will expired soon');
-      },
-      onTokenDidExpire() {
-        callApiForRenewToken();
-        console.log('token did expire');
-      },
-      onConnected() {
-        console.log('onConnected');
-        // Alert.alert('phone connected');
-        dispatch(setConnected(true));
-      },
-      onDisconnected() {
-        dispatch(setConnected(false));
-        dispatch(setTokenRenewed(false));
-        // Alert.alert('Disconnected', 'Disconnected from agora');
-        console.log('onDisconnected:x');
-      },
-      onUserAuthenticationFailed() {
-        callApiForRenewToken();
-        // loginUser();
-      },
-    };
-    if (initialized) {
-      chatClient.addConnectionListener(connectionListener);
-    }
+  //     setInitialized(true);
+  //   }
 
-    return () => {
-      chatClient.removeConnectionListener(connectionListener); // ✅ Only remove this listener, not all
-    };
-  }, [initialized, connected]);
+  //   const connectionListener: ChatConnectEventListener = {
+  //     onTokenWillExpire() {
+  //       callApiForRenewToken();
+  //       // Alert.alert('Token Expired', 'Token will expired soon');
+  //     },
+  //     onTokenDidExpire() {
+  //       callApiForRenewToken();
+  //       console.log('token did expire');
+  //     },
+  //     onConnected() {
+  //       console.log('onConnected');
+  //       // Alert.alert('phone connected');
+  //       dispatch(setConnected(true));
+  //     },
+  //     onDisconnected() {
+  //       dispatch(setConnected(false));
+  //       dispatch(setTokenRenewed(false));
+  //       // Alert.alert('Disconnected', 'Disconnected from agora');
+  //       console.log('onDisconnected:x');
+  //     },
+  //     onUserAuthenticationFailed() {
+  //       callApiForRenewToken();
+  //       // loginUser();
+  //     },
+  //   };
+  //   if (initialized) {
+  //     chatClient.addConnectionListener(connectionListener);
+  //   }
+
+  //   return () => {
+  //     chatClient.removeConnectionListener(connectionListener); // ✅ Only remove this listener, not all
+  //   };
+  // }, [initialized, connected]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -146,8 +165,14 @@ export default function HomeB() {
             dispatch(setChatRoomMessages(messagesReceived));
             return;
           }
+          playNotificationSound();
           dispatch(setMessages(messagesReceived));
           dispatch(fetchUserDetails([messagesReceived[0].from]));
+          onDisplayNotification(
+            messagesReceived[0].body.type == 'txt'
+              ? 'text Message Received'
+              : 'Voice Message Received',
+          );
         },
         onMessagesRead: (messages: Array<ChatMessage>): void => {
           console.log('Messages read:', messages);
@@ -208,7 +233,33 @@ export default function HomeB() {
       loginUser();
     }
   }, [tokenRenewed]);
+  const onDisplayNotification = async (text: string) => {
+    // Request permissions (required for iOS)
+    await notifee.requestPermission();
+    // Create a channel (required for Android)
+    const channelId = await notifee.createChannel({
+      id: 'default',
+      name: 'Default Channel',
+    });
 
+    // Display a notification
+    await notifee.displayNotification({
+      title: 'Message Received',
+      body: text,
+      // body: 'Main body content of the notification',
+      android: {
+        channelId,
+        // smallIcon: 'name-of-a-small-icon', // optional, defaults to 'ic_launcher'.
+        pressAction: {
+          id: 'default',
+        },
+        // sound: 'default',
+      },
+      ios: {
+        sound: 'default',
+      },
+    });
+  };
   const callApiForRenewToken = async () => {
     try {
       if (tokenRenewed) return;
@@ -262,6 +313,16 @@ export default function HomeB() {
     } catch (error) {
       // setError('error occurred: please check internet connection(m)');
       console.log('error');
+    }
+  };
+
+  const playNotificationSound = async () => {
+    try {
+      const path = 'message.mp3';
+      await audioPlayerRef.current?.startPlayer(path);
+      audioPlayerRef.current?.setVolume(1.0);
+    } catch (error) {
+      console.log('Error playing sound:', error);
     }
   };
 

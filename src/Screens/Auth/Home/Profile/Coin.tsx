@@ -3,18 +3,30 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
   StyleSheet,
-  ScrollView,
+  FlatList,
+  Dimensions,
   Image,
   Platform,
+  Alert,
 } from 'react-native';
-import React, {useContext, useCallback, useState, useRef} from 'react';
+import React, {
+  useContext,
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+} from 'react';
 import Context from '../../../../Context/Context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
 import PlayStore from '../../../../assets/svg/play.svg';
+import {formatNumber} from '../../../../utils/generalScript';
+import Toast from 'react-native-toast-message';
+
 import Cat from '../../../../assets/svg/cat.svg';
 import EasyPaisa from '../../../../assets/svg/easy.svg';
 import {colors} from '../../../../styles/colors';
@@ -22,20 +34,36 @@ import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from '@gorhom/bottom-sheet';
+import axiosInstance from '../../../../Api/axiosConfig';
+const deviceWidth = Dimensions.get('window').width;
+const deviceHeight = Dimensions.get('window').height;
+import {useDispatch, useSelector} from 'react-redux';
+import {setPurchase} from '../../../../store/slice/accountSlice';
+// import audioService from '../../../../services/audioService';
 
-export default function Coin({navigation}) {
+interface CoinProp {
+  navigation: any;
+}
+export default function Coin({navigation}: CoinProp) {
+  const dispatch = useDispatch();
+  const {purchase} = useSelector((state: any) => state.account);
   const {userAuthInfo, tokenMemo} = useContext(Context);
-
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [sheet, setSheet] = useState<boolean>(false);
-
-  const {user} = userAuthInfo;
+  const [loading, setLoading] = useState<boolean>(false);
+  const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
-  const [tab, setTab] = useState(1);
-  const [card, setCard] = useState(2);
+  const [data, setData] = useState({
+    type: '',
+    combine: [],
+    displaying: [],
+    disabled: false,
+  });
 
   const handleOpenSheet = useCallback(() => {
     bottomSheetRef.current?.expand();
+  }, []);
+  useEffect(() => {
+    getPackages();
   }, []);
 
   // renders
@@ -50,21 +78,78 @@ export default function Coin({navigation}) {
     [],
   );
 
-  const updateCard = (valTab: number) => {
-    setCard(valTab);
+  const getPackages = async () => {
+    try {
+      setLoading(true);
+      const url = 'packages';
+      const res = await axiosInstance.get(url);
+      // console.log(res.data);
+      setData((prev: any) => ({
+        ...prev,
+        type: 'diamonds',
+        combine: res.data.packages,
+        displaying: res.data.packages.diamonds,
+      }));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
-  const updateTab = (valTab: number) => {
-    setTab(valTab);
+
+  const offlinePurchase = async () => {
+    bottomSheetRef.current?.close();
+    Alert.alert('Offline Transfer', 'Please Transfer offline Amount to Admin');
+    try {
+      setData(prev => ({...prev, disabled: true}));
+
+      const url = 'package/purchase';
+      let data = {
+        packageId: purchase.id,
+        type: 'offline',
+      };
+      const res = await axiosInstance.post(url, data);
+      // Toast.show({
+      //   type: 'success',
+      //   text1: 'Success',
+      //   text2: 'Request Sent 👋'
+      // });
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setData(prev => ({...prev, disabled: false}));
+    }
+  };
+
+  const displayType = (type: any) => {
+    setData(prev => ({...prev, displaying: data.combine[type], type}));
+  };
+  const refreshUser = async () => {
+    try {
+      setLoading(true);
+      const url = 'user';
+      const res = await axiosInstance.get(url);
+      // console.log(res.data);
+      setUser(res.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <View style={styles.container}>
-      <View style={{marginTop: Platform.OS == 'ios' ? 40 : 10}}>
+      <View style={{marginTop: Platform.OS == 'ios' ? 50 : 10}}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}>
           <Icon name="arrow-left-thin" color={colors.complimentary} size={25} />
         </TouchableOpacity>
       </View>
+      <TouchableOpacity onPress={refreshUser} style={styles.editBtn}>
+        <Icon name="refresh" color={colors.complimentary} size={23} />
+      </TouchableOpacity>
 
       <View style={{alignSelf: 'center', alignItems: 'center'}}>
         <Image
@@ -84,20 +169,18 @@ export default function Coin({navigation}) {
           {/* Current Details */}
           {user.first_name + ' ' + user.last_name}
         </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 30,
-            justifyContent: 'space-evenly',
-            alignItems: 'center',
-          }}>
+        <View style={styles.accountStats}>
           <View style={styles.info}>
-            <Text style={styles.infoHeading}>1435</Text>
-            <Text style={styles.infoText}>Diamond</Text>
+            <Text style={styles.infoHeading}>
+              {formatNumber(user.wallet?.diamonds)}
+            </Text>
+            <Text style={styles.infoText}>Diamond 💎</Text>
           </View>
           <View style={styles.info}>
-            <Text style={styles.infoHeading}>247k</Text>
-            <Text style={styles.infoText}>Beans</Text>
+            <Text style={styles.infoHeading}>
+              {formatNumber(user.wallet?.beans)}
+            </Text>
+            <Text style={styles.infoText}>Beans 🫘</Text>
           </View>
         </View>
       </View>
@@ -106,38 +189,64 @@ export default function Coin({navigation}) {
           <Text style={styles.balanceTxt}>Account Balance</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.coinType}>
-        <TouchableOpacity
-          onPress={() => setTab(1)}
-          style={[styles.tab, tab == 1 && {borderBottomWidth: 2}]}>
-          <Text style={[styles.tabText, tab == 1 && {color: '#fff'}]}>
-            Diamonds
-          </Text>
-          <Icon
-            style={{marginLeft: 5}}
-            name="diamond"
-            color="#4ea2e6"
-            size={25}
+      {loading ? (
+        <View>
+          <ActivityIndicator
+            animating={true}
+            size={'large'}
+            style={[appStyles.indicatorStyle, {marginTop: deviceHeight * 0.2}]}
           />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setTab(2)}
-          style={[styles.tab, tab == 2 && {borderBottomWidth: 2}]}>
-          <Text style={[styles.tabText, tab == 2 && {color: '#fff'}]}>
-            Beans
-          </Text>
-          <Icon name="chevron-right" color="#fff" size={25} />
-        </TouchableOpacity>
-      </View>
-      {tab == 1 ? (
-        <Diamond
-          navigation={navigation}
-          handleOpenSheet={handleOpenSheet}></Diamond>
+        </View>
       ) : (
-        <Beans
-          navigation={navigation}
-          handleOpenSheet={handleOpenSheet}></Beans>
+        <>
+          <View style={styles.coinType}>
+            <TouchableOpacity
+              onPress={() => displayType('diamonds')}
+              style={[
+                styles.tab,
+                data.type == 'diamonds' && {borderBottomWidth: 2},
+              ]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  data.type == 'diamonds' && {color: '#fff'},
+                ]}>
+                Diamonds 💎
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => displayType('beans')}
+              style={[
+                styles.tab,
+                data.type == 'beans' && {borderBottomWidth: 2},
+              ]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  data.type == 'beans' && {color: '#fff'},
+                ]}>
+                Beans
+              </Text>
+              <Icon name="chevron-right" color="#fff" size={25} />
+            </TouchableOpacity>
+          </View>
+
+          {data.type == 'diamonds' ? (
+            <Diamond
+              navigation={navigation}
+              data={data}
+              dispatch={dispatch}
+              handleOpenSheet={handleOpenSheet}></Diamond>
+          ) : (
+            <Beans
+              data={data}
+              navigation={navigation}
+              dispatch={dispatch}
+              handleOpenSheet={handleOpenSheet}></Beans>
+          )}
+        </>
       )}
+
       <BottomSheet
         index={-1}
         enablePanDownToClose={true}
@@ -175,7 +284,9 @@ export default function Coin({navigation}) {
                 </View>
                 <Icon name="chevron-right" size={25} color={colors.lines} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sheetBtn}>
+              <TouchableOpacity
+                style={styles.sheetBtn}
+                onPress={offlinePurchase}>
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
                   <Cat height={33} width={33} />
                   <Text
@@ -238,10 +349,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    // backgroundColor: 'red',
     backgroundColor: colors.LG,
-    // borderTopEndRadius: 40,
-    // borderTopLeftRadius: 40,
     padding: 16,
   },
   coinType: {
@@ -276,7 +384,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '95%',
   },
-
+  editBtn: {
+    flexDirection: 'row',
+    // width: '20%',
+    position: 'absolute',
+    width: 35,
+    height: 35,
+    top: Platform.OS == 'ios' ? 70 : 20,
+    right: 20,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
   cardPeriod: {
     color: colors.complimentary,
     ...appStyles.bodyMd,
@@ -289,10 +409,13 @@ const styles = StyleSheet.create({
   },
   card: {
     paddingTop: 10,
-    width: '30%',
-    height: 150,
-    backgroundColor: '#302847',
+    marginBottom: 20,
+    width: deviceWidth * 0.291,
+    height: deviceWidth * 0.39,
+    // backgroundColor: '#494759',
+    justifyContent: 'center',
     borderWidth: 1,
+    margin: 5,
     borderColor: '#403f51',
     alignItems: 'center',
     borderRadius: 8,
@@ -319,21 +442,26 @@ const styles = StyleSheet.create({
   },
   info: {
     width: '25%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoHeading: {
+    textAlign: 'center',
+    marginRight: 14,
     ...appStyles.headline2,
     color: colors.complimentary,
-    marginLeft: 5,
   },
   infoText: {
     ...appStyles.bodyRg,
+    marginTop: 5,
+    textAlign: 'center',
     color: colors.body_text,
   },
   cardAmount: {
     backgroundColor: '#ed005c',
     borderRadius: 9,
     padding: 5,
-    marginTop: -5,
+    marginTop: 10,
   },
   userText: {
     ...appStyles.headline,
@@ -341,202 +469,106 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.complimentary,
   },
+  accountStats: {
+    flexDirection: 'row',
+    marginTop: 30,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
 });
 
-const Diamond = ({navigation, handleOpenSheet}) => {
+interface DiamondProps {
+  navigation: any;
+  handleOpenSheet: any;
+  data: any;
+  dispatch: any;
+}
+const Diamond = ({
+  navigation,
+  handleOpenSheet,
+  data,
+  dispatch,
+}: DiamondProps) => {
   return (
-    <>
-      <View
-        style={{
-          marginTop: 20,
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>900</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$1.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>2700</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$2.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>5400</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$9.99</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          marginTop: 40,
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>9000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$14.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>18000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$29.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/diamonds.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="diamond" color="#4ea2e6" size={18} />
-            <Text style={styles.cardPeriod}>45000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$34.99</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </>
+    <View
+      style={{
+        marginTop: 40,
+        alignItems: 'center',
+      }}>
+      <FlatList
+        data={data.displaying}
+        numColumns={3}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <TouchableOpacity
+            disabled={data.disabled}
+            style={styles.card}
+            onPress={() => {
+              dispatch(setPurchase(item));
+              handleOpenSheet();
+            }}>
+            <Image
+              style={{
+                marginTop: 10,
+                height: deviceWidth * 0.224,
+                width: deviceWidth * 0.224,
+              }}
+              source={require('../../../../assets/images/diamonds.png')}
+            />
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Text style={styles.cardPeriod}>💎 {item.count}</Text>
+            </View>
+            <View style={styles.cardAmount}>
+              <Text style={styles.cardPrice}>${item.price}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 };
 
-const Beans = ({navigation, handleOpenSheet}) => {
+interface Beans {
+  navigation: any;
+  handleOpenSheet: any;
+  data: any;
+  dispatch: any;
+}
+const Beans = ({navigation, handleOpenSheet, data, dispatch}: Beans) => {
   return (
-    <>
-      <View
-        style={{
-          marginTop: 20,
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity style={styles.card} onPress={handleOpenSheet}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>900</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$1.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>2700</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$2.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>5400</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$9.99</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          marginTop: 30,
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-        }}>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>9000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$14.99</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>18000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$29.9</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={() => handleOpenSheet()}>
-          <Image
-            style={{height: 90, width: 90}}
-            source={require('../../../../assets/images/beans.png')}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Icon name="palm-tree" color="#8d3b38" size={18} />
-            <Text style={styles.cardPeriod}>45000</Text>
-          </View>
-          <View style={styles.cardAmount}>
-            <Text style={styles.cardPrice}>$34.99</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </>
+    <View
+      style={{
+        marginTop: 40,
+        alignItems: 'center',
+      }}>
+      <FlatList
+        data={data.displaying}
+        numColumns={3}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <TouchableOpacity
+            disabled={data.disabled}
+            style={styles.card}
+            onPress={() => {
+              dispatch(setPurchase(item));
+              handleOpenSheet();
+            }}>
+            <Image
+              style={{
+                height: deviceWidth * 0.224,
+                width: deviceWidth * 0.224,
+              }}
+              source={require('../../../../assets/images/beans.png')}
+            />
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Text style={styles.cardPeriod}>🫘 {item.count}</Text>
+            </View>
+            <View style={styles.cardAmount}>
+              <Text style={styles.cardPrice}>${item.price}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 };

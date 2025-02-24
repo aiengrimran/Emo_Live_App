@@ -5,16 +5,25 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  NativeModules,
   Image,
   FlatList,
 } from 'react-native';
-import React, {useState, useRef, useContext} from 'react';
+import React, {useState, useRef, useEffect, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Popular from './Navigations/Popular';
 import envVar from '../../../config/envVar';
 import {updatePodcastListeners} from '../../../store/slice/podcastSlice';
 import {ChatTextMessageBody} from 'react-native-agora-chat';
 import {fetchUserDetails} from '../../../store/slice/usersSlice';
+
+import RNFS from 'react-native-fs';
+import {
+  checkReadStorage,
+  checkWriteStorage,
+  checkCamPermission,
+} from '../../../scripts';
+
 import {
   setUnreadCount,
   setUnreadNotification,
@@ -43,8 +52,11 @@ import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
 import Context from '../../../Context/Context';
 import axiosInstance from '../../../Api/axiosConfig';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 export default function Home({navigation}) {
+  const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
+
   const {userDetails} = useSelector((state: any) => state.users);
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {user} = userAuthInfo;
@@ -56,9 +68,19 @@ export default function Home({navigation}) {
   const [tab, setTab] = useState(1);
   const translateX = useSharedValue(0);
 
+  useEffect(() => {
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new AudioRecorderPlayer();
+    }
+    return () => {
+      // Clean up the audio player instance on component unmount
+      audioPlayerRef.current?.stopPlayer();
+      audioPlayerRef.current = null;
+    };
+  }, []);
   const getNotifications = async () => {
     try {
-      const url = envVar.API_URL + 'notifications/unread';
+      const url = 'notifications/unread';
       const res = await axiosInstance.get(url);
       const count = res.data.notifications.length;
       if (count > 0) {
@@ -119,7 +141,7 @@ export default function Home({navigation}) {
 
   const test = () => {
     // dispatch(setStream(stream));
-    console.log(userDetails);
+    // console.log(userDetails);
 
     // dispatch(fetchUserDetails([1, 14, 15]));
 
@@ -154,8 +176,9 @@ export default function Home({navigation}) {
           </Text>
           <TouchableOpacity
             onPress={() => {
-              test();
-              // navigation.navigate('Notifications');
+              // test();
+              // playNotificationSound();
+              navigation.navigate('Notifications');
             }}>
             {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />

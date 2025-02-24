@@ -57,7 +57,6 @@ import {
   setHostLeftPodcast,
   setLeaveModal,
 } from '../../../../../store/slice/podcastSlice';
-import axios from 'axios';
 import {
   updateStreamListeners,
   setUserInState,
@@ -110,9 +109,6 @@ export default function LiveStreaming({navigation}) {
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
   const [sheet, setSheet] = useState<boolean>(false);
-  const [statusBarStyle, setStatusBarStyle] = useState<StatusBarStyle>(
-    STYLES[0],
-  );
   const [sheetType, setSheetType] = useState<string | null>('');
   const dispatch = useDispatch();
 
@@ -137,17 +133,16 @@ export default function LiveStreaming({navigation}) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // if (!isJoined) {
-    setupVideoSDKEngine();
-    // }
+    if (!isJoined) {
+      setupVideoSDKEngine();
+    }
 
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
       agoraEngineRef.current?.release();
     };
-  }, []);
-  // }, [isJoined]);
+  }, [isJoined]);
 
   // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
@@ -169,7 +164,6 @@ export default function LiveStreaming({navigation}) {
               dispatch(getUserInfoFromAPI(stream.host));
               return;
             }
-
             dispatch(setUserInState(user));
           }
           if (stream.host == user.id) {
@@ -424,7 +418,7 @@ export default function LiveStreaming({navigation}) {
 
   const saveChatRoomId = async (roomId: string, retryCount = 0) => {
     try {
-      const url = envVar.API_URL + 'stream/save-roomId';
+      const url = 'stream/save-roomId';
       const data = {
         chatRoomId: roomId,
         id: stream.id,
@@ -498,19 +492,9 @@ export default function LiveStreaming({navigation}) {
   const destroyEngine = () => {
     resetLiveStreaming(dispatch);
     try {
-      const channelLeave = agoraEngineRef.current?.leaveChannel();
-      let handler = agoraEngineRef.current?.unregisterEventHandler(
-        eventHandler.current!,
-      );
-      const engine = agoraEngineRef.current?.release();
-      console.log(
-        'channelLeave => ',
-        channelLeave,
-        'handler => ',
-        handler,
-        'engine =>',
-        engine,
-      );
+      agoraEngineRef.current?.leaveChannel();
+      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      agoraEngineRef.current?.release();
     } catch (error) {
       console.log(error);
     }
@@ -534,11 +518,6 @@ export default function LiveStreaming({navigation}) {
   const handleOpenSheet = useCallback((type: string) => {
     setSheet(true);
     setSheetType(type);
-    bottomSheetRef.current?.expand();
-  }, []);
-  const handleOpenSheet2 = useCallback(() => {
-    setSheet(true);
-    setSheetType('avatar');
     bottomSheetRef.current?.expand();
   }, []);
 
@@ -735,6 +714,8 @@ export default function LiveStreaming({navigation}) {
           navigation={navigation}
           id={stream.id}
           live={true}
+          PK={false}
+          battle={''}
         />
         <BottomSheet
           index={-1}

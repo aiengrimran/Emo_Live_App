@@ -11,6 +11,7 @@ import Routes from './src/Routes/Index';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import hotUpdate from 'react-native-ota-hot-update';
 import {store} from './src/store/store';
+import Toast from 'react-native-toast-message';
 import Chats1 from './src/tests/Chats1';
 import LiveStreaming from './src/tests/LiveStreaming';
 // import Sw
@@ -113,6 +114,7 @@ export default function App() {
           {/* <Chat /> */}
           {/* <Chats1 /> */}
           <Routes />
+          <Toast />
           {/* <BackDrop /> */}
         </Provider>
       </View>

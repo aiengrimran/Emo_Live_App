@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import envVar from '../config/envVar';
 const axiosInstance = axios.create({
   baseURL: envVar.API_URL,
-  timeout: 30000,
+  timeout: 35000,
   // timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -16,7 +16,7 @@ axiosInstance.interceptors.request.use(
     // Add token to request headers
     const token = await AsyncStorage.getItem('token');
     if (token) {
-      // const tokenP = JSON.parse(token);
+      config.headers.Accept = 'application/json';
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

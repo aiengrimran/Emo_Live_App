@@ -120,13 +120,15 @@ export default function GoLive({navigation}: any) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    setupVideoSDKEngine();
+    if (isJoined) {
+      setupVideoSDKEngine();
+    }
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
       agoraEngineRef.current?.release();
     };
-  }, []);
+  }, [isJoined]);
 
   const setupVideoSDKEngine = async () => {
     try {
@@ -289,7 +291,7 @@ export default function GoLive({navigation}: any) {
   const saveChatRoomId = async (roomId: string) => {
     try {
       console.log('calling api to roomId');
-      const url = envVar.API_URL + 'podcast/save-roomId';
+      const url = 'podcast/save-roomId';
       const data = {
         chatRoomId: roomId,
         id: podcast.id,
@@ -522,6 +524,8 @@ export default function GoLive({navigation}: any) {
             navigation={navigation}
             id={podcast.id}
             live={false}
+            PK={false}
+            battle={''}
           />
 
           <BottomSheet
