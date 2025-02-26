@@ -91,48 +91,48 @@ export default function HomeB() {
 
   // });
 
-  // useEffect(() => {
-  //   if (!initialized && !connected) {
-  //     console.log('Network available, initializing chat SDK...Home');
+  useEffect(() => {
+    if (!initialized && !connected) {
+      console.log('Network available, initializing chat SDK...Home');
 
-  //     initializedAgoraChat(); // Your function to initialize Agora Chat
+      initializedAgoraChat(); // Your function to initialize Agora Chat
 
-  //     setInitialized(true);
-  //   }
+      setInitialized(true);
+    }
 
-  //   const connectionListener: ChatConnectEventListener = {
-  //     onTokenWillExpire() {
-  //       callApiForRenewToken();
-  //       // Alert.alert('Token Expired', 'Token will expired soon');
-  //     },
-  //     onTokenDidExpire() {
-  //       callApiForRenewToken();
-  //       console.log('token did expire');
-  //     },
-  //     onConnected() {
-  //       console.log('onConnected');
-  //       // Alert.alert('phone connected');
-  //       dispatch(setConnected(true));
-  //     },
-  //     onDisconnected() {
-  //       dispatch(setConnected(false));
-  //       dispatch(setTokenRenewed(false));
-  //       // Alert.alert('Disconnected', 'Disconnected from agora');
-  //       console.log('onDisconnected:x');
-  //     },
-  //     onUserAuthenticationFailed() {
-  //       callApiForRenewToken();
-  //       // loginUser();
-  //     },
-  //   };
-  //   if (initialized) {
-  //     chatClient.addConnectionListener(connectionListener);
-  //   }
+    const connectionListener: ChatConnectEventListener = {
+      onTokenWillExpire() {
+        callApiForRenewToken();
+        // Alert.alert('Token Expired', 'Token will expired soon');
+      },
+      onTokenDidExpire() {
+        callApiForRenewToken();
+        console.log('token did expire');
+      },
+      onConnected() {
+        console.log('onConnected');
+        // Alert.alert('phone connected');
+        dispatch(setConnected(true));
+      },
+      onDisconnected() {
+        dispatch(setConnected(false));
+        dispatch(setTokenRenewed(false));
+        // Alert.alert('Disconnected', 'Disconnected from agora');
+        console.log('onDisconnected:x');
+      },
+      onUserAuthenticationFailed() {
+        callApiForRenewToken();
+        // loginUser();
+      },
+    };
+    if (initialized) {
+      chatClient.addConnectionListener(connectionListener);
+    }
 
-  //   return () => {
-  //     chatClient.removeConnectionListener(connectionListener); // ✅ Only remove this listener, not all
-  //   };
-  // }, [initialized, connected]);
+    return () => {
+      chatClient.removeConnectionListener(connectionListener); // ✅ Only remove this listener, not all
+    };
+  }, [initialized, connected]);
 
   const initializedAgoraChat = () => {
     let o = new ChatOptions({
@@ -165,7 +165,7 @@ export default function HomeB() {
             dispatch(setChatRoomMessages(messagesReceived));
             return;
           }
-          playNotificationSound();
+          // playNotificationSound();
           dispatch(setMessages(messagesReceived));
           dispatch(fetchUserDetails([messagesReceived[0].from]));
           onDisplayNotification(
@@ -387,24 +387,6 @@ export default function HomeB() {
           ),
         }}
       />
-      {/* <Tab.Screen
-        name="GoLive2"
-        component={GoLive2}
-        options={{
-          tabBarLabel: 'GoLive',
-          tabBarActiveTintColor: colors.complimentary,
-          tabBarInactiveTintColor: colors.body_text,
-          tabBarIcon: ({focused}) => (
-            <View style={{position: 'relative'}}>
-              <Icon
-                name="camera-plus-outline"
-                size={25}
-                color={focused ? colors.complimentary : colors.body_text}
-              />
-            </View>
-          ),
-        }}
-      /> */}
       <Tab.Screen
         // name="Alerts"
         name="Notifications"

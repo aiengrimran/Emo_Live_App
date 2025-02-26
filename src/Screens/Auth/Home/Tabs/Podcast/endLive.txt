@@ -112,25 +112,16 @@ export default function EndLive({
     dispatch(setLeaveModal(false));
   };
 
-  interface BodyText {
-    live: boolean;
-    podcastId: number;
-    userId: number;
-  }
-  const getText = ({live, podcastId, userId}: BodyText) => {
-    if (PK) {
-      return 'Are you sure to left this Battle.';
-    }
-    if (hostLeftPodcast) {
-      return live ? 'Host Has Left Stream' : 'Host Has Left PodCast';
-    } else if (userId === podcastId) {
-      return 'Are you sure to end this podcast Host';
-    } else {
-      return live
-        ? 'Are you sure to left this Stream.'
-        : 'Are you sure to left this Podcast.';
-    }
-  };
+  const renderPodcastText = (live, hostLeftPodcast, userId, podcastId) => {
+    const getText = () => {
+      if (hostLeftPodcast) {
+        return live ? 'Host Has Left Stream' : 'Host Has Left PodCast';
+      } else if (userId === podcastId) {
+        return 'Are you sure to end this podcast Host';
+      } else {
+        return live ? 'Are you sure to left this Stream.' : 'Are you sure to left this Podcast.';
+      }
+    };
 
   return (
     <View>
@@ -155,10 +146,26 @@ export default function EndLive({
                 {/* {live ? 'Live Streaming' : 'Podcast'} End */}
               </Text>
               <View style={{marginVertical: 20}}>
-                <Text
-                  style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
-                  {getText({live, podcastId: podcast.id, userId: user.id})}
-                </Text>
+                {live ? (
+                  <Text
+                    style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                    {/* {description()} */}
+                    {hostLeftPodcast
+                      ? 'Host Has Left Stream'
+                      : user.id == podcast.id
+                      ? 'Are you sure to end this podcast Host'
+                      : 'Are you sure to left this Stream.'}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[appStyles.regularTxtMd, {color: colors.body_text}]}>
+                    {hostLeftPodcast
+                      ? 'Host Has Left PodCast'
+                      : user.id == podcast.id
+                      ? 'Are you sure to end this podcast Host'
+                      : 'Are you sure to left this Podcast.'}
+                  </Text>
+                )}
               </View>
 
               <TouchableOpacity

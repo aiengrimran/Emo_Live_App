@@ -10,10 +10,12 @@ import {
   BackHandler,
   Image,
   FlatList,
+  NativeModules,
   Dimensions,
   TextInput,
   Alert,
 } from 'react-native';
+const {ScreenAwake} = NativeModules;
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import liveStyles from './styles/liveStyles';
@@ -133,8 +135,6 @@ export default function GoLive({navigation}: any) {
   const setupVideoSDKEngine = async () => {
     try {
       // Create RtcEngine after obtaining device permissions
-      // dispatch(setIsJoined(false));
-
       console.log('initializing engine ....');
       agoraEngineRef.current = createAgoraRtcEngine();
       const agoraEngine = agoraEngineRef.current;
@@ -220,6 +220,7 @@ export default function GoLive({navigation}: any) {
       case 3:
         dispatch(setLiveStatus('CONNECTED'));
         dispatch(setIsJoined(true));
+        timeOutScreen(false);
         break;
       case 5:
         leaveAgoraChannel();
@@ -227,11 +228,19 @@ export default function GoLive({navigation}: any) {
       case 1:
         dispatch(setLiveStatus('IDLE'));
         dispatch(setIsJoined(false));
+        timeOutScreen(false);
         // userJoinChannel();
         console.log('disconnected');
         break;
       default:
         break;
+    }
+  };
+  const timeOutScreen = (val: boolean) => {
+    try {
+      ScreenAwake.keepAwake(val);
+    } catch (error) {
+      console.log(error);
     }
   };
   // Function to handle open Bottom Sheet
@@ -417,6 +426,7 @@ export default function GoLive({navigation}: any) {
     try {
       const res = agoraEngineRef.current?.leaveChannel();
       dispatch(setIsJoined(false));
+      timeOutScreen(false);
       dispatch(setLiveStatus('IDLE'));
       console.log(res);
     } catch (error) {

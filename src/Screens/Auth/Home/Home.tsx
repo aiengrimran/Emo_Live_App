@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
-  NativeModules,
+  TouchableWithoutFeedback,
   Image,
   FlatList,
 } from 'react-native';
@@ -46,19 +46,18 @@ import Live from './Navigations/Live';
 import {useSelector, useDispatch} from 'react-redux';
 import NewHost from './Navigations/NewHost';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
+import Explore from './Tabs/Components/Explore';
 
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
 import Context from '../../../Context/Context';
 import axiosInstance from '../../../Api/axiosConfig';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 export default function Home({navigation}) {
-  const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
-
   const {userDetails} = useSelector((state: any) => state.users);
   const {tokenMemo, userAuthInfo} = useContext(Context);
+  const [showExplore, setshowExplore] = useState(false);
   const {user} = userAuthInfo;
   const dispatch = useDispatch();
   // const {token} = tokenMemo;
@@ -68,16 +67,6 @@ export default function Home({navigation}) {
   const [tab, setTab] = useState(1);
   const translateX = useSharedValue(0);
 
-  useEffect(() => {
-    if (!audioPlayerRef.current) {
-      audioPlayerRef.current = new AudioRecorderPlayer();
-    }
-    return () => {
-      // Clean up the audio player instance on component unmount
-      audioPlayerRef.current?.stopPlayer();
-      audioPlayerRef.current = null;
-    };
-  }, []);
   const getNotifications = async () => {
     try {
       const url = 'notifications/unread';
@@ -140,6 +129,7 @@ export default function Home({navigation}) {
   }));
 
   const test = () => {
+    // console.log(NativeModules);
     // dispatch(setStream(stream));
     // console.log(userDetails);
 
@@ -151,6 +141,7 @@ export default function Home({navigation}) {
     navigation.navigate('LiveStreaming');
     // navigation.navigate('GoLive');
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.screenTop}>
@@ -167,16 +158,10 @@ export default function Home({navigation}) {
           />
         </View>
         <View style={styles.headerLeft}>
-          <Text
-            style={styles.heading}
-            onPress={() => {
-              console.log(userDetails);
-            }}>
-            Emo Live
-          </Text>
+          <Text style={styles.heading}>Emo Live</Text>
           <TouchableOpacity
             onPress={() => {
-              // test();
+              test();
               // playNotificationSound();
               navigation.navigate('Notifications');
             }}>
@@ -185,6 +170,8 @@ export default function Home({navigation}) {
           </TouchableOpacity>
         </View>
       </View>
+      {showExplore && <Explore />}
+
       {/* <View> */}
       <View>
         <ScrollView

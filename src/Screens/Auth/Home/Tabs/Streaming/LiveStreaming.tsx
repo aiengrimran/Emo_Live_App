@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  NativeModules,
   // SafeAreaView,
   StatusBar,
   Image,
@@ -46,6 +47,7 @@ import {
   VideoSourceType,
 } from 'react-native-agora';
 import StreamStatus from './StreamStatus';
+const {ScreenAwake} = NativeModules;
 import Context from '../../../../../Context/Context';
 import LiveLoading from '../Components/LiveLoading';
 const deviceWidth = Dimensions.get('window').width;
@@ -262,6 +264,7 @@ export default function LiveStreaming({navigation}) {
       case 3:
         dispatch(setLiveStatus('CONNECTED'));
         dispatch(setIsJoined(true));
+        timeOutScreen(true);
         break;
       case 4:
         dispatch(setLiveStatus('LOADING'));
@@ -280,11 +283,19 @@ export default function LiveStreaming({navigation}) {
         break;
     }
   };
+  const timeOutScreen = (val: boolean) => {
+    try {
+      ScreenAwake.keepAwake(val);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const leaveAgoraChannel = async () => {
     try {
       if (agoraEngineRef.current) {
         agoraEngineRef.current.leaveChannel(); // Leave the channel
         dispatch(setIsJoined(false));
+        timeOutScreen(false);
         console.log('Left the Agora channel successfully');
       } else {
         console.log('Agora engine is not initialized');

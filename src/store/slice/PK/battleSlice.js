@@ -44,6 +44,20 @@ export const battleSlice = createSlice({
           : item,
       );
     },
+    updateMuteUnmuteUser: (state, {id}) => {
+      state.battleHosts = state.battleHosts.map(listener =>
+        listener.user?.id === id
+          ? {...listener, muted: !listener.muted} // Create a new object with updated muted property
+          : listener,
+      );
+    },
+    updateUserCamera: (state, {id}) => {
+      state.battleHosts = state.battleHosts.map(listener =>
+        listener.user?.id === id
+          ? {...listener, camOn: !listener.camOn} // Create a new object with updated muted property
+          : listener,
+      );
+    },
 
     setBattleHosts: (state, action) => {
       state.battleHosts = action.payload;
@@ -63,6 +77,8 @@ export const battleSlice = createSlice({
 export const {
   updateStreamRoomId,
   setBattleHosts,
+  updateMuteUnmuteUser,
+  updateUserCamera,
   setUserInBattle,
   setBattles,
   setBattle,

@@ -6,6 +6,7 @@ import {
   Modal,
   Image,
   TextInput,
+  Platform,
   FlatList,
   Dimensions,
   ActivityIndicator,
@@ -51,8 +52,15 @@ export default function Battle({navigation}: Battle) {
   });
 
   useEffect(() => {
-    // dispatch(getBattles())
+    // dispatch(getBattles());
   }, []);
+
+  const test = () => {
+    console.log('Ss');
+    dispatch(updateBattleHosts(2));
+    dispatch(setBattle(''));
+    navigation.navigate('LiveBattle');
+  };
 
   const startPKBattle = async () => {
     try {
@@ -121,7 +129,14 @@ export default function Battle({navigation}: Battle) {
           Start New Battle
         </Text>
       </TouchableOpacity>
-
+      <TouchableOpacity
+        style={styles.refreshBtn}
+        onPress={() => {
+          // test();
+          dispatch(getBattles());
+        }}>
+        <Icon name="refresh" color={colors.complimentary} size={20} />
+      </TouchableOpacity>
       <FlatList
         data={battles}
         keyExtractor={item => item.id?.toString}
@@ -160,7 +175,6 @@ export default function Battle({navigation}: Battle) {
           </TouchableOpacity>
         )}
       />
-
       <StartPK
         modal={modal}
         setForm={setForm}
@@ -238,6 +252,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     borderRadius: 26,
+  },
+  refreshBtn: {
+    // top: Platform.OS == 'ios' ? 80 : 20,
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    backgroundColor: colors.accent,
+    width: 35,
+    height: 35,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   PodcastUser: {
     position: 'relative',

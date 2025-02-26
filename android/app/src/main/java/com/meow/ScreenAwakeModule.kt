@@ -12,17 +12,23 @@ class ScreenAwakeModule(reactContext: ReactApplicationContext) : ReactContextBas
     }
     override fun getName(): String = "ScreenAwake"
 
-    // @ReactMethod
-    // fun keepAwake(enabled: Boolean) {
-    //     currentActivity?.runOnUiThread {
-    //         val window = currentActivity?.window
-    //         if (enabled) {
-    //             window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    //         } else {
-    //             window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    //         }
-    //     }
-    // }
+    @ReactMethod
+    fun keepAwake(enabled: Boolean) {
+        currentActivity?.runOnUiThread {
+            val window = currentActivity?.window
+            if (enabled) {
+                window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+    
+    @ReactMethod
+    fun testString(): String {
+        return "Hello world native module"
+
+    }
 
     @ReactMethod
     fun testMethod() {

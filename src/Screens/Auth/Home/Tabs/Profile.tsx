@@ -158,15 +158,7 @@ export default function Search({navigation}) {
               Check VIP
             </Text>
           </TouchableOpacity>
-          <View
-            style={{
-              top: Platform.OS == 'ios' ? 80 : 20,
-              flexDirection: 'row',
-              position: 'absolute',
-              right: 20,
-              justifyContent: 'space-between',
-              width: '25%',
-            }}>
+          <View style={styles.refreshBtn}>
             <TouchableOpacity onPress={refreshUser} style={styles.refresh}>
               <Icon name="refresh" color={colors.complimentary} size={20} />
             </TouchableOpacity>
@@ -558,6 +550,14 @@ const styles = StyleSheet.create({
   process: {
     height: 10,
     backgroundColor: 'blue',
+  },
+  refreshBtn: {
+    top: Platform.OS == 'ios' ? 80 : 20,
+    flexDirection: 'row',
+    position: 'absolute',
+    right: 20,
+    justifyContent: 'space-between',
+    width: '25%',
   },
   levelTxt: {
     color: colors.dominant,

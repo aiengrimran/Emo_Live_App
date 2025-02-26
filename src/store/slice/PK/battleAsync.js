@@ -57,23 +57,15 @@ export const getBattles = createAsyncThunk(
         type: 'users/setLoading',
         payload: true,
       });
-      let url = envVar.LOCAL_URL + 'battles';
-      console.log(url);
-      // return;
-      // const {data} = await axiosInstance.get('battles');
-      const {data} = await axios.get(envVar.LOCAL_URL + 'battles');
-      console.log(data);
-
-      if (data.battles?.[0]) {
-        dispatch(setBattles(data.battles));
-      }
+      const {data} = await axiosInstance.get('battles');
+      dispatch(setBattles(data.battles));
     } catch (error) {
       console.warn('Error fetching user info:', error);
       throw error; // Re-throw the error to handle it in the component if needed
     } finally {
       dispatch({
         type: 'users/setLoading',
-        payload: true,
+        payload: false,
       });
     }
   },

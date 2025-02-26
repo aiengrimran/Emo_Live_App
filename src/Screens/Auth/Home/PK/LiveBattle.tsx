@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   BackHandler,
+  NativeModules,
   Image,
   TextInput,
   Alert,
@@ -25,6 +26,7 @@ import Gifts from '../Tabs/Podcast/Gifts';
 import AvatarSheet from '../Tabs/Components/AvatarSheet';
 import Users from '../Tabs/Podcast/Users';
 import Tools from '../Tabs/Podcast/Tools';
+const {ScreenAwake} = NativeModules;
 import {
   checkCamPermission,
   checkMicrophonePermission,
@@ -61,7 +63,9 @@ import Context from '../../../../Context/Context';
 import PKBottom from './components/PKBottom';
 import {
   setBattle,
+  updateMuteUnmuteUser,
   setUserInBattle,
+  updateUserCamera,
 } from '../../../../store/slice/PK/battleSlice';
 import {
   getUserInfoFromAPI,
@@ -81,7 +85,9 @@ export default function LiveBattle({navigation}: LiveBattle) {
   const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
   const {userAuthInfo, tokenMemo} = useContext(Context);
-  const {battle, roomId} = useSelector((state: any) => state.battle);
+  const {battle, roomId, battleHosts} = useSelector(
+    (state: any) => state.battle,
+  );
   const {isJoined, loading, liveStatus} = useSelector(
     (state: any) => state.users,
   );
@@ -114,16 +120,16 @@ export default function LiveBattle({navigation}: LiveBattle) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    // if (!isJoined) {
-    setupVideoSDKEngine();
-    // }
+    if (!isJoined) {
+      setupVideoSDKEngine();
+    }
 
     // Release memory when the App is closed
     return () => {
       agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
       agoraEngineRef.current?.release();
     };
-  }, []);
+  }, [isJoined]);
 
   // Define the setupVideoSDKEngine method called when the App starts
   const setupVideoSDKEngine = async () => {
@@ -212,6 +218,7 @@ export default function LiveBattle({navigation}: LiveBattle) {
       case 3:
         dispatch(setLiveStatus('CONNECTED'));
         dispatch(setIsJoined(true));
+        timeOutScreen(true);
         break;
       case 4:
         dispatch(setLiveStatus('LOADING'));
@@ -224,10 +231,18 @@ export default function LiveBattle({navigation}: LiveBattle) {
       case 1:
         dispatch(setLiveStatus('IDLE'));
         dispatch(setIsJoined(false));
+
         console.log('disconnected');
         break;
       default:
         break;
+    }
+  };
+  const timeOutScreen = (val: boolean) => {
+    try {
+      ScreenAwake.keepAwake(val);
+    } catch (error) {
+      console.log(error);
     }
   };
   const leaveAgoraChannel = async () => {
@@ -235,6 +250,7 @@ export default function LiveBattle({navigation}: LiveBattle) {
       if (agoraEngineRef.current) {
         agoraEngineRef.current.leaveChannel(); // Leave the channel
         dispatch(setIsJoined(false));
+        timeOutScreen(false);
         console.log('Left the Agora channel successfully');
       } else {
         console.log('Agora engine is not initialized');
@@ -408,6 +424,46 @@ export default function LiveBattle({navigation}: LiveBattle) {
   const handleSheetChanges = useCallback((index: number) => {
     if (index < 0) setSheet(false);
   }, []);
+
+  const toggleCamera = () => {
+    try {
+      if (agoraEngineRef.current) {
+        const res = agoraEngineRef.current.switchCamera();
+        console.log(res);
+      }
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+    }
+  };
+
+  const toggleMute = (item: any) => {
+    try {
+      if (agoraEngineRef.current) {
+        // Toggle mute/unmute for the remote user
+        agoraEngineRef.current.muteLocalAudioStream(item.muted);
+        dispatch(updateMuteUnmuteUser(item.user.id));
+      }
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+    }
+  };
+
+  const offCamera = (item: any) => {
+    try {
+      if (agoraEngineRef.current) {
+        // Toggle mute/unmute for the remote user
+        if (item.camOn) {
+          agoraEngineRef.current.disableVideo();
+        } else {
+          agoraEngineRef.current.enableVideo();
+        }
+        dispatch(updateUserCamera(item.user.id));
+      }
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <PKHeader
@@ -421,32 +477,70 @@ export default function LiveBattle({navigation}: LiveBattle) {
       {/* match info */}
       <BattleInfo />
       <View style={{flexDirection: 'row'}}>
-        <View style={{backgroundColor: '#e93d53', width: '60%'}}>
-          <Text style={styles.countLeft}>1221312</Text>
+        <View style={styles.user1Score}>
+          <Text style={styles.countLeft}>0</Text>
         </View>
-        <View style={{backgroundColor: '#058CFF', width: '40%'}}>
-          <Text style={[styles.count, {textAlign: 'right'}]}>1221312</Text>
+        <View style={styles.user2Score}>
+          <Text style={[styles.count, {textAlign: 'right'}]}>0</Text>
         </View>
       </View>
       <View style={{position: 'relative'}}>
         <View style={styles.duration}>
-          <Text style={{color: colors.complimentary}}>
+          <Text
+            style={{color: colors.complimentary}}
+            onPress={() => console.log(battleHosts)}>
             V<Text style={{color: '#6E5ED4'}}>S</Text>{' '}
             {battle.duration || '10:20'}
           </Text>
         </View>
         {/* *** main **** */}
         <View style={{flexDirection: 'row'}}>
-          <View
-            style={{
-              width: '50%',
-              backgroundColor: colors.LR,
-              height: deviceHeight * 0.35,
-            }}>
+          <View style={styles.userLeft}>
             {isJoined ? (
-              <RtcSurfaceView
-                canvas={{uid: battle.user1_id == user.id ? 0 : battle.user1_id}}
-              />
+              <>
+                <RtcSurfaceView
+                  canvas={{
+                    uid: battle.user1_id == user.id ? 0 : battle.user1_id,
+                  }}
+                />
+                {user.id == battle.user1_id && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.toggleCamLeft}
+                      onPress={() => toggleCamera()}>
+                      <Icon
+                        name="camera-flip-outline"
+                        size={20}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.toggleMuteBtn}
+                      onPress={() => toggleMute(battleHosts[0])}>
+                      <Icon
+                        name={
+                          battleHosts[0].muted ? 'microphone-off' : 'microphone'
+                        }
+                        size={20}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.offCamLeft}
+                      onPress={() => offCamera(battleHosts[0])}>
+                      <Icon
+                        name={
+                          battleHosts[0].camOn
+                            ? 'camera-off-outline'
+                            : 'camera-outline'
+                        }
+                        size={25}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
             ) : (
               <View style={{alignItems: 'center', marginTop: 140}}>
                 <Text style={{color: colors.complimentary}}>
@@ -456,19 +550,58 @@ export default function LiveBattle({navigation}: LiveBattle) {
             )}
 
             <View style={styles.winLeft}>
-              <Text style={[appStyles.regularTxtMd, {color: '#F8E4B6'}]}>
+              <Text style={styles.winTxt}>
                 WIN
-                <Text style={[appStyles.bodyMd, {color: '#fff'}]}>x 1</Text>
+                <Text style={styles.winCount}> x 1</Text>
               </Text>
             </View>
           </View>
-          <View style={{width: '50%', position: 'relative'}}>
+          <View style={styles.userRight}>
             {isJoined ? (
-              <RtcSurfaceView
-                canvas={{
-                  uid: battle.user2_id == user.id ? 0 : battle.user2_id,
-                }}
-              />
+              <>
+                <RtcSurfaceView
+                  canvas={{
+                    uid: battle.user2_id == user.id ? 0 : battle.user2_id,
+                  }}
+                />
+                {user.id == battle.user2_id && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.toggleCamLeft}
+                      onPress={() => toggleCamera()}>
+                      <Icon
+                        name="camera-flip-outline"
+                        size={20}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.toggleMuteBtn}
+                      onPress={() => toggleMute(battleHosts[1])}>
+                      <Icon
+                        name={
+                          battleHosts[1].muted ? 'microphone-off' : 'microphone'
+                        }
+                        size={20}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.offCamLeft}
+                      onPress={() => offCamera(battleHosts[1])}>
+                      <Icon
+                        name={
+                          battleHosts[1].camOn
+                            ? 'camera-off-outline'
+                            : 'camera-outline'
+                        }
+                        size={25}
+                        color={colors.complimentary}
+                      />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
             ) : (
               <View style={{alignItems: 'center', marginTop: 140}}>
                 <Text style={{color: colors.complimentary}}>
@@ -478,9 +611,9 @@ export default function LiveBattle({navigation}: LiveBattle) {
             )}
 
             <View style={styles.winRight}>
-              <Text style={[appStyles.regularTxtMd, {color: '#F8E4B6'}]}>
+              <Text style={styles.winTxt}>
                 WIN
-                <Text style={[appStyles.bodyMd, {color: '#fff'}]}>x 10</Text>
+                <Text style={styles.winCount}> x 10</Text>
               </Text>
             </View>
           </View>
@@ -560,4 +693,21 @@ export default function LiveBattle({navigation}: LiveBattle) {
 
 const styles = StyleSheet.create({
   ...mainStyles,
+  userLeft: {
+    width: '50%',
+    backgroundColor: colors.LR,
+    height: deviceHeight * 0.35,
+  },
+  toggleCamLeft: {position: 'absolute', right: 5, top: 45},
+  toggleMuteBtn: {position: 'absolute', left: 10, top: 45},
+  offCamLeft: {
+    position: 'absolute',
+    right: 15,
+    bottom: 10,
+  },
+  userRight: {width: '50%', position: 'relative'},
+  user1Score: {backgroundColor: '#e93d53', width: '60%'},
+  user2Score: {backgroundColor: '#058CFF', width: '40%'},
+  winTxt: {...appStyles.regularTxtMd, color: '#F8E4B6'},
+  winCount: {...appStyles.bodyMd, color: '#fff'},
 });
