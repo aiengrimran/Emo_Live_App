@@ -238,6 +238,7 @@ export default function GoLive({navigation}: any) {
   };
   const timeOutScreen = (val: boolean) => {
     try {
+      if (Platform.OS !== 'android') return;
       ScreenAwake.keepAwake(val);
     } catch (error) {
       console.log(error);

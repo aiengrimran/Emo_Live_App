@@ -240,6 +240,7 @@ export default function LiveBattle({navigation}: LiveBattle) {
   };
   const timeOutScreen = (val: boolean) => {
     try {
+      if (Platform.OS !== 'android') return;
       ScreenAwake.keepAwake(val);
     } catch (error) {
       console.log(error);

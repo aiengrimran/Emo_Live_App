@@ -285,6 +285,7 @@ export default function LiveStreaming({navigation}) {
   };
   const timeOutScreen = (val: boolean) => {
     try {
+      if (Platform.OS !== 'android') return;
       ScreenAwake.keepAwake(val);
     } catch (error) {
       console.log(error);

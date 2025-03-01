@@ -7,9 +7,6 @@ import android.view.WindowManager
 
 class ScreenAwakeModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
    
-   init {
-        println("CalendarModule initialized")
-    }
     override fun getName(): String = "ScreenAwake"
 
     @ReactMethod
@@ -30,8 +27,4 @@ class ScreenAwakeModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     }
 
-    @ReactMethod
-    fun testMethod() {
-        println("Test method called")
-    }
 }

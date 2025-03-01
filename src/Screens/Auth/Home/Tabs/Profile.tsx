@@ -14,7 +14,6 @@ import {
   Modal,
   NativeModules,
 } from 'react-native';
-const {ScreenAwake} = NativeModules;
 import React, {useContext, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import hotUpdate from 'react-native-ota-hot-update';
@@ -138,7 +137,6 @@ export default function Search({navigation}) {
   };
   const temp = async () => {
     console.log('i am clicked');
-    console.log(ScreenAwake);
   };
   return (
     <View style={styles.container}>
