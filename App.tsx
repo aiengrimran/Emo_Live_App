@@ -14,6 +14,7 @@ import {store} from './src/store/store';
 import Toast from 'react-native-toast-message';
 import Chats1 from './src/tests/Chats1';
 import LiveStreaming from './src/tests/LiveStreaming';
+// import RealTime from './src/tests/RealTime';
 // import Sw
 import {Provider} from 'react-redux';
 
@@ -114,7 +115,8 @@ export default function App() {
           {/* <Chat /> */}
           {/* <Chats1 /> */}
           <Routes />
-          <Toast />
+          {/* <RealTime /> */}
+          {/* <Toast /> */}
           {/* <BackDrop /> */}
         </Provider>
       </View>

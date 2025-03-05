@@ -75,7 +75,7 @@ const appStyles = StyleSheet.create({
     marginTop: 70,
   },
   backBtn: {
-    marginTop: Platform.OS == 'ios' ? 40 : 5,
+    marginTop: Platform.OS == 'ios' ? 30 : 5,
     flexDirection: 'row',
     alignItems: 'center',
     width: '50%',

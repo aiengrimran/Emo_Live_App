@@ -21,6 +21,7 @@ import {
 } from '../../../../store/slice/usersSlice';
 import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
+import {formatNumber} from '../../../../utils/generalScript';
 
 export default function UserProfile({navigation}) {
   const dispatch = useDispatch();
@@ -90,28 +91,28 @@ export default function UserProfile({navigation}) {
         <Text style={styles.userText}>
           {visitProfile.first_name + ' ' + visitProfile.last_name}
         </Text>
-        <Text style={styles.userDesc}>{visitProfile.bio}.</Text>
-        {/* <Text style={styles.userDesc}>Dreamer, Explorer nature Lover.</Text> */}
+        <Text style={styles.userDesc}>{visitProfile.bio}</Text>
         <View
           style={{
             flexDirection: 'row',
-            marginTop: 30,
+            marginTop: 20,
             alignItems: 'center',
             width: '90%',
-            justifyContent: 'center',
+            // backgroundColor: 'red',
+            // justifyContent: 'center',
             alignSelf: 'center',
           }}>
           <View style={styles.info}>
-            <Text style={styles.infoHeading}>1435</Text>
-            <Text style={styles.infoText}>Diamond</Text>
-          </View>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>247k</Text>
-            <Text style={styles.infoText}>Beans</Text>
-          </View>
-          <View style={styles.info}>
-            <Text style={styles.infoHeading}>1.7</Text>
+            <Text style={styles.infoHeading}>
+              {formatNumber(visitProfile.fans)}
+            </Text>
             <Text style={styles.infoText}>Fans</Text>
+          </View>
+          <View style={styles.info}>
+            <Text style={styles.infoHeading}>
+              {formatNumber(visitProfile.fans)}
+            </Text>
+            <Text style={styles.infoText}>Following</Text>
           </View>
         </View>
       </View>

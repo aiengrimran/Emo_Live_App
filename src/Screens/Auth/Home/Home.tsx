@@ -57,7 +57,7 @@ import axiosInstance from '../../../Api/axiosConfig';
 export default function Home({navigation}) {
   const {userDetails} = useSelector((state: any) => state.users);
   const {tokenMemo, userAuthInfo} = useContext(Context);
-  const [showExplore, setshowExplore] = useState(false);
+  const [showExplore, setShowExplore] = useState(false);
   const {user} = userAuthInfo;
   const dispatch = useDispatch();
   // const {token} = tokenMemo;
@@ -130,6 +130,7 @@ export default function Home({navigation}) {
 
   const test = () => {
     // console.log(NativeModules);
+    setShowExplore(true);
     // dispatch(setStream(stream));
     // console.log(userDetails);
 
@@ -162,15 +163,19 @@ export default function Home({navigation}) {
           <TouchableOpacity
             onPress={() => {
               test();
-              // playNotificationSound();
-              navigation.navigate('Notifications');
             }}>
             {/* onPress={() => navigation.navigate('Notifications')}> */}
             <Icon name="bell-outline" size={24} color={colors.complimentary} />
           </TouchableOpacity>
         </View>
       </View>
-      {showExplore && <Explore />}
+      {showExplore && (
+        <Explore
+          setTab={setTab}
+          setShowExplore={setShowExplore}
+          navigation={navigation}
+        />
+      )}
 
       {/* <View> */}
       <View>

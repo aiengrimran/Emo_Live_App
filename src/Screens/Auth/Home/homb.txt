@@ -92,7 +92,6 @@ export default function HomeB() {
   // });
 
   useEffect(() => {
-    return;
     if (!initialized && !connected) {
       console.log('Network available, initializing chat SDK...Home');
 

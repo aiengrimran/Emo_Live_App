@@ -2,7 +2,6 @@ import {createAsyncThunk} from '@reduxjs/toolkit';
 import axiosInstance from '../../../Api/axiosConfig';
 import envVar from '../../../config/envVar';
 import {setBattle, setBattles, setBattleHosts} from './battleSlice';
-import axios from 'axios';
 const MAX_RETRIES = 3;
 export const saveBattleRoomId = roomId => {
   return async (dispatch, getState) => {

@@ -78,6 +78,13 @@ PODS:
     - hermes-engine/Pre-built (= 0.76.4)
   - hermes-engine/Pre-built (0.76.4)
   - HyphenateChat (4.5.0)
+  - NWWebSocket (0.5.4)
+  - pusher-websocket-react-native (1.3.1):
+    - PusherSwift (~> 10.1.5)
+    - React
+  - PusherSwift (10.1.5):
+    - NWWebSocket (~> 0.5.4)
+    - TweetNacl (~> 1.0.0)
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -2072,6 +2079,7 @@ PODS:
     - Yoga
   - SocketRocket (0.7.1)
   - SSZipArchive (2.4.3)
+  - TweetNacl (1.0.2)
   - VisionCamera (4.6.3):
     - VisionCamera/Core (= 4.6.3)
     - VisionCamera/React (= 4.6.3)
@@ -2087,6 +2095,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - "pusher-websocket-react-native (from `../node_modules/@pusher/pusher-websocket-react-native`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2184,9 +2193,12 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - HyphenateChat
+    - NWWebSocket
+    - PusherSwift
     - React-Codegen
     - SocketRocket
     - SSZipArchive
+    - TweetNacl
 
 EXTERNAL SOURCES:
   boost:
@@ -2202,6 +2214,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2024-11-12-RNv0.76.2-5b4aa20c719830dcf5684832b89a6edb95ac3d64
+  pusher-websocket-react-native:
+    :path: "../node_modules/@pusher/pusher-websocket-react-native"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTDeprecation:
@@ -2380,6 +2394,9 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   hermes-engine: 8b344d6d97321a706b9861a89e50e6fb04e8f999
   HyphenateChat: bf4cfa65a83ffa210803fdc91263b4891fb510ee
+  NWWebSocket: 040d22f23438cc09aaeabf537beff67699c3c76d
+  pusher-websocket-react-native: e40c49a1e4ec96d4157375aebcf44943f0f8f62f
+  PusherSwift: cad631bad86cfff4b8458dce1310a7774e469b1f
   RCT-Folly: bf5c0376ffe4dd2cf438dcf86db385df9fdce648
   RCTDeprecation: 063fc281b30b7dc944c98fe53a7e266dab1a8706
   RCTRequired: 8eda2a5a745f6081157a4f34baac40b65fe02b31
@@ -2459,6 +2476,7 @@ SPEC CHECKSUMS:
   RNVectorIcons: 07792a9538e8577c1263fcad187712e90d65d8fb
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
+  TweetNacl: 3abf4d1d2082b0114e7a67410e300892448951e6
   VisionCamera: 598ab83c6bf4d65f5c32ec54361eed866505d388
   Yoga: be6f55a028e86c83ae066f018e9b5d24ffc45436
 

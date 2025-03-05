@@ -20,8 +20,10 @@ import {
   addStreamListenerS,
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
+import {getStreams} from '../../../../store/slice/streaming/streamingAsync';
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
+import {setLoading} from '../../../../store/slice/usersSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import Context from '../../../../Context/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,36 +36,18 @@ interface LiveProps {
 export default function Live({navigation, flatListRef}: LiveProps) {
   const {tokenMemo, userAuthInfo} = useContext(Context);
   const {streams} = useSelector((state: any) => state.streaming);
+  const {loading} = useSelector((state: any) => state.users);
   const {token} = tokenMemo;
   const {setUser} = userAuthInfo;
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // getStream();
+    // dispatch(getStreams()
   }, []);
-  const getStream = async () => {
-    try {
-      setLoading(true);
-      dispatch(setStreams([]));
-
-      const url = 'stream/active';
-      const res = await axiosInstance.get(url);
-      setLoading(false);
-      console.log(res.data);
-
-      if (res.data.stream.length) {
-        dispatch(setStreams(res.data.stream));
-      }
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-    }
-  };
 
   const joinStream = async (item: any) => {
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       const url = 'stream/join';
       const data = {
         channel: item.channel,
@@ -82,7 +66,7 @@ export default function Live({navigation, flatListRef}: LiveProps) {
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -100,7 +84,7 @@ export default function Live({navigation, flatListRef}: LiveProps) {
             <></>
           )}
         </View>
-        <TouchableOpacity onPress={getStream}>
+        <TouchableOpacity onPress={() => dispatch(getStreams())}>
           <Text style={{marginVertical: 10, color: colors.complimentary}}>
             Get Live Streaming
           </Text>
