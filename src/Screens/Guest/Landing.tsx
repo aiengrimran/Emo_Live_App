@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../../Api/axiosConfig';
@@ -142,12 +143,12 @@ export default function Landing({navigation}: any) {
             }}>
             <View
               style={{
-                height: '30%',
+                height: Platform.OS == 'ios' ? '30%' : '25%',
                 backgroundColor: 'rgba(0, 0, 0, 0.4)',
               }}></View>
             <View
               style={{
-                height: '70%',
+                height: Platform.OS == 'ios' ? '70%' : '75%',
                 backgroundColor: 'rgba(0, 0, 0, 0.7)',
               }}>
               <View style={{width: '80%', alignSelf: 'center'}}>
@@ -156,7 +157,7 @@ export default function Landing({navigation}: any) {
                   <Text
                     style={[
                       styles.subText,
-                      {textAlign: 'center', marginTop: 40},
+                      {textAlign: 'center', marginTop: 20},
                     ]}>
                     Experience the Live experience
                   </Text>

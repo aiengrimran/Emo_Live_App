@@ -10,7 +10,27 @@ const AppContext = createContext<any>(null);
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function AppProvider({children}) {
+// Define the shape of the context
+interface AppContextType {
+  userAuthInfo: {
+    user: string | null;
+    setUser: React.Dispatch<React.SetStateAction<string | null>>;
+  };
+  tokenMemo: {
+    token: string | null;
+    setToken: React.Dispatch<React.SetStateAction<string | null>>;
+  };
+  netConnection: {
+    isConnected: boolean;
+    setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
+  };
+  loader: boolean;
+}
+interface AppProviderType {
+  children: any;
+}
+
+export default function AppProvider({children}: AppProviderType) {
   const [user, setUser] = useState<string | null>(null);
   const [connection, setConnection] = useState<boolean | null>(true);
   const [token, setToken] = useState<String | null>(null);

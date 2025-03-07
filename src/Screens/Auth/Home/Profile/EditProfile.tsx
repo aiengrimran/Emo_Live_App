@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Context from '../../../../Context/Context';
+import {colors} from '../../../../styles/colors';
 import GeneralPermission from '../../../../Components/GeneralPermission';
 import {RESULTS} from 'react-native-permissions';
 import appStyles from '../../../../styles/styles';
@@ -24,7 +24,10 @@ import {checkPermission} from '../../../../scripts/index';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAppContext} from '../../../../Context/AppContext';
-export default function EditProfile({navigation}) {
+interface EditProfile {
+  navigation: any;
+}
+export default function EditProfile({navigation}: EditProfile) {
   const {userAuthInfo, tokenMemo} = useAppContext();
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
@@ -85,10 +88,8 @@ export default function EditProfile({navigation}) {
         mediaType: 'photo', // Specify that only photos should be picked
         quality: 1, // Highest quality for the image
       };
-
       // Launch the image library
       const result = await launchImageLibrary(options);
-
       if (result.didCancel) {
         // User canceled the image selection
         Alert.alert('Cancelled', 'Image selection was cancelled.');
@@ -99,7 +100,6 @@ export default function EditProfile({navigation}) {
         // If successful, get the selected image asset
         const asset = result.assets[0];
         console.log('Selected Image:', asset);
-
         // Example: Call a function to handle the selected image
         setSelectedImage(asset); // Ensure setSelectedImage is defined in your state
       } else {

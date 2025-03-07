@@ -76,7 +76,6 @@ export default function Chat({navigation, route}: ChatProps) {
   const userMessages = useSelector(state =>
     selectMessagesForConversation(state, chatUser.id),
   );
-  const [modal, setShowModal] = useState(true);
   // useEffect(() => {
   //   // Subscribe to network state updates
   //   const unsubscribe = NetInfo.addEventListener(state => {
@@ -569,19 +568,8 @@ export default function Chat({navigation, route}: ChatProps) {
             }}
           />
         </View>
-        <ChatModal
-          modalInfo={modalInfo}
-          setModalInfo={setModalInfo}
-          setShowModal={setShowModal}
-        />
-
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            alignSelf: 'center',
-            width: '100%',
-          }}>
+        <ChatModal modalInfo={modalInfo} setModalInfo={setModalInfo} />
+        <View style={styles.input}>
           <Input
             audioPlayerRef={audioPlayerRef}
             setMessage={setMessage}
@@ -607,6 +595,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '90%',
+  },
+  input: {
+    position: 'absolute',
+    bottom: 0,
+    alignSelf: 'center',
+    width: '100%',
   },
   messageAck: {position: 'absolute', right: 10, bottom: 25},
 });

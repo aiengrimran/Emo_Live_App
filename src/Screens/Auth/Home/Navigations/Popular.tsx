@@ -58,6 +58,7 @@ export default function Popular({navigation}) {
 
   const joinPodcast = async (item: any) => {
     try {
+      console.log('ss');
       setLoading(true);
       const url = 'podcast/join';
       const data = {
@@ -82,6 +83,9 @@ export default function Popular({navigation}) {
     <View style={{flex: 1}}>
       <View style={{marginTop: 20}}>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
+        <Text style={{color: '#fff'}} onPress={() => getPodcast()}>
+          get Podcasts
+        </Text>
         <View>
           <FlatList
             data={podcasts}

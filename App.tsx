@@ -19,9 +19,6 @@ import LiveStreaming from './src/tests/LiveStreaming';
 // import Sw
 import {Provider} from 'react-redux';
 
-// import Agora
-import Agora from './src/Routes/Agora';
-
 // Replace <TOKEN> with your actual GitHub token
 
 export default function App() {

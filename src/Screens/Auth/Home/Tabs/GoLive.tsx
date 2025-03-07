@@ -118,7 +118,7 @@ export default function GoLive({navigation}: any) {
 
   useEffect(() => {
     // Initialize the engine when the App starts
-    if (isJoined) {
+    if (!isJoined) {
       setupVideoSDKEngine();
     }
     // Release memory when the App is closed
@@ -137,10 +137,10 @@ export default function GoLive({navigation}: any) {
       eventHandler.current = {
         onJoinChannelSuccess: (_connection: RtcConnection, elapsed: number) => {
           if (podcast.host == user.id) {
-            createUserChatRoom();
+            // createUserChatRoom();
           } else {
             dispatch(getUserInfoFromAPI(podcast.host));
-            userJoinChatRoom(podcast.chat_room_id);
+            // userJoinChatRoom(podcast.chat_room_id);
           }
 
           dispatch(setUserInState(user));
@@ -213,6 +213,7 @@ export default function GoLive({navigation}: any) {
     try {
       const users = await getLiveUsers(podcast.id, 'podcast');
       if (users.length > 0) {
+        console.log('user.length', users);
         dispatch(setPrevUsersInPodcast(users));
       }
     } catch (error) {
@@ -317,8 +318,11 @@ export default function GoLive({navigation}: any) {
     }
   };
 
-  const userJoinChatRoom = async (roomId: any) => {
+  const userJoinChatRoom = async (roomId: string) => {
     try {
+      if (!roomId) {
+        throw new Error('room Id is null');
+      }
       await chatClient.roomManager.joinChatRoom(roomId);
     } catch (error) {
       console.log(error, 'error in joining chat room');

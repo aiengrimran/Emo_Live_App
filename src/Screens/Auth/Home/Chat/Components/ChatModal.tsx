@@ -7,13 +7,8 @@ import {colors} from '../../../../../styles/colors';
 interface ChatModalProps {
   modalInfo: any;
   setModalInfo: any;
-  setShowModal: any;
 }
-export default function ChatModal({
-  modalInfo,
-  setModalInfo,
-  setShowModal,
-}: ChatModalProps) {
+export default function ChatModal({modalInfo, setModalInfo}: ChatModalProps) {
   const deleteMessage = () => {
     try {
     } catch (error) {}
@@ -28,7 +23,9 @@ export default function ChatModal({
       visible={modalInfo.modal}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowModal(false)}>
+      onRequestClose={() =>
+        setModalInfo((prev: any) => ({...prev, modal: false}))
+      }>
       {/* Backdrop */}
       <View style={chatStyles.backdrop}>
         {/* Modal Content */}

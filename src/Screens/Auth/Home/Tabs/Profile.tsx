@@ -43,7 +43,7 @@ export default function Search({navigation}) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getUnreadMessages();
+    // getUnreadMessages();
   }, []);
 
   const onCheckGitVersion = () => {
