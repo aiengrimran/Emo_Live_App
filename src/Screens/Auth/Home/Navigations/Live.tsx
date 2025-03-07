@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
@@ -25,8 +25,8 @@ import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
 import {setLoading} from '../../../../store/slice/usersSlice';
 import {useDispatch, useSelector} from 'react-redux';
-import Context from '../../../../Context/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAppContext} from '../../../../Context/AppContext';
 
 interface LiveProps {
   navigation: any;
@@ -34,7 +34,7 @@ interface LiveProps {
 }
 
 export default function Live({navigation, flatListRef}: LiveProps) {
-  const {tokenMemo, userAuthInfo} = useContext(Context);
+  const {tokenMemo, userAuthInfo} = useAppContext();
   const {streams} = useSelector((state: any) => state.streaming);
   const {loading} = useSelector((state: any) => state.users);
   const {token} = tokenMemo;

@@ -12,21 +12,21 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DatePicker from 'react-native-date-picker';
 
-import Context from '../../Context/Context';
 import appStyles from '../../styles/styles';
 import {colors} from '../../styles/colors';
 import axiosInstance from '../../Api/axiosConfig';
+import {useAppContext} from '../../Context/AppContext';
 // import {ScrollView} from 'react-native-gesture-handler';
 
 export default function Register({navigation}) {
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<any>('');
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {setToken, setUser} = userAuthInfo;
   const [form, setForm] = useState({
     first_name: '',

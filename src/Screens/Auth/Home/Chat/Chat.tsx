@@ -8,7 +8,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useContext} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import ChatModal from './Components/ChatModal';
@@ -26,7 +26,6 @@ import {
 } from 'react-native-agora-chat';
 import {selectMessagesForConversation} from '../../../../store/selectors/selectors';
 import Header from './Components/Header';
-import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
 import Input from './Components/Input';
 import {
@@ -40,6 +39,7 @@ import envVar from '../../../../config/envVar';
 import {useSelector, useDispatch} from 'react-redux';
 import appStyles from '../../../../styles/styles';
 import {chatStyles} from './styles/chat';
+import {useAppContext} from '../../../../Context/AppContext';
 interface ChatProps {
   navigation: any;
   route: any;
@@ -51,7 +51,7 @@ export default function Chat({navigation, route}: ChatProps) {
   const chatClient = ChatClient.getInstance();
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
   const {connected, messages} = useSelector((state: any) => state.chat);
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
 

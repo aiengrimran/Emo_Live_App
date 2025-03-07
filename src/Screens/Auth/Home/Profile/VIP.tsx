@@ -8,7 +8,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import {colors} from '../../../../styles/colors';
@@ -22,12 +22,12 @@ import Diamond from '../../../../assets/svg/diamond.svg';
 import Speed from '../../../../assets/svg/speed.svg';
 import Doctor from '../../../../assets/svg/doctor.svg';
 import Ic from '../../../../assets/svg/Ic.svg';
-import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
+import {useAppContext} from '../../../../Context/AppContext';
 
 // import Group from '../../../../assets/svg/Group.svg';
 export default function VIP({navigation}) {
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
   const [tab, setTab] = useState(1);

@@ -10,10 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import React, {useState, useContext, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../../Api/axiosConfig';
-import Context from '../../Context/Context';
 import appStyles from '../../styles/styles';
 import {
   GoogleSignin,
@@ -21,9 +20,10 @@ import {
 } from '@react-native-google-signin/google-signin';
 
 import {colors} from '../../styles/colors';
+import {useAppContext} from '../../Context/AppContext';
 
 export default function Landing({navigation}: any) {
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {setUser} = userAuthInfo;
   const {setToken} = tokenMemo;
   const [form, setForm] = useState({

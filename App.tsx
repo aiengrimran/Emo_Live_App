@@ -13,6 +13,7 @@ import hotUpdate from 'react-native-ota-hot-update';
 import {store} from './src/store/store';
 import Toast from 'react-native-toast-message';
 import Chats1 from './src/tests/Chats1';
+import AppContext from './src/Context/AppContext';
 import LiveStreaming from './src/tests/LiveStreaming';
 // import RealTime from './src/tests/RealTime';
 // import Sw
@@ -105,7 +106,6 @@ export default function App() {
   return (
     <GestureHandlerRootView>
       <View style={{flex: 1}}>
-        {/* <Agora2 /> */}
         {/* <SwipeImran/> */}
         {/* <GestureTest/> */}
         {/* <MoveFunction/> */}
@@ -114,7 +114,9 @@ export default function App() {
           {/* <Audio /> */}
           {/* <Chat /> */}
           {/* <Chats1 /> */}
-          <Routes />
+          <AppContext>
+            <Routes />
+          </AppContext>
           {/* <RealTime /> */}
           {/* <Toast /> */}
           {/* <BackDrop /> */}

@@ -14,12 +14,11 @@ import {
   Modal,
   NativeModules,
 } from 'react-native';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import hotUpdate from 'react-native-ota-hot-update';
 
 import IconF from 'react-native-vector-icons/FontAwesome6';
-import Context from '../../../../Context/Context';
 import {colors} from '../../../../styles/colors';
 import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
@@ -29,12 +28,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import axiosInstance from '../../../../Api/axiosConfig';
 import envVar from '../../../../config/envVar';
+import {useAppContext} from '../../../../Context/AppContext';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Search({navigation}) {
   const [progress, setProgress] = useState(100);
   const [updateModal, setUpdateModal] = useState(false);
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user, setUser} = userAuthInfo;
   const chatClient = ChatClient.getInstance();
   const {token} = tokenMemo;

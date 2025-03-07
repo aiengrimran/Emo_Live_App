@@ -11,19 +11,19 @@ import {
 import appStyles from '../../../../../styles/styles';
 import {ChatClient} from 'react-native-agora-chat';
 import {colors} from '../../../../../styles/colors';
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Context from '../../../../../Context/Context';
 import axiosInstance from '../../../../../Api/axiosConfig';
 import {setChatLoggedIn} from '../../../../../store/slice/usersSlice';
 import {
   setConnected,
   setInitialized,
 } from '../../../../../store/slice/chatSlice';
+import {useAppContext} from '../../../../../Context/AppContext';
 export default function Settings({navigation}) {
   const chatClient = ChatClient.getInstance();
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const [loading, setLoading] = useState(false);
 
   const logout = async () => {

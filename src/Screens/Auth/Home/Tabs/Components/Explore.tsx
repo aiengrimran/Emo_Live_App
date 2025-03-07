@@ -9,16 +9,16 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import React, {useState, useEffect, useContext, useRef} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import appStyles from '../../../../../styles/styles';
 import {colors} from '../../../../../styles/colors';
-import Context from '../../../../../Context/Context';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import envVar from '../../../../../config/envVar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../../Api/axiosConfig';
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
+import {useAppContext} from '../../../../../Context/AppContext';
 
 const windowWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
@@ -28,7 +28,7 @@ interface Explore {
   navigation: any;
 }
 export default function Explore({setTab, setShowExplore, navigation}: Explore) {
-  const {tokenMemo} = useContext(Context);
+  const {tokenMemo} = useAppContext();
 
   const {users, loading} = useSelector((state: any) => state.users);
   const {token} = tokenMemo;

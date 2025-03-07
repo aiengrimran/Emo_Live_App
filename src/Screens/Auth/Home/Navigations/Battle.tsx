@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
@@ -20,9 +20,6 @@ import {useSelector, useDispatch} from 'react-redux';
 
 import axiosInstance from '../../../../Api/axiosConfig';
 import {getBattles} from '../../../../store/slice/PK/battleAsync';
-import envVar from '../../../../config/envVar';
-import axios from 'axios';
-import Context from '../../../../Context/Context';
 import {
   setLoading,
   getUsers,
@@ -33,13 +30,14 @@ import {
   setBattle,
   updateBattleHosts,
 } from '../../../../store/slice/PK/battleSlice';
+import {useAppContext} from '../../../../Context/AppContext';
 // import axiosIn
 
 interface Battle {
   navigation: any;
 }
 export default function Battle({navigation}: Battle) {
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {setUser} = userAuthInfo;
   const {users, loading, error} = useSelector((state: any) => state.users);
   const {battles} = useSelector((state: any) => state.battle);

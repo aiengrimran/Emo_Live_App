@@ -12,7 +12,7 @@ import {
   AppState,
   ImageBackground,
 } from 'react-native';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import StartModal from './Components/StartModal';
 import appStyles from '../../../../styles/styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -36,15 +36,15 @@ import {
   setSingle,
 } from '../../../../store/slice/streamingSlice';
 import axiosInstance from '../../../../Api/axiosConfig';
-import Context from '../../../../Context/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAppContext} from '../../../../Context/AppContext';
 interface StartLiveProps {
   navigation: any;
 }
 export default function StartLive({navigation}: StartLiveProps) {
   const dispatch = useDispatch();
 
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {user, setUser} = userAuthInfo;
   const camRef = useRef<Camera>(null);
   const {liveForm} = useSelector((state: any) => state.users);

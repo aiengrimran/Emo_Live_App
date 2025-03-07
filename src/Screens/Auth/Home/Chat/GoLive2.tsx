@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import {colors} from '../../../../styles/colors';
 import appStyles from '../../../../styles/styles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -19,7 +19,6 @@ import Room6 from '../../../../assets/svg/room6Off.svg';
 import Room9 from '../../../../assets/svg/room9Off.svg';
 import Room9On from '../../../../assets/svg/room9.svg';
 import axiosInstance from '../../../../Api/axiosConfig';
-import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
 import {resetPodcastState} from '../Tabs/scripts/liveScripts';
 import {
@@ -33,6 +32,7 @@ import {
   updateStreamListeners,
 } from '../../../../store/slice/streamingSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAppContext} from '../../../../Context/AppContext';
 interface GoLiveProps {
   navigation: any;
 }
@@ -43,7 +43,7 @@ export default function GoLive2({navigation}: GoLiveProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useDispatch();
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user, setUser} = userAuthInfo;
 
   const {token} = tokenMemo;

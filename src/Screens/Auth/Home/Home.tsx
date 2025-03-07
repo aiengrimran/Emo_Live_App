@@ -9,7 +9,7 @@ import {
   Image,
   FlatList,
 } from 'react-native';
-import React, {useState, useRef, useEffect, useContext} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Popular from './Navigations/Popular';
 import envVar from '../../../config/envVar';
@@ -45,18 +45,18 @@ import Games from '../Games/Games';
 import Live from './Navigations/Live';
 import {useSelector, useDispatch} from 'react-redux';
 import NewHost from './Navigations/NewHost';
+import {useAppContext} from '../../../Context/AppContext';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 import Explore from './Tabs/Components/Explore';
 
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import {colors} from '../../../styles/colors';
 import appStyles from '../../../styles/styles';
-import Context from '../../../Context/Context';
 import axiosInstance from '../../../Api/axiosConfig';
 
 export default function Home({navigation}) {
   const {userDetails} = useSelector((state: any) => state.users);
-  const {tokenMemo, userAuthInfo} = useContext(Context);
+  const {tokenMemo, userAuthInfo} = useAppContext();
   const [showExplore, setShowExplore] = useState(false);
   const {user} = userAuthInfo;
   const dispatch = useDispatch();

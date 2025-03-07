@@ -1,5 +1,5 @@
 // Imports dependencies.
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -15,16 +15,16 @@ import {
   ChatMessageChatType,
   ChatMessage,
 } from 'react-native-agora-chat';
-import Context from '../../Context/Context';
 // Defines the App object.
 let tokens = [
   '007eJxTYFjioyL6de2k5/kcJxjcnRRvXL7zdrWQv/uXi6vXPfixIMVNgSE5ydDcwsLUMi3NwNDEwCDFwiAl2cQgJdXQ3DwtNSUp2fd3Xvpfifx0Bc04FkYGVgZGIATxVRgszUxMLYDadJNNjEx1DQ1T03QtLVOSdNOMTSyM00yMjYyNkgBqVSp/',
   '007eJxTYHgUdmvbmQDTXes+rNnvJraP/+W3usU1YakS6n+0ZWJ+iNxRYEhOMjS3sDC1TEszMDQxMEixMEhJNjFISTU0N09LTUlKTv2Tl94QyMhQWhbLwsjAysAIhCC+CoNFqkVSmoWFgW5SSkqSrqFhapqupZGJha65pUGqqZG5pXFqkiEASn0pPA==',
 ];
 import env from '../../config/envVar';
+import {useAppContext} from '../../Context/AppContext';
 const AGORA_KEY = env.AGORA_KEY;
 const Chat2 = ({navigation}) => {
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {user} = userAuthInfo;
   // Defines the variable.
   const title = 'AgoraChatQuickstart';

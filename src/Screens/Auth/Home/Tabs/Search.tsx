@@ -10,7 +10,7 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
 import {useSelector, useDispatch} from 'react-redux';
@@ -22,14 +22,14 @@ import {
   setLoading,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
-import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
+import {useAppContext} from '../../../../Context/AppContext';
 const deviceHeight = Dimensions.get('window').height;
 interface SearchScreenProps {
   navigation: any;
 }
 export default function Search({navigation}: SearchScreenProps) {
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {token} = tokenMemo;
   const dispatch = useDispatch();
   const {users, loading} = useSelector((state: any) => state.users);

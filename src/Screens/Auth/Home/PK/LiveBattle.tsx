@@ -11,13 +11,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import React, {
-  useRef,
-  useEffect,
-  useState,
-  useContext,
-  useCallback,
-} from 'react';
+import React, {useRef, useEffect, useState, useCallback} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import mainStyles from './style/mainStyle';
@@ -45,6 +39,7 @@ import {
   AudienceLatencyLevelType,
   RtcSurfaceView,
   RtcConnection,
+  UserOfflineReasonType,
   IRtcEngineEventHandler,
   ConnectionStateType,
   ConnectionChangedReasonType,
@@ -59,7 +54,6 @@ import PKHeader from './components/PKHeader';
 import {colors} from '../../../../styles/colors';
 import BattleInfo from './components/BattleInfo';
 // import PKB from './components/BattleInfo';
-import Context from '../../../../Context/Context';
 import PKBottom from './components/PKBottom';
 import {
   setBattle,
@@ -73,6 +67,7 @@ import {
 } from '../../../../store/slice/PK/battleAsync';
 import SupportViewers from './components/SupportViewers';
 import Comment from './components/Comment';
+import {useAppContext} from '../../../../Context/AppContext';
 const MAX_RETRIES = 5;
 const deviceHeight = Dimensions.get('window').height;
 
@@ -84,7 +79,7 @@ export default function LiveBattle({navigation}: LiveBattle) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {battle, roomId, battleHosts} = useSelector(
     (state: any) => state.battle,
   );
@@ -174,15 +169,24 @@ export default function LiveBattle({navigation}: LiveBattle) {
           console.log('new function', 'user has leaved the');
         },
 
-        onUserOffline: (connection: RtcConnection, uid: number) => {
-          if (uid === battle.user1_id) {
-            hostEndedPodcast();
-            return;
+        onUserOffline: (
+          connection: RtcConnection,
+          uid: number,
+          reason: UserOfflineReasonType,
+        ) => {
+          if (reason == 0) {
+            if (uid === battle.user1_id) {
+              hostEndedPodcast();
+              return;
+            }
+            // if (uid !== battle.host) {
+            //   // dispatch(removeUserFromStream(uid));
+            // }
           }
-          Alert.alert('User id goes offline', String(uid));
-          // if (uid !== stream.host) {
-          //   dispatch(removeUserFromStream(uid));
-          // }
+
+          if (reason == 1) {
+            console.log(uid, 'are having network issues');
+          }
         },
         onConnectionStateChanged: (
           _connection: RtcConnection,

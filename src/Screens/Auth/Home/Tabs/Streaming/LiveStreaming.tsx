@@ -18,13 +18,7 @@ import {
   StatusBarStyle,
   Dimensions,
 } from 'react-native';
-import React, {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  useContext,
-} from 'react';
+import React, {useRef, useEffect, useState, useCallback} from 'react';
 import appStyles from '../../../../../styles/styles';
 import IconM from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
@@ -39,6 +33,7 @@ import {
   ClientRoleType,
   IRtcEngine,
   AudienceLatencyLevelType,
+  UserOfflineReasonType,
   RtcSurfaceView,
   RtcConnection,
   IRtcEngineEventHandler,
@@ -48,7 +43,6 @@ import {
 } from 'react-native-agora';
 import StreamStatus from './StreamStatus';
 const {ScreenAwake} = NativeModules;
-import Context from '../../../../../Context/Context';
 import LiveLoading from '../Components/LiveLoading';
 const deviceWidth = Dimensions.get('window').width;
 import Header from '../Podcast/Header';
@@ -85,6 +79,7 @@ import {
   checkCamPermission,
   checkMicrophonePermission,
 } from '../../../../../scripts';
+import {useAppContext} from '../../../../../Context/AppContext';
 import Gifts from '../Podcast/Gifts';
 import Users from '../Podcast/Users';
 import Tools from '../Podcast/Tools';
@@ -100,7 +95,7 @@ export default function LiveStreaming({navigation}) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const eventHandler = useRef<IRtcEngineEventHandler>(); // Implement callback functions
   const agoraEngineRef = useRef<IRtcEngine>(); // IRtcEngine instance
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {stream, single, streamListeners, roomId} = useSelector(
     (state: any) => state.streaming,
   );
@@ -186,7 +181,6 @@ export default function LiveStreaming({navigation}) {
           // setRemoteUid(uid);
         },
         onLeaveChannel(connection, stats) {
-          console.log('leave changel ...');
           if (connection.localUid !== stream.host) {
             if (single) {
               dispatch(removeUserFromSingleStream(connection.localUid));
@@ -202,17 +196,26 @@ export default function LiveStreaming({navigation}) {
           console.log('new function', 'user has leaved the');
         },
 
-        onUserOffline: (connection: RtcConnection, uid: number) => {
-          if (uid === stream.host) {
-            hostEndedPodcast();
-            return;
-          }
-          if (uid !== stream.host) {
-            if (single) {
-              dispatch(removeUserFromSingleStream(uid));
+        onUserOffline: (
+          connection: RtcConnection,
+          uid: number,
+          reason: UserOfflineReasonType,
+        ) => {
+          if (reason == 0) {
+            if (uid === stream.host) {
+              hostEndedPodcast();
               return;
             }
-            dispatch(removeUserFromStream(uid));
+            if (uid !== stream.host) {
+              if (single) {
+                dispatch(removeUserFromSingleStream(uid));
+                return;
+              }
+              dispatch(removeUserFromStream(uid));
+            }
+          }
+          if (reason == 1) {
+            console.log(uid, 'are having network issues');
           }
         },
         onConnectionStateChanged: (

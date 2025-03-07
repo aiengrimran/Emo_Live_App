@@ -11,10 +11,9 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Context from '../../../../Context/Context';
-import {colors} from '../../../../styles/colors';
 import GeneralPermission from '../../../../Components/GeneralPermission';
 import {RESULTS} from 'react-native-permissions';
 import appStyles from '../../../../styles/styles';
@@ -24,8 +23,9 @@ import envVar from '../../../../config/envVar';
 import {checkPermission} from '../../../../scripts/index';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAppContext} from '../../../../Context/AppContext';
 export default function EditProfile({navigation}) {
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
 

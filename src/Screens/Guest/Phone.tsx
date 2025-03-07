@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import appStyles from '../../styles/styles';
 import {colors} from '../../styles/colors';
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Context from '../../Context/Context';
+import {useAppContext} from '../../Context/AppContext';
 export default function Phone() {
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {setUser} = userAuthInfo;
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);

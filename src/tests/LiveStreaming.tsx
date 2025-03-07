@@ -7,7 +7,7 @@ import {
   AppState,
   Platform,
 } from 'react-native';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import envVar from '../config/envVar';
 import {
   createAgoraRtcEngine,
@@ -23,13 +23,13 @@ import {
   ConnectionChangedReasonType,
   VideoSourceType,
 } from 'react-native-agora';
-import Context from '../Context/Context';
 import {colors} from '../styles/colors';
 
 import {checkCamPermission, checkMicrophonePermission} from '../scripts';
+import {useAppContext} from '../Context/AppContext';
 
 export default function LiveStreaming() {
-  const {userAuthInfo} = useContext(Context);
+  const {userAuthInfo} = useAppContext();
   const {user} = userAuthInfo;
   const [userTemp, setUserTemp] = useState<any>('');
   const [isJoined, setIsJoined] = useState(false);

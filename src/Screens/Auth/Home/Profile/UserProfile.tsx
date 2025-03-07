@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import React, {useState, useLayoutEffect, useContext} from 'react';
+import React, {useState, useLayoutEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import {colors} from '../../../../styles/colors';
@@ -19,13 +19,13 @@ import {
   updateUsers,
   updateVisitProfile,
 } from '../../../../store/slice/usersSlice';
-import Context from '../../../../Context/Context';
 import envVar from '../../../../config/envVar';
 import {formatNumber} from '../../../../utils/generalScript';
+import {useAppContext} from '../../../../Context/AppContext';
 
 export default function UserProfile({navigation}) {
   const dispatch = useDispatch();
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
   const [error, setError] = useState('');

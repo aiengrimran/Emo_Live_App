@@ -23,13 +23,7 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 
 const deviceWidth = Dimensions.get('window').width;
 
-import React, {
-  useRef,
-  useContext,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import React, {useRef, useCallback, useEffect, useState} from 'react';
 import Tools from './Podcast/Tools';
 import PodcastStatus from './Podcast/PodcastStatus';
 // import PodcastSt
@@ -43,6 +37,8 @@ import {
   IRtcEngineEventHandler,
   ConnectionStateType,
   ConnectionChangedReasonType,
+  UserOfflineReasonType,
+  RtcStats,
 } from 'react-native-agora';
 import {ChatClient} from 'react-native-agora-chat';
 import appStyles from '../../../../styles/styles';
@@ -53,7 +49,6 @@ import PodcastGuest from './Podcast/PodcastGuest';
 import {resetPodcastState, getLiveUsers} from './scripts/liveScripts';
 import Header from './Podcast/Header';
 
-import Context from '../../../../Context/Context';
 import {useSelector, useDispatch} from 'react-redux';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import axiosInstance from '../../../../Api/axiosConfig';
@@ -80,6 +75,7 @@ import {setLoading, setIsJoined} from '../../../../store/slice/usersSlice';
 import {setConnected} from '../../../../store/slice/chatSlice';
 import {checkMicrophonePermission} from '../../../../scripts';
 import LiveLoading from './Components/LiveLoading';
+import {useAppContext} from '../../../../Context/AppContext';
 const MAX_RETRIES = 3;
 
 export default function GoLive({navigation}: any) {
@@ -95,7 +91,7 @@ export default function GoLive({navigation}: any) {
     (state: any) => state.users,
   );
 
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {user, setUser} = userAuthInfo;
   const {token} = tokenMemo;
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -159,26 +155,34 @@ export default function GoLive({navigation}: any) {
           }
           // setRemoteUid(uid);
         },
-        onLeaveChannel(connection, stats) {
-          console.log('user leave channel ,///');
-          if (connection.localUid !== podcast.host) {
-            dispatch(removeUserFromPodcast(connection.localUid));
-          }
-          if (connection.localUid === podcast.host) {
-            console.log('host is lefting podcast');
-            hostEndedPodcast();
-            return;
-          }
-          console.log('new function', 'user has leaved the');
+        onLeaveChannel(connection: RtcConnection, stats: RtcStats) {
+          // console.log('user leave channel ,///');
+          // if (connection.localUid !== podcast.host) {
+          //   dispatch(removeUserFromPodcast(connection.localUid));
+          // }
+          // if (connection.localUid === podcast.host) {
+          //   console.log('host is lefting podcast');
+          //   hostEndedPodcast();
+          //   return;
+          // }
+          // console.log('new function', 'user has leaved the');
         },
-        onUserOffline: (_connection: RtcConnection, uid: number) => {
-          console.log('user offline userid:', user.id, 'uid :', uid);
-          if (uid !== podcast.host) {
-            dispatch(removeUserFromPodcast(uid));
+        onUserOffline: (
+          _connection: RtcConnection,
+          uid: number,
+          reason: UserOfflineReasonType,
+        ) => {
+          if (reason == 0) {
+            if (uid !== podcast.host) {
+              dispatch(removeUserFromPodcast(uid));
+            }
+            if (uid === podcast.host) {
+              hostEndedPodcast();
+              return;
+            }
           }
-          if (uid === podcast.host) {
-            hostEndedPodcast();
-            return;
+          if (reason == 1) {
+            console.log(uid, 'are having network issues');
           }
         },
         onConnectionStateChanged: (

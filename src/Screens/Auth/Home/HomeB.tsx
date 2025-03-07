@@ -1,5 +1,5 @@
 import {View, Text, Image, Alert, StyleSheet} from 'react-native';
-import React, {useContext, useRef, useEffect, useState} from 'react';
+import React, {useRef, useEffect, useState} from 'react';
 import Home from './Home';
 import Search from './Tabs/Search';
 import Profile from './Tabs/Profile';
@@ -40,6 +40,7 @@ import {
   setMessages,
 } from '../../../store/slice/chatSlice';
 import {useSelector, useDispatch} from 'react-redux';
+import {useAppContext} from '../../../Context/AppContext';
 import appStyles from '../../../styles/styles';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
@@ -51,7 +52,7 @@ export default function HomeB() {
   const dispatch = useDispatch();
   const chatClient = ChatClient.getInstance();
   const chatManager = chatClient.chatManager;
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const {token} = tokenMemo;
   const {user, setUser} = userAuthInfo;
   const {initialized, connected, tokenRenewed, localConvGet, chatLoggedIn} =

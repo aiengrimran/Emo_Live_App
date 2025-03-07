@@ -9,7 +9,7 @@ import {
   FlatList,
   Image,
 } from 'react-native';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import appStyles from '../../../styles/styles';
@@ -18,11 +18,11 @@ import envVar from '../../../config/envVar';
 import axiosInstance from '../../../Api/axiosConfig';
 import axios from 'axios';
 import {useDispatch, useSelector} from 'react-redux';
-import Context from '../../../Context/Context';
 import {setUnreadNotification} from '../../../store/slice/notificationSlice';
+import {useAppContext} from '../../../Context/AppContext';
 export default function Notifications({navigation}) {
   const dispatch = useDispatch();
-  const {tokenMemo} = useContext(Context);
+  const {tokenMemo} = useAppContext();
   const {token} = tokenMemo;
   const {unreadNotification} = useSelector((state: any) => state.notification);
   console.log(unreadNotification, 'Sss');

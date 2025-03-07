@@ -11,14 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import React, {
-  useContext,
-  useCallback,
-  useState,
-  useRef,
-  useEffect,
-} from 'react';
-import Context from '../../../../Context/Context';
+import React, {useCallback, useState, useRef, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconF from 'react-native-vector-icons/FontAwesome6';
 import envVar from '../../../../config/envVar';
@@ -39,6 +32,7 @@ const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import {useDispatch, useSelector} from 'react-redux';
 import {setPurchase} from '../../../../store/slice/accountSlice';
+import {useAppContext} from '../../../../Context/AppContext';
 // import audioService from '../../../../services/audioService';
 
 interface CoinProp {
@@ -47,7 +41,7 @@ interface CoinProp {
 export default function Coin({navigation}: CoinProp) {
   const dispatch = useDispatch();
   const {purchase} = useSelector((state: any) => state.account);
-  const {userAuthInfo, tokenMemo} = useContext(Context);
+  const {userAuthInfo, tokenMemo} = useAppContext();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const {user, setUser} = userAuthInfo;

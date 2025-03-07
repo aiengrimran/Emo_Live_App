@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
@@ -20,13 +20,13 @@ import {
 import envVar from '../../../../config/envVar';
 import appStyles from '../../../../styles/styles';
 import {useDispatch, useSelector} from 'react-redux';
-import Context from '../../../../Context/Context';
 import {setPodcasts} from '../../../../store/slice/podcastSlice';
+import {useAppContext} from '../../../../Context/AppContext';
 
 export default function Popular({navigation}) {
   const {podcasts} = useSelector((state: any) => state.podcast);
   const {streams} = useSelector((state: any) => state.streaming);
-  const {tokenMemo, userAuthInfo} = useContext(Context);
+  const {tokenMemo, userAuthInfo} = useAppContext();
   const {token} = tokenMemo;
   const [error, setError] = useState('');
   const {setUser} = userAuthInfo;

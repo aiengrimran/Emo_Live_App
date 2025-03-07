@@ -1,14 +1,14 @@
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import React, {useContext} from 'react';
+import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {colors} from '../../styles/colors';
 import appStyles from '../../styles/styles';
-import Context from '../../Context/Context';
 import NetInfo from '@react-native-community/netinfo';
+import {useAppContext} from '../../Context/AppContext';
 
 export default function ConnectionError() {
   // import
-  const {netConnection} = useContext(Context);
+  const {netConnection} = useAppContext();
   const {setConnection} = netConnection;
   const retryConnection = async () => {
     NetInfo.fetch().then(state => {

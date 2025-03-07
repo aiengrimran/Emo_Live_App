@@ -8,14 +8,13 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import appStyles from '../../../../styles/styles';
 import {ChatClient, ChatConversationType} from 'react-native-agora-chat';
 import {colors} from '../../../../styles/colors';
 import envVar from '../../../../config/envVar';
 import {resetMessage} from '../../../../store/slice/chatSlice';
-import Context from '../../../../Context/Context';
 import Stranger from '../../../../assets/svg/stranger.svg';
 import {UseSelector, useDispatch, useSelector} from 'react-redux';
 import {setConnected, setInitialized} from '../../../../store/slice/chatSlice';
@@ -28,13 +27,14 @@ import {
   resetD,
   fetchUserDetails,
 } from '../../../../store/slice/usersSlice';
+import {useAppContext} from '../../../../Context/AppContext';
 // import {Colors} from 'react-native/Libraries/NewAppScreen';
 interface InboxProps {
   navigation: any;
 }
 export default function Inbox({navigation}: InboxProps) {
   const dispatch = useDispatch();
-  const {tokenMemo} = useContext(Context);
+  const {tokenMemo} = useAppContext();
   const inbox = useSelector(selectInbox);
   const {token} = tokenMemo;
   const {connected} = useSelector((state: any) => state.chat);
