@@ -168,12 +168,12 @@ export default function HomeB() {
           }
           // playNotificationSound();
           dispatch(setMessages(messagesReceived));
-          // dispatch(fetchUserDetails([messagesReceived[0].from]));
-          // onDisplayNotification(
-          //   messagesReceived[0].body.type == 'txt'
-          //     ? 'text Message Received'
-          //     : 'Voice Message Received',
-          // );
+          dispatch(fetchUserDetails([messagesReceived[0].from]));
+          onDisplayNotification(
+            messagesReceived[0].body.type == 'txt'
+              ? 'text Message Received'
+              : 'Voice Message Received',
+          );
         },
         onMessagesRead: (messages: Array<ChatMessage>): void => {
           console.log('Messages read:', messages);
@@ -279,7 +279,7 @@ export default function HomeB() {
   };
   useEffect(() => {
     if (connected && !localConvGet) {
-      // getLocalConv();
+      getLocalConv();
     }
   }, [connected]);
   const getLocalConv = async () => {

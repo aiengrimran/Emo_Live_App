@@ -31,26 +31,26 @@ export default function Popular({navigation}) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState<boolean>(false);
 
-  // useEffect(() => {
-  //   // Fetch podcasts immediately
-  //   getPodcasts();
+  useEffect(() => {
+    // Fetch podcasts immediately
+    getPodcasts();
 
-  //   // Set interval to fetch podcasts every 3 seconds
-  //   const intervalId = setInterval(() => {
-  //     getPodcasts();
-  //   }, 3000);
+    // Set interval to fetch podcasts every 3 seconds
+    const intervalId = setInterval(() => {
+      getPodcasts();
+    }, 3000);
 
-  //   // Cleanup function to clear interval when the component unmounts
-  //   return () => clearInterval(intervalId);
-  // }, []);
+    // Cleanup function to clear interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []);
 
   const getPodcasts = async () => {
     try {
-      dispatch(setPodcasts([]));
-      setLoading(true);
+      // dispatch(setPodcasts([]));
+      // setLoading(true);
       const res = await axiosInstance.get('podcast/active');
-      setLoading(false);
-      console.log(res.data);
+      // setLoading(false);
+      // console.log(res.data);
 
       if (res.data.podcast.length) {
         dispatch(setPodcasts(res.data.podcast));
@@ -89,9 +89,9 @@ export default function Popular({navigation}) {
     <View style={{flex: 1}}>
       <View style={{marginTop: 20}}>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
-        <Text style={{color: '#fff'}} onPress={() => getPodcasts()}>
+        {/* <Text style={{color: '#fff'}} onPress={() => getPodcasts()}>
           get Podcasts
-        </Text>
+        </Text> */}
         <View>
           <FlatList
             data={podcasts}

@@ -42,20 +42,21 @@ export default function Search({navigation}) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   // getUnreadMessages();
+  useEffect(() => {
+    getUnreadMessages();
 
-  //     // Fetch podcasts immediately
-  //     refreshUser();
+    // Fetch podcasts immediately
+    refreshUser();
 
-  //     // Set interval to fetch podcasts every 3 seconds
-  //     const intervalId = setInterval(() => {
-  //       refreshUser();
-  //     }, 3000);
+    // Set interval to fetch podcasts every 3 seconds
+    const intervalId = setInterval(() => {
+      refreshUser();
+      // getUnreadMessages();
+    }, 3000);
 
-  //     // Cleanup function to clear interval when the component unmounts
-  //     return () => clearInterval(intervalId);
-  //   }, []);
+    // Cleanup function to clear interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []);
 
   const onCheckGitVersion = () => {
     setProgress(0);
@@ -135,7 +136,7 @@ export default function Search({navigation}) {
   };
   const refreshUser = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const url = 'user/info';
       const res = await axiosInstance.get(url);
       setUser(res.data.user);
@@ -168,9 +169,9 @@ export default function Search({navigation}) {
             </Text>
           </TouchableOpacity>
           <View style={styles.refreshBtn}>
-            <TouchableOpacity onPress={refreshUser} style={styles.refresh}>
+            {/* <TouchableOpacity onPress={refreshUser} style={styles.refresh}>
               <Icon name="refresh" color={colors.complimentary} size={20} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => navigation.navigate('EditProfile')}
               style={styles.editBtn}>
@@ -565,8 +566,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     position: 'absolute',
     right: 20,
-    justifyContent: 'space-between',
-    width: '25%',
+    // justifyContent: 'space-between',
+    // width: '25%',
   },
   levelTxt: {
     color: colors.dominant,

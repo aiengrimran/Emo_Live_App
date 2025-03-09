@@ -45,6 +45,19 @@ export default function Live({navigation, flatListRef}: LiveProps) {
     // dispatch(getStreams()
   }, []);
 
+  // useEffect(() => {
+  //   // Fetch podcasts immediately
+  //   getPodcasts();
+
+  //   // Set interval to fetch podcasts every 3 seconds
+  //   const intervalId = setInterval(() => {
+  //     getPodcasts();
+  //   }, 3000);
+
+  //   // Cleanup function to clear interval when the component unmounts
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
   const joinStream = async (item: any) => {
     try {
       dispatch(setLoading(true));
