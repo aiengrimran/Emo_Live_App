@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Platform,
   Dimensions,
   Alert,
   StyleSheet,
@@ -40,6 +41,13 @@ import {useSelector, useDispatch} from 'react-redux';
 import appStyles from '../../../../styles/styles';
 import {chatStyles} from './styles/chat';
 import {useAppContext} from '../../../../Context/AppContext';
+const voiceMessage = {
+  body: {
+    localPath:
+      '/Users/macbookpro/Library/Developer/CoreSimulator/Devices/9B56342A-16A9-4EBC-A996-9B76BD6DC2FA/data/Containers/Data/Application/603A65A4-E9BB-4717-86BF-02FA8B812759/Library/Application Support/HyphenateSDK/appdata/2/2/android_75fa8df7-b9bb-41a4-a358-8803e7b61930/d8d16b30-fc49-11ef-8631-4fbf3e6bcc02',
+  },
+};
+
 interface ChatProps {
   navigation: any;
   route: any;
@@ -50,7 +58,9 @@ export default function Chat({navigation, route}: ChatProps) {
   const dispatch = useDispatch();
   const chatClient = ChatClient.getInstance();
   const audioPlayerRef = useRef<AudioRecorderPlayer | null>(null);
-  const {connected, messages} = useSelector((state: any) => state.chat);
+  const {connected, messagesByConversation} = useSelector(
+    (state: any) => state.chat,
+  );
   const {userAuthInfo, tokenMemo} = useAppContext();
   const {user} = userAuthInfo;
   const {token} = tokenMemo;
@@ -76,19 +86,6 @@ export default function Chat({navigation, route}: ChatProps) {
   const userMessages = useSelector(state =>
     selectMessagesForConversation(state, chatUser.id),
   );
-  // useEffect(() => {
-  //   // Subscribe to network state updates
-  //   const unsubscribe = NetInfo.addEventListener(state => {
-  //     // setIsConnected(state.isConnected);
-  //     // console.log(state.isConnected ? 'yah it is connected ' : 'not connected');
-  //     setStatus(prevState => ({
-  //       ...prevState,
-  //       connected: Boolean(state.isConnected),
-  //     }));
-  //   });
-  //   // Cleanup subscription on unmount
-  //   return () => unsubscribe();
-  // }, []);
 
   useEffect(() => {
     if (!audioPlayerRef.current) {
@@ -101,11 +98,126 @@ export default function Chat({navigation, route}: ChatProps) {
     };
   }, []);
 
+  const downloadAndPlayVoice = async () => {
+    try {
+      const remotePath =
+        'https://a61.easemob.com/611258830/1451592/chatfiles/567513a0-fcdd-11ef-9626-53989cf3b277';
+      // const remotePath = voiceMessage.body.remotePath;
+      // const localPath = voiceMessage.body.localPath;
+
+      if (!remotePath) {
+        console.error('No remote path found');
+        return;
+      }
+
+      // Define the local file path with the correct extension
+      const fileName = remotePath.split('/').pop(); // Extract the file name from the URL
+      const newPath = `${RNFS.CachesDirectoryPath}/${fileName}.mp4`; // Save as .mp4
+
+      // Check if the file already exists in the cache directory
+      const fileExists = await RNFS.exists(newPath);
+
+      console.log(fileExists, 'Ss');
+
+      if (!fileExists) {
+        // Download the file from the remote path
+        const downloadResult = await RNFS.downloadFile({
+          fromUrl: remotePath,
+          toFile: newPath,
+        }).promise;
+
+        console.log('File downloaded to:', newPath);
+      }
+
+      // Construct the URI based on the platform
+      const audioURI = Platform.OS === 'ios' ? `file://${newPath}` : newPath;
+
+      console.log('Playing audio from:', audioURI);
+
+      // Start playing the audio
+      const result = await audioPlayerRef.current?.startPlayer(audioURI);
+
+      console.log('Playback started:', result);
+
+      // Handle playback completion
+      audioPlayerRef.current?.addPlayBackListener(e => {
+        if (e.currentPosition === e.duration) {
+          console.log('Playback finished');
+          audioPlayerRef.current?.stopPlayer();
+          audioPlayerRef.current?.removePlayBackListener();
+        }
+      });
+    } catch (error) {
+      console.error('Error downloading or playing audio:', error);
+    }
+  };
+  const downloadAndPlayVoiced = async () => {
+    try {
+      const remotePath =
+        'https://a61.easemob.com/611258830/1451592/chatfiles/567513a0-fcdd-11ef-9626-53989cf3b277';
+      // const remotePath = voiceMessage.body.remotePath;
+      // const localPath = voiceMessage.body.localPath;
+
+      if (!remotePath) {
+        console.error('No remote path found');
+        return;
+      }
+
+      // Define the local file path with the correct extension
+      const fileName = remotePath.split('/').pop(); // Extract the file name from the URL
+      const newPath = `${RNFS.CachesDirectoryPath}/${fileName}.mp4`; // Save as .mp4
+
+      // Check if the file already exists in the cache directory
+      const fileExists = await RNFS.exists(newPath);
+
+      console.log(fileExists, 'Ss');
+
+      if (!fileExists) {
+        // Download the file from the remote path
+        const downloadResult = await RNFS.downloadFile({
+          fromUrl: remotePath,
+          toFile: newPath,
+        }).promise;
+
+        console.log('File downloaded to:', newPath);
+      }
+
+      // Construct the URI based on the platform
+      const audioURI = Platform.OS === 'ios' ? `file://${newPath}` : newPath;
+
+      console.log('Playing audio from:', audioURI);
+
+      // Start playing the audio
+      const result = await audioPlayerRef.current?.startPlayer(audioURI);
+
+      console.log('Playback started:', result);
+
+      // Handle playback completion
+      audioPlayerRef.current?.addPlayBackListener(e => {
+        if (e.currentPosition === e.duration) {
+          console.log('Playback finished');
+          audioPlayerRef.current?.stopPlayer();
+          audioPlayerRef.current?.removePlayBackListener();
+        }
+      });
+    } catch (error) {
+      console.error('Error downloading or playing audio:', error);
+    }
+  };
+
   // Sends a text message to somebody.
   const sendMsg = async () => {
     try {
-      if (!connected || chatUser.id) return;
+      // remotePath?: string;
+      type Payload = {
+        conversationId: any;
+        status: number;
+        msgId: any;
+        remotePath?: string;
+      };
+      if (!connected) return;
       let msg;
+      console.log('why i am not sending message');
       if (message.type == 'text') {
         msg = ChatMessage.createTextMessage(
           String(chatUser.id),
@@ -124,16 +236,19 @@ export default function Chat({navigation, route}: ChatProps) {
           // messageInfo,
         );
       }
-      dispatch(setSentMessage(msg));
       setMessage((prevState: any) => ({
         ...prevState,
         content: '',
         uri: '',
       }));
+
+      dispatch(setSentMessage(msg));
+
+      console.log(msg);
       const callback = new (class {
         onProgress(locaMsgId: string, progress: string) {
           // console.log(`send message process: ${locaMsgId}, ${progress}`);
-          let payload = {
+          let payload: Payload = {
             conversationId: chatUser.id,
             status: 1,
             msgId: locaMsgId,
@@ -154,11 +269,14 @@ export default function Chat({navigation, route}: ChatProps) {
         }
         onSuccess(message: any) {
           // console.log('sent', message);
-          let payload = {
+          let payload: Payload = {
             conversationId: message.conversationId,
             status: 2,
             msgId: message.localMsgId,
           };
+          if (message.body.type == 'voice') {
+            payload = {...payload, remotePath: message.body.remotePath};
+          }
           dispatch(setMessageStatus(payload));
         }
       })();
@@ -199,7 +317,7 @@ export default function Chat({navigation, route}: ChatProps) {
       console.log(error);
     }
   };
-  const processAudioData = position => {
+  const processAudioData = (position: any) => {
     const maxHeight = 18;
     const maxAmplitude = 100;
 
@@ -208,6 +326,50 @@ export default function Chat({navigation, route}: ChatProps) {
       return (randomValue / maxAmplitude) * maxHeight; // Normalize to maxHeight
     });
   };
+  const playVoice2 = async () => {
+    try {
+      const localPath = voiceMessage.body.localPath;
+
+      if (!localPath) {
+        console.error('No valid local path found');
+        return;
+      }
+
+      // Define the new path with the correct extension
+      const newFilename = 'sound.m4a'; // Use .mp4 for Android if needed
+      const newPath = `${RNFS.CachesDirectoryPath}/${newFilename}`;
+
+      // Check if the file already exists in the cache directory
+      const fileExists = await RNFS.exists(newPath);
+
+      if (!fileExists) {
+        // If the file doesn't exist, copy it to the cache directory
+        await RNFS.copyFile(localPath, newPath);
+        console.log('File copied to cache directory');
+      }
+
+      // Construct the URI based on the platform
+      const audioURI = Platform.OS === 'ios' ? `file://${newPath}` : newPath;
+
+      console.log('Playing audio from:', audioURI);
+
+      // Start playing the audio
+      const result = await audioPlayerRef.current?.startPlayer(audioURI);
+
+      console.log('Playback started:', result);
+
+      // Handle playback completion
+      audioPlayerRef.current?.addPlayBackListener(e => {
+        if (e.currentPosition === e.duration) {
+          console.log('Playback finished');
+          audioPlayerRef.current?.stopPlayer();
+          audioPlayerRef.current?.removePlayBackListener();
+        }
+      });
+    } catch (error) {
+      console.error('Error playing audio:', error);
+    }
+  };
 
   const playVoice = async (item: any) => {
     try {
@@ -215,49 +377,45 @@ export default function Chat({navigation, route}: ChatProps) {
         stopPlay();
         return;
       }
-      let uri;
-      let path;
-      let checkFile = null;
-      let filePath = item.body.localPath;
-      // Construct the file URI
-      if (item.from == user.id) {
-        uri = `file://${filePath}`;
-      } else {
-        checkFile = await RNFS.exists(`${filePath}.m4a`);
-        // const bol = await RNFS.unlink(`${filePath}.m4a`);
-        // console.log(checkFile);
-        // console.log(bol, checkFile);
-        // console.log(filePath, checkFile);
-        // return;
-        if (!checkFile) {
-          path = convertFile(filePath);
-        }
-        return 'Ss';
-        uri = `file://${checkFile ? filePath : path}`;
-        console.log(uri);
-        return;
+      let remotePath = item.body.remotePath;
+      // Define the local file path with the correct extension
+      const fileName = remotePath.split('/').pop(); // Extract the file name from the URL
+      const newPath = `${RNFS.CachesDirectoryPath}/${fileName}.mp4`; // Save as .mp4
+
+      // Check if the file already exists in the cache directory
+      const fileExists = await RNFS.exists(newPath);
+
+      if (!fileExists) {
+        // Download the file from the remote path
+        const downloadResult = await RNFS.downloadFile({
+          fromUrl: remotePath,
+          toFile: newPath,
+        }).promise;
+
+        console.log('File downloaded to:', newPath);
       }
-      console.log(uri);
+      const audioURI = Platform.OS === 'ios' ? `file://${newPath}` : newPath;
       // return;
-      // Start the audio player
-      await audioPlayerRef.current?.startPlayer(uri);
+      await audioPlayerRef.current?.startPlayer(audioURI);
       // await audioPlay.er.startPlayer(uri);
       console.log('Playing audio:');
-      setVoicePlay(prevState => ({...prevState, id: item.msgId, played: true}));
+      setVoicePlay((prevState: any) => ({
+        ...prevState,
+        id: item.msgId,
+        played: true,
+      }));
 
       // Add playback listener
       audioPlayerRef.current?.addPlayBackListener(e => {
-        console.log('Playback progress:');
-
         // Process waveform data if needed
         const waveform = processAudioData(e.currentPosition); // Simulated function for visualization
-        setVoicePlay(prevState => ({...prevState, audioData: waveform}));
+        setVoicePlay((prevState: any) => ({...prevState, audioData: waveform}));
 
         const positionInSeconds = e.currentPosition / 1000;
         const playTime = audioPlayerRef.current?.mmss(
           Math.floor(positionInSeconds),
         );
-        setVoicePlay(prevState => ({...prevState, playtime: playTime}));
+        setVoicePlay((prevState: any) => ({...prevState, playtime: playTime}));
 
         // Stop playback when the audio finishes
         if (e.currentPosition >= e.duration) {
@@ -270,31 +428,17 @@ export default function Chat({navigation, route}: ChatProps) {
     }
   };
 
-  const convertFile = async path => {
-    try {
-      const newFilePath = `${path}.m4a`;
-      const f = await RNFS.exists(path);
-      console.log(path, f, 'sss');
-      return;
-      await RNFS.moveFile(path, newFilePath);
-      return newFilePath;
-    } catch (error) {
-      console.error(error);
-      return error;
-    }
-  };
-
   const stopPlay = async () => {
     try {
       const res = await audioPlayerRef.current?.stopPlayer();
-      setVoicePlay(prevState => ({...prevState, played: false, id: ''}));
+      setVoicePlay((prevState: any) => ({...prevState, played: false, id: ''}));
       audioPlayerRef.current?.removePlayBackListener();
     } catch (error) {
       console.log(error);
     }
   };
 
-  const formatTime = timestamp => {
+  const formatTime = (timestamp: any) => {
     const date = new Date(timestamp);
 
     // Get the time components
@@ -348,18 +492,24 @@ export default function Chat({navigation, route}: ChatProps) {
           connected={connected}
         />
 
-        {/* chat messages ... */}
-
-        {/* <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-          <TouchableOpacity
-            style={{backgroundColor: colors.accent, padding: 5}}>
-            <Text style={{color: '#fff'}}>send Msg</Text>
-          </TouchableOpacity>
-
+        {/* <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <Text
             style={{color: '#fff'}}
             onPress={() => console.log(userMessages)}>
             getMessages
+          </Text>
+          <Text
+            style={{color: '#fff'}}
+            onPress={() => console.log(messagesByConversation)}>
+            tests
+          </Text>
+          <Text style={{color: '#fff'}} onPress={playVoice2}>
+            playVoice2
+          </Text>
+        </View>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <Text onPress={downloadAndPlayVoice} style={{color: '#fff'}}>
+            dandPlay
           </Text>
         </View> */}
 
@@ -386,11 +536,7 @@ export default function Chat({navigation, route}: ChatProps) {
                             {item.body?.content}
                           </Text>
                         ) : item.body.type == 'voice' ? (
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}>
+                          <View style={styles.voice}>
                             <TouchableOpacity onPress={() => playVoice(item)}>
                               <Icon
                                 name={
@@ -460,7 +606,6 @@ export default function Chat({navigation, route}: ChatProps) {
                     <View style={chatStyles.mineMessage}>
                       <TouchableOpacity
                         onLongPress={() => {
-                          console.log('i should set Modal');
                           setModalInfo({
                             modal: true,
                             type: 'delete',
@@ -488,7 +633,7 @@ export default function Chat({navigation, route}: ChatProps) {
                               </TouchableOpacity>
                               {voicePlay.id == item.msgId ? (
                                 <>
-                                  <View style={{width: '80%', marginLeft: 5}}>
+                                  <View style={{width: '78%', marginLeft: 5}}>
                                     <Svg height="18" width="100%">
                                       <Polyline
                                         points={voicePlay.audioData
@@ -514,12 +659,7 @@ export default function Chat({navigation, route}: ChatProps) {
                                 </>
                               ) : (
                                 <>
-                                  <View
-                                    style={{
-                                      flexDirection: 'row',
-                                      justifyContent: 'space-between',
-                                      width: '90%',
-                                    }}>
+                                  <View style={styles.voicePattern}>
                                     <Text>
                                       {
                                         '||||| :::: ||||| |||| ||||| ||||| ||| ||||| ::::::: |||||'
@@ -538,10 +678,12 @@ export default function Chat({navigation, route}: ChatProps) {
                         )}
                       </TouchableOpacity>
                       <View style={styles.messageAck}>
-                        {item.status > 0 && item.status < 3 ? (
+                        {item.status == 1 &&
+                        ![2, 3].includes(item.status) &&
+                        item.body.type == 'voice' ? (
                           <Icon
-                            name={item.status == 1 ? 'check' : 'check-all'}
-                            color={item.hasReadAck ? 'blue' : colors.accent}
+                            name="clock-time-four-outline"
+                            color={colors.lines}
                             size={16}
                           />
                         ) : item.status == 3 ? (
@@ -550,12 +692,14 @@ export default function Chat({navigation, route}: ChatProps) {
                             color={colors.lines}
                             size={16}
                           />
-                        ) : (
+                        ) : item.status == 1 || item.status == 2 ? (
                           <Icon
-                            name="clock-time-four-outline"
-                            color={colors.lines}
+                            name={item.status == 1 ? 'check' : 'check-all'}
+                            color={item.hasReadAck ? 'blue' : colors.accent}
                             size={16}
                           />
+                        ) : (
+                          <></>
                         )}
                       </View>
                       <Text style={chatStyles.messageTime}>
@@ -587,9 +731,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   list: {
-    marginTop: 30,
-    marginVertical: 180,
-    height: deviceHeight * 0.7,
+    // marginTop: 20,
+    // marginVertical: 180,
+    height: deviceHeight * 0.78,
+  },
+  voice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  voicePattern: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
   },
   voiceView: {
     flexDirection: 'row',
@@ -604,3 +757,6 @@ const styles = StyleSheet.create({
   },
   messageAck: {position: 'absolute', right: 10, bottom: 25},
 });
+
+// file:////data/user/0/com.meow/cache/sound.mp4 recording stopped
+// (NOBRIDGE) LOG  Playing audio: /data/user/0/com.meow/cache/sound.mp4

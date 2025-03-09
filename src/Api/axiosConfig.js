@@ -26,23 +26,64 @@ axiosInstance.interceptors.request.use(
   },
 );
 
-// Add a response interceptor
+// // Add a response interceptor
+// axiosInstance.interceptors.response.use(
+//   response => response,
+//   error => {
+//     if (error.response) {
+//       // console.log('Error Response:', error.response.data);
+//       return Promise.reject(error.response.data);
+//     } else if (error.request) {
+//       console.log('server not responding at the moment');
+//       return Promise.reject(error.request);
+//       // return Promise.reject(error.request);
+//       //   console.log('No Response:', error.request);
+//     } else {
+//       return Promise.reject(error.message);
+//       //   console.log('Error:', error.message);
+//     }
+//     return Promise.reject(error);
+//   },
+// );
+
 axiosInstance.interceptors.response.use(
-  response => response,
+  response => {
+    // Return the successful response directly
+    return response;
+  },
   error => {
+    // Handle errors
+    let errorMessage = 'An unexpected error occurred. Please try again later.';
+
     if (error.response) {
-      // console.log('Error Response:', error.response.data);
-      return Promise.reject(error.response.data);
+      // Server responded with a status code outside 2xx
+      const {data, status} = error.response;
+
+      if (data && data.message) {
+        // Use the error message from the server
+        errorMessage = data.message;
+      } else if (status === 401) {
+        errorMessage = 'Unauthorized: Please log in again.';
+      } else if (status === 404) {
+        errorMessage = 'Resource not found.';
+      } else if (status === 500) {
+        errorMessage = 'Server error: Please try again later.';
+      }
     } else if (error.request) {
-      console.log('server not responding at the moment');
-      return Promise.reject(error.request);
-      // return Promise.reject(error.request);
-      //   console.log('No Response:', error.request);
+      // The request was made but no response was received
+      errorMessage =
+        'No response from the server. Please check your network connection.';
     } else {
-      return Promise.reject(error.message);
-      //   console.log('Error:', error.message);
+      // Something happened in setting up the request
+      errorMessage = error.message || 'Request setup error.';
     }
-    return Promise.reject(error);
+
+    // Return a consistent error object
+    return Promise.reject({
+      message: errorMessage,
+      code: error.response?.status || 'NO_RESPONSE',
+      data: error.response?.data || null,
+    });
   },
 );
 

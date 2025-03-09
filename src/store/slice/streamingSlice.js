@@ -4,7 +4,7 @@ import axiosInstance from '../../Api/axiosConfig';
 
 export const getUserInfoFromAPI = createAsyncThunk(
   'streaming/getUserInfoFromAPI',
-  async (id, {getState, dispatch}) => {
+  async (id, remote = false, {getState, dispatch}) => {
     // async (id: number, {getState, dispatch}) => {
     try {
       console.log(id, 'user id from stream');
@@ -33,11 +33,12 @@ export const getUserInfoFromAPI = createAsyncThunk(
 
           // Dispatch an action to update the state
           dispatch(setStreamListeners(updatedUsers));
-          console.log('I should have');
-          dispatch({
-            type: 'users/setGuestUser',
-            payload: {user: data.users?.[0], state: true},
-          });
+          if (remote) {
+            dispatch({
+              type: 'users/setGuestUser',
+              payload: {user: data.users?.[0], state: true},
+            });
+          }
         } else {
           console.warn('No empty rooms available');
         }
@@ -50,7 +51,7 @@ export const getUserInfoFromAPI = createAsyncThunk(
 );
 export const getUserInfoFromAPIS = createAsyncThunk(
   'streaming/getUserInfoFromAPIS',
-  async (id, {getState, dispatch}) => {
+  async (id, remote = false, {getState, dispatch}) => {
     // async (id: number, {getState, dispatch}) => {
     try {
       const {streamListenersS} = getState().streaming;
@@ -63,10 +64,12 @@ export const getUserInfoFromAPIS = createAsyncThunk(
       const {data} = await axiosInstance.post('users-info', {users: [id]});
       if (data.users?.[0]) {
         dispatch(addStreamListenerS(data.users?.[0]));
-        dispatch({
-          type: 'users/setGuestUser',
-          payload: {user: data.users?.[0], state: true},
-        });
+        if (remote) {
+          dispatch({
+            type: 'users/setGuestUser',
+            payload: {user: data.users?.[0], state: true},
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user info:', error);

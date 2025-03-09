@@ -106,6 +106,7 @@ const appStyles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: 'Kanit',
     alignSelf: 'center',
+    textAlign: 'center',
   },
   indicatorStyle: {
     alignSelf: 'center',

@@ -106,6 +106,38 @@ const chatSlice = createSlice({
         return;
       }
 
+      // Update the specific message's status and remotePath (if applicable)
+      state.messagesByConversation[conversationId] =
+        state.messagesByConversation[conversationId].map(message => {
+          if (message.localMsgId === msgId) {
+            // If the message is of type 'voice', update both status and remotePath
+            if (message.body.type === 'voice') {
+              return {
+                ...message,
+                status,
+                body: {
+                  ...message.body,
+                  remotePath: payload.remotePath, // Update remotePath inside body
+                },
+              };
+            }
+            // If the message is not of type 'voice', only update the status
+            return {...message, status};
+          }
+          // Return the message as-is if it doesn't match the msgId
+          return message;
+        });
+    },
+    setMessageStatusx: (state, {payload}) => {
+      const {conversationId, msgId, status} = payload;
+      console.log(conversationId, msgId, status);
+
+      // Check if the conversation exists
+      if (!state.messagesByConversation[conversationId]) {
+        console.warn(`Conversation ID ${conversationId} not found in state.`);
+        return;
+      }
+
       // Update the specific message's status
       state.messagesByConversation[conversationId] =
         state.messagesByConversation[conversationId].map(message =>

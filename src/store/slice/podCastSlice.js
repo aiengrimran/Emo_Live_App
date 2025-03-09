@@ -4,7 +4,7 @@ import axiosInstance from '../../Api/axiosConfig';
 
 export const getUserInfoFromAPI = createAsyncThunk(
   'podcast/getUserInfoFromAPI',
-  async (id, {getState, dispatch}) => {
+  async (id, remote, {getState, dispatch}) => {
     // async (id: number, {getState, dispatch}) => {
     try {
       console.log(id, 'user id from podcast');
@@ -33,10 +33,12 @@ export const getUserInfoFromAPI = createAsyncThunk(
 
           // Dispatch an action to update the state
           dispatch(setPodcastListeners(updatedUsers));
-          dispatch({
-            type: 'users/setGuestUser',
-            payload: {user: data.users?.[0], state: true},
-          });
+          if (remote) {
+            dispatch({
+              type: 'users/setGuestUser',
+              payload: {user: data.users?.[0], state: true},
+            });
+          }
         } else {
           console.warn('No empty rooms available');
         }

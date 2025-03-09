@@ -123,15 +123,16 @@ export default function GoLive({navigation}: any) {
     }
     // Release memory when the App is closed
     return () => {
-      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
-      agoraEngineRef.current?.release();
+      console.log('clearing up listners');
+      // agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      // agoraEngineRef.current?.release();
     };
-  }, [isJoined]);
+  }, [isJoined, podcast]);
 
   const setupVideoSDKEngine = async () => {
     try {
       // Create RtcEngine after obtaining device permissions
-      console.log('initializing engine ....');
+      console.log('initializing engine ....', 'resetting ....');
       agoraEngineRef.current = createAgoraRtcEngine();
       const agoraEngine = agoraEngineRef.current;
       eventHandler.current = {
@@ -139,7 +140,7 @@ export default function GoLive({navigation}: any) {
           if (podcast.host == user.id) {
             // createUserChatRoom();
           } else {
-            dispatch(getUserInfoFromAPI(podcast.host));
+            dispatch(getUserInfoFromAPI({id: podcast.host}));
             // userJoinChatRoom(podcast.chat_room_id);
           }
 
@@ -150,10 +151,10 @@ export default function GoLive({navigation}: any) {
           }
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
+          console.log(uid, 'remote user joined');
           if (uid !== podcast.host) {
-            dispatch(getUserInfoFromAPI(uid));
+            dispatch(getUserInfoFromAPI({id: uid, remote: true}));
           }
-          // setRemoteUid(uid);
         },
         onLeaveChannel(connection: RtcConnection, stats: RtcStats) {
           // console.log('user leave channel ,///');
@@ -190,7 +191,7 @@ export default function GoLive({navigation}: any) {
           state: ConnectionStateType,
           reason: ConnectionChangedReasonType,
         ) => {
-          console.log(state, reason);
+          // console.log(state, reason);
           handelConnection(state);
         },
       };
@@ -203,7 +204,7 @@ export default function GoLive({navigation}: any) {
         appId: envVar.AGORA_APP_ID,
       });
 
-      // agoraEngine.enableLocalAudio(true);
+      agoraEngine.enableLocalAudio(true);
       userJoinChannel();
     } catch (e) {
       console.log(e);
@@ -272,13 +273,12 @@ export default function GoLive({navigation}: any) {
         return;
       }
 
-      console.log('Creating chat room...');
       const chatRoom = await chatClient.roomManager.createChatRoom(
         'Podcast',
         'Hi',
         'welcome',
         [],
-        5,
+        20,
       );
 
       const roomId = chatRoom.roomId;
@@ -333,12 +333,6 @@ export default function GoLive({navigation}: any) {
     dispatch(setHostLeftPodcast(true));
     dispatch(setLeaveModal(true));
   };
-  const destroyEngine = () => {
-    const res = agoraEngineRef.current?.leaveChannel();
-
-    agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
-    agoraEngineRef.current?.release();
-  };
 
   const userJoinChannel = async () => {
     if (!checkPermission()) {
@@ -349,10 +343,9 @@ export default function GoLive({navigation}: any) {
     // Exit if already joined
     if (isJoined) {
       console.log('User is already in the channel.');
-      dispatch(setLiveStatus('CONNECTED'));
+      // dispatch(setLiveStatus('CONNECTED'));
       return;
     }
-
     try {
       // Check if Agora engine is initialized
       if (!agoraEngineRef.current) {
@@ -423,20 +416,26 @@ export default function GoLive({navigation}: any) {
       resetPodcastState(dispatch);
       setTimeout(() => {
         dispatch(setLeaveModal(false));
-        console.log('closing ....');
+        dispatch(setPodcast(''));
+        dispatch(setIsJoined(false));
+        timeOutScreen(false);
+        dispatch(setLiveStatus('IDLE'));
         navigation.navigate('HomeB');
       }, 400);
     } catch (error) {
       console.log(error);
     }
   };
+  const destroyEngine = () => {
+    const res = agoraEngineRef.current?.leaveChannel();
+    agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+    agoraEngineRef.current?.release();
+  };
 
   const leaveAgoraChannel = () => {
     try {
       const res = agoraEngineRef.current?.leaveChannel();
-      dispatch(setIsJoined(false));
-      timeOutScreen(false);
-      dispatch(setLiveStatus('IDLE'));
+
       console.log(res);
     } catch (error) {
       console.log(error);
@@ -516,6 +515,7 @@ export default function GoLive({navigation}: any) {
                       token={token}
                       handleOpenSheet2={handleOpenSheet2}
                       item={item}
+                      user={user}
                       dispatch={dispatch}
                     />
                   ) : (

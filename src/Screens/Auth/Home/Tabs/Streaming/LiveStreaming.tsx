@@ -136,8 +136,8 @@ export default function LiveStreaming({navigation}) {
 
     // Release memory when the App is closed
     return () => {
-      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
-      agoraEngineRef.current?.release();
+      // agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      // agoraEngineRef.current?.release();
     };
   }, [isJoined]);
 
@@ -158,7 +158,7 @@ export default function LiveStreaming({navigation}) {
             }
           } else {
             if (stream.host !== user.id) {
-              dispatch(getUserInfoFromAPI(stream.host));
+              dispatch(getUserInfoFromAPI({id: stream.host}));
               return;
             }
             dispatch(setUserInState(user));
@@ -172,28 +172,28 @@ export default function LiveStreaming({navigation}) {
         },
         onUserJoined: (_connection: RtcConnection, uid: number) => {
           if (uid !== user.id && !single) {
-            dispatch(getUserInfoFromAPI(uid));
+            dispatch(getUserInfoFromAPI({id: uid, remote: true}));
             return;
           }
           if (single) {
-            dispatch(getUserInfoFromAPIS(uid));
+            dispatch(getUserInfoFromAPIS({id: uid, remote: true}));
           }
           // setRemoteUid(uid);
         },
         onLeaveChannel(connection, stats) {
-          if (connection.localUid !== stream.host) {
-            if (single) {
-              dispatch(removeUserFromSingleStream(connection.localUid));
-              return;
-            }
-            dispatch(removeUserFromStream(connection.localUid));
-          }
+          // if (connection.localUid !== stream.host) {
+          //   if (single) {
+          //     dispatch(removeUserFromSingleStream(connection.localUid));
+          //     return;
+          //   }
+          //   dispatch(removeUserFromStream(connection.localUid));
+          // }
           // if (connection.localUid === podcast.host) {
           //   console.log('host is lefting podcast');
           //   hostEndedPodcast();
           //   return;
           // }
-          console.log('new function', 'user has leaved the');
+          // console.log('new function', 'user has leaved the');
         },
 
         onUserOffline: (
@@ -497,6 +497,7 @@ export default function LiveStreaming({navigation}) {
       setTimeout(() => {
         dispatch(setLeaveModal(false));
         dispatch(setStream(''));
+        dispatch(setIsJoined(false));
         navigation.navigate('HomeB');
       }, 400);
     } catch (error) {

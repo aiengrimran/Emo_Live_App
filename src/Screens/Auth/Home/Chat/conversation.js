@@ -1,37 +1,19 @@
-export const conversations = [
+export const msgsD = [
   {
-    convId: '1',
-    convType: 0,
-    isChatThread: false,
-    isPinned: false,
-    pinnedTime: 0,
-    marks: [],
-  },
-  {
-    convId: '2/ios_dbf4dde4-ad4c-ad45-e8bc-29c2666d8dea',
-    convType: 0,
-    isChatThread: false,
-    isPinned: false,
-    pinnedTime: 0,
-    marks: [],
-  },
-  {
-    convId: '2',
-    convType: 0,
-    isChatThread: false,
-    isPinned: false,
-    pinnedTime: 0,
-    marks: [],
-  },
-];
-
-// {"convId": "1", "convType": 0, "ext": undefined, "isChatThread": false, "isPinned": false, "marks": [], "pinnedTime": 0}
-// let messages= {{"cursor": "hh", "list": [{"attributes": [Object], "body": [ChatTextMessageBody], "chatType": 0, "conversationId": "2", "deliverOnlineOnly": false, "direction": "send", "from": "2", "groupAckCount": 0, "hasDeliverAck": false, "hasRead": true, "hasReadAck": false, "isBroadcast": false, "isChatThread": false, "isContentReplaced": false, "isOnline": true, "localMsgId": "1735587733383", "localTime": 1735587733383, "msgId": "1365816301058001858", "needGroupAck": false, "receiverList": [Array], "serverTime": 1735568688500, "status": 2, "to": "2"}]}}
-
-const list = [
-  {
-    attributes: [Object],
-    body: [ChatTextMessageBody],
+    attributes: {},
+    body: {
+      displayName: '',
+      duration: 0,
+      fileSize: 0,
+      fileStatus: -1,
+      lastModifyOperatorId: undefined,
+      lastModifyTime: undefined,
+      localPath: '//data/user/0/com.meow/cache/sound.mp4',
+      modifyCount: undefined,
+      remotePath: '',
+      secret: '',
+      type: 'voice',
+    },
     chatType: 0,
     conversationId: '2',
     deliverOnlineOnly: false,
@@ -45,13 +27,56 @@ const list = [
     isChatThread: false,
     isContentReplaced: false,
     isOnline: true,
-    localMsgId: '1735587733383',
-    localTime: 1735587733383,
-    msgId: '1365816301058001858',
+    localMsgId: '1741457952342',
+    localTime: 1741457952342,
+    msgId: '174145795234243660',
     needGroupAck: false,
-    receiverList: [Array],
-    serverTime: 1735568688500,
-    status: 2,
+    receiverList: undefined,
+    serverTime: 1741457952342,
+    status: 1,
     to: '2',
   },
 ];
+
+// file:////data/user/0/com.meow/cache/sound.mp4 recording stopped
+// (NOBRIDGE) LOG  Playing audio: /data/user/0/com.meow/cache/sound.mp4
+// (NOBRIDGE) LOG  Playing audio: /data/user/0/com.meow/cache/sound.mp4
+
+let testm = {
+  attributes: {},
+  body: {
+    displayName: '',
+    duration: 0,
+    fileSize: 0,
+    fileStatus: 0,
+    lastModifyOperatorId: undefined,
+    lastModifyTime: undefined,
+    localPath: '//data/user/0/com.meow/cache/sound.mp4',
+    modifyCount: undefined,
+    remotePath:
+      'https://a61.easemob.com/611258830/1451592/chatfiles/3a1c2cd0-fc46-11ef-b36c-25475d24b98f',
+    secret: 'OhxT4PxGEe-x0uFjNR1ewKu9DWMMxszFDVrvaJMoQcRhVBZF',
+    type: 'voice',
+  },
+  chatType: 0,
+  conversationId: '2',
+  deliverOnlineOnly: false,
+  direction: 'send',
+  from: '2',
+  groupAckCount: 0,
+  hasDeliverAck: false,
+  hasRead: true,
+  hasReadAck: false,
+  isBroadcast: false,
+  isChatThread: false,
+  isContentReplaced: false,
+  isOnline: true,
+  localMsgId: '1741456388967',
+  localTime: 1741456388967,
+  msgId: '1391103842040417226',
+  needGroupAck: false,
+  receiverList: undefined,
+  serverTime: 1741456402954,
+  status: 2,
+  to: '2',
+};

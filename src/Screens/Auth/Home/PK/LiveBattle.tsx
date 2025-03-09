@@ -121,8 +121,8 @@ export default function LiveBattle({navigation}: LiveBattle) {
 
     // Release memory when the App is closed
     return () => {
-      agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
-      agoraEngineRef.current?.release();
+      // agoraEngineRef.current?.unregisterEventHandler(eventHandler.current!);
+      // agoraEngineRef.current?.release();
     };
   }, [isJoined]);
 
@@ -409,6 +409,7 @@ export default function LiveBattle({navigation}: LiveBattle) {
       setTimeout(() => {
         dispatch(setLeaveModal(false));
         dispatch(setBattle(''));
+        dispatch(setIsJoined(false));
         navigation.navigate('HomeB');
       }, 400);
     } catch (error) {

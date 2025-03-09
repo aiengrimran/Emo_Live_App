@@ -10,6 +10,22 @@ const AppContext = createContext<any>(null);
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Define the shape of the context
+interface AppContextType {
+  userAuthInfo: {
+    user: string | null;
+    setUser: React.Dispatch<React.SetStateAction<string | null>>;
+  };
+  tokenMemo: {
+    token: string | null;
+    setToken: React.Dispatch<React.SetStateAction<string | null>>;
+  };
+  netConnection: {
+    isConnected: boolean;
+    setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
+  };
+  loader: boolean;
+}
 interface AppProviderType {
   children: any;
 }

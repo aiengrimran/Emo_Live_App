@@ -60,7 +60,6 @@ export const getLiveUsers = (id, type) => {
 };
 export const resetLiveStreaming = dispatch => {
   console.log('function run');
-  dispatch(setIsJoined(false));
   dispatch(setSingle(false));
   dispatch(setStreamListeners([]));
   dispatch(resetChatRoomMessage());
@@ -69,7 +68,6 @@ export const resetLiveStreaming = dispatch => {
   dispatch(setLiveStatus('IDLE'));
 };
 export const resetBattle = dispatch => {
-  dispatch(setIsJoined(false));
   dispatch(setBattleHosts([]));
   dispatch(setBattle(''));
   dispatch(resetChatRoomMessage());

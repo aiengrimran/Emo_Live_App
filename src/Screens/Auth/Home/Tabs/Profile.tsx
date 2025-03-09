@@ -42,9 +42,20 @@ export default function Search({navigation}) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // getUnreadMessages();
-  }, []);
+  // useEffect(() => {
+  //   // getUnreadMessages();
+
+  //     // Fetch podcasts immediately
+  //     refreshUser();
+
+  //     // Set interval to fetch podcasts every 3 seconds
+  //     const intervalId = setInterval(() => {
+  //       refreshUser();
+  //     }, 3000);
+
+  //     // Cleanup function to clear interval when the component unmounts
+  //     return () => clearInterval(intervalId);
+  //   }, []);
 
   const onCheckGitVersion = () => {
     setProgress(0);
@@ -246,13 +257,13 @@ export default function Search({navigation}) {
               <View style={styles.account}>
                 <View style={styles.info}>
                   <Text style={styles.accountStatus}>
-                    {formatNumber(user.followers)}
+                    {formatNumber(user.following)}
                   </Text>
                   <Text style={styles.infoText}>Fans</Text>
                 </View>
                 <View style={styles.info}>
                   <Text style={styles.accountStatus}>
-                    {formatNumber(user.following)}
+                    {formatNumber(user.followers)}
                   </Text>
                   <Text style={styles.infoText}>Following</Text>
                 </View>

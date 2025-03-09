@@ -13,6 +13,7 @@ interface PodcastGuest {
   dispatch: any;
   handleOpenSheet2: any;
   muteUnmuteUser: any;
+  user: any;
 }
 
 export default function PodcastGuest({
@@ -21,6 +22,7 @@ export default function PodcastGuest({
   dispatch,
   handleOpenSheet2,
   muteUnmuteUser,
+  user,
 }: PodcastGuest) {
   return (
     <TouchableOpacity
@@ -55,6 +57,7 @@ export default function PodcastGuest({
         <Icon name="star-four-points" size={15} color={colors.dominant} />
         <Text style={[appStyles.small, {color: colors.dominant}]}>3754</Text>
       </View>
+      {item.user.id == user.id}
       <TouchableOpacity
         onPress={() => muteUnmuteUser(item)}
         style={{

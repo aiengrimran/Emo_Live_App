@@ -12,7 +12,6 @@ import React, {useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axiosInstance from '../../../../Api/axiosConfig';
 import {colors} from '../../../../styles/colors';
-import axios from 'axios';
 import {
   setPodcast,
   updatePodcastListeners,
@@ -25,7 +24,6 @@ import {useAppContext} from '../../../../Context/AppContext';
 
 export default function Popular({navigation}) {
   const {podcasts} = useSelector((state: any) => state.podcast);
-  const {streams} = useSelector((state: any) => state.streaming);
   const {tokenMemo, userAuthInfo} = useAppContext();
   const {token} = tokenMemo;
   const [error, setError] = useState('');
@@ -33,11 +31,20 @@ export default function Popular({navigation}) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    // getPodcast();
-  }, []);
+  // useEffect(() => {
+  //   // Fetch podcasts immediately
+  //   getPodcasts();
 
-  const getPodcast = async () => {
+  //   // Set interval to fetch podcasts every 3 seconds
+  //   const intervalId = setInterval(() => {
+  //     getPodcasts();
+  //   }, 3000);
+
+  //   // Cleanup function to clear interval when the component unmounts
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
+  const getPodcasts = async () => {
     try {
       dispatch(setPodcasts([]));
       setLoading(true);
@@ -58,7 +65,6 @@ export default function Popular({navigation}) {
 
   const joinPodcast = async (item: any) => {
     try {
-      console.log('ss');
       setLoading(true);
       const url = 'podcast/join';
       const data = {
@@ -83,14 +89,14 @@ export default function Popular({navigation}) {
     <View style={{flex: 1}}>
       <View style={{marginTop: 20}}>
         {error && <Text style={[appStyles.errorText]}>{error}</Text>}
-        <Text style={{color: '#fff'}} onPress={() => getPodcast()}>
+        <Text style={{color: '#fff'}} onPress={() => getPodcasts()}>
           get Podcasts
         </Text>
         <View>
           <FlatList
             data={podcasts}
             refreshing={loading}
-            onRefresh={getPodcast}
+            onRefresh={getPodcasts}
             keyExtractor={(item: any) => item.id?.toString()}
             numColumns={2}
             contentContainerStyle={{

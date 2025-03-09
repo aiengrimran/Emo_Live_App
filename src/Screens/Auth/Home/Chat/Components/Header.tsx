@@ -43,7 +43,7 @@ export default function Header({
           />
           <View style={{marginLeft: 10}}>
             <Text style={chatStyles.user}>
-              {chatUser.first_name + ' ' + chatUser.last_name}
+              {chatUser.first_name + ' ' + chatUser.last_name} --- {chatUser.id}
             </Text>
             <Text
               style={chatStyles.userStatus}

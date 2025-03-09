@@ -93,7 +93,6 @@ export default function HomeB() {
   // });
 
   useEffect(() => {
-    return;
     if (!initialized && !connected) {
       console.log('Network available, initializing chat SDK...Home');
 
@@ -162,19 +161,19 @@ export default function HomeB() {
     if (connected) {
       let msgListener: ChatMessageEventListener = {
         onMessagesReceived: (messagesReceived: Array<ChatMessage>): void => {
-          console.log('message received ...', messagesReceived[0].chatType);
+          console.log('message received ...', messagesReceived[0]);
           if (messagesReceived[0].chatType == ChatMessageChatType.ChatRoom) {
             dispatch(setChatRoomMessages(messagesReceived));
             return;
           }
           // playNotificationSound();
           dispatch(setMessages(messagesReceived));
-          dispatch(fetchUserDetails([messagesReceived[0].from]));
-          onDisplayNotification(
-            messagesReceived[0].body.type == 'txt'
-              ? 'text Message Received'
-              : 'Voice Message Received',
-          );
+          // dispatch(fetchUserDetails([messagesReceived[0].from]));
+          // onDisplayNotification(
+          //   messagesReceived[0].body.type == 'txt'
+          //     ? 'text Message Received'
+          //     : 'Voice Message Received',
+          // );
         },
         onMessagesRead: (messages: Array<ChatMessage>): void => {
           console.log('Messages read:', messages);
@@ -193,10 +192,10 @@ export default function HomeB() {
 
   // Logs in with an account ID and a token.
   const loginUser = async (retryCount = 0) => {
-    if (await chatClient.isConnected()) {
-      dispatch(setChatLoggedIn(true));
-      true;
-    }
+    // if (await chatClient.isConnected()) {
+    //   dispatch(setChatLoggedIn(true));
+    //   true;
+    // }
     const isLoggedIn = await chatClient.isLoginBefore();
     if (isLoggedIn) {
       dispatch(setChatLoggedIn(true));
@@ -280,7 +279,7 @@ export default function HomeB() {
   };
   useEffect(() => {
     if (connected && !localConvGet) {
-      getLocalConv();
+      // getLocalConv();
     }
   }, [connected]);
   const getLocalConv = async () => {

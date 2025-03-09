@@ -37,6 +37,10 @@ export default function Search({navigation}: SearchScreenProps) {
   const [error, setError] = useState('');
   const [searchLoader, setSearchLoader] = useState(false);
   const [query, setQuery] = useState('');
+  const [subLoader, setSubLoader] = useState<any>({
+    loading: false,
+    id: null,
+  });
   const [searchUsers, setSearchUsers] = useState([]);
 
   useEffect(() => {
@@ -46,19 +50,20 @@ export default function Search({navigation}: SearchScreenProps) {
 
   const followUser = async (item: any) => {
     try {
+      setSubLoader({loading: true, id: item.id});
       dispatch(setLoading(true));
 
       const url = item.is_followed
         ? '/user/un-follow-user/' + item.id
         : '/user/follow-user/' + item.id;
-      setLoading(true);
       const res = await axiosInstance.get(url);
-      dispatch(setLoading(false));
       dispatch(updateUsers(res.data.users));
     } catch (error: any) {
-      console.log(error);
       clearError();
       setError(error.message);
+    } finally {
+      dispatch(setLoading(false));
+      setSubLoader({loading: false, id: null});
     }
   };
 
@@ -120,7 +125,7 @@ export default function Search({navigation}: SearchScreenProps) {
       {error && (
         <Text style={[appStyles.errorText, {marginVertical: 10}]}>{error}</Text>
       )}
-      {loading ? (
+      {loading && !subLoader.loading ? (
         <ActivityIndicator
           animating={loading}
           style={[appStyles.indicatorStyle]}
@@ -139,6 +144,7 @@ export default function Search({navigation}: SearchScreenProps) {
               renderItem={({item}: any) => (
                 <View style={styles.userSection}>
                   <TouchableOpacity
+                    disabled={loading}
                     onPress={() => {
                       dispatch(updateVisitProfile(item));
                       navigation.navigate('UserProfile');
@@ -165,14 +171,23 @@ export default function Search({navigation}: SearchScreenProps) {
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity
+                    disabled={subLoader.loading}
                     onPress={() => followUser(item)}
                     style={[
                       styles.followBtn,
                       item.is_followed && {backgroundColor: '#494759'},
                     ]}>
-                    <Text style={styles.btnText}>
-                      {item.is_followed ? 'Following' : 'Follow'}
-                    </Text>
+                    {subLoader.loading && subLoader.id == item.id ? (
+                      <ActivityIndicator
+                        animating={true}
+                        color={colors.complimentary}
+                        size={'small'}
+                      />
+                    ) : (
+                      <Text style={styles.btnText}>
+                        {item.is_followed ? 'Following' : 'Follow'}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               )}
