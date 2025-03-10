@@ -92,16 +92,7 @@ export default function UserProfile({navigation}) {
           {visitProfile.first_name + ' ' + visitProfile.last_name}
         </Text>
         <Text style={styles.userDesc}>{visitProfile.bio}</Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: 20,
-            alignItems: 'center',
-            width: '90%',
-            // backgroundColor: 'red',
-            // justifyContent: 'center',
-            alignSelf: 'center',
-          }}>
+        <View style={styles.accountStats}>
           <View style={styles.info}>
             <Text style={styles.infoHeading}>
               {formatNumber(visitProfile.fans)}
@@ -110,7 +101,7 @@ export default function UserProfile({navigation}) {
           </View>
           <View style={styles.info}>
             <Text style={styles.infoHeading}>
-              {formatNumber(visitProfile.fans)}
+              {formatNumber(visitProfile.following)}
             </Text>
             <Text style={styles.infoText}>Following</Text>
           </View>
@@ -213,7 +204,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '500',
   },
-
+  accountStats: {
+    flexDirection: 'row',
+    marginTop: 20,
+    alignItems: 'center',
+    width: '90%',
+    alignSelf: 'center',
+  },
   btnTxt: {
     ...appStyles.paragraph1,
     color: colors.complimentary,

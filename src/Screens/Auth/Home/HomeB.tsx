@@ -118,6 +118,7 @@ export default function HomeB() {
       onDisconnected() {
         dispatch(setConnected(false));
         dispatch(setTokenRenewed(false));
+        dispatch(setChatLoggedIn(false));
         // Alert.alert('Disconnected', 'Disconnected from agora');
         console.log('onDisconnected:x');
       },

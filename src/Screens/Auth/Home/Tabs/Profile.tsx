@@ -248,7 +248,7 @@ export default function Search({navigation}) {
                   },
                 ]}>
                 {/* <Icon name="security" color="#fff" size={20} /> */}
-                <Text style={styles.infoHeading}>Top-up Agent</Text>
+                <Text style={styles.infoHeading}>Top-up Agent..</Text>
               </View>
             </View>
           </View>
@@ -258,13 +258,13 @@ export default function Search({navigation}) {
               <View style={styles.account}>
                 <View style={styles.info}>
                   <Text style={styles.accountStatus}>
-                    {formatNumber(user.following)}
+                    {formatNumber(user.followers)}
                   </Text>
                   <Text style={styles.infoText}>Fans</Text>
                 </View>
                 <View style={styles.info}>
                   <Text style={styles.accountStatus}>
-                    {formatNumber(user.followers)}
+                    {formatNumber(user.following)}
                   </Text>
                   <Text style={styles.infoText}>Following</Text>
                 </View>

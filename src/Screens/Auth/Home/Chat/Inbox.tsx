@@ -117,17 +117,17 @@ export default function Inbox({navigation}: InboxProps) {
           </TouchableOpacity>
         </View>
       </View>
-      <View
+      {/* <View
         style={{
           marginVertical: 10,
           flexDirection: 'row',
           justifyContent: 'space-around',
-        }}>
-        <Text style={{color: '#fff'}} onPress={clearConv}>
+        }}> */}
+      {/* <Text style={{color: '#fff'}} onPress={clearConv}>
           {' '}
           clear conv
-        </Text>
-        {/* <Text
+        </Text> */}
+      {/* <Text
           style={{color: '#fff'}}
           onPress={() => dispatch(resetMessage({}))}>
           {' '}
@@ -140,9 +140,9 @@ export default function Inbox({navigation}: InboxProps) {
         <Text style={{color: '#fff'}} onPress={() => dispatch(setMessages(mm))}>
           {' '}
           set mmx */}
-        {/* </Text> */}
-      </View>
-      <View
+      {/* </Text> */}
+      {/* </View> */}
+      {/* <View
         style={{
           marginTop: 20,
           flexDirection: 'row',
@@ -164,7 +164,7 @@ export default function Inbox({navigation}: InboxProps) {
           }}>
           fetch
         </Text>
-      </View>
+      </View> */}
 
       {error && <Text style={[appStyles.errorText]}>{error}</Text>}
       {/* <Text style={{color: '#fff', fontSize: 20}}>
