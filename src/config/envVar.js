@@ -1,6 +1,11 @@
 export default env = {
   API_URL: 'https://www.emolivestreaming.online/api/',
-  LOCAL_URL: 'http://localhost:8000/api/',
+  BACKED_URL: 'https://www.emolivestreaming.online/',
+  BACKED_URL: 'https://www.emolivestreaming.online/',
+  LOCAL_API_URL: 'http://localhost:8000/api/',
+  LOCAL_URL: 'http://localhost:8000/',
+  SOCKET_SERVER: 'http://localhost:8080/app/',
+  SOCKET_SERVER_LOCAL: 'http://localhost:8080/app/xjceygqczxvyasqh0c2d',
   LOCAL_TOKEN: '',
   ZALKIP_TOKEN:
     '007eJxTYGDM4VA6nvRI9nt6bXZ5r9XXyAsq329xvT7RX/8vPFvpF48CQ3KSobmFhallWpqBoYmBQYqFQUqyiUFKqqG5eVpqSlIyx8z16Q2BjAwth+sZGBlYgZiRAcRXYTBKMTU3tDQ10E02TTLVNTRMTdNNtEg21zWyTLawSEw0TDRLSQUAoV0oWw==',
@@ -15,4 +20,5 @@ export default env = {
     '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com',
   IOS_CLIENT_ID:
     '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
+  REVERB_KEY: 'xjceygqczxvyasqh0c2d',
 };

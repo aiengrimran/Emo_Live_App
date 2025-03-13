@@ -7,16 +7,13 @@ import {
   LayoutAnimation,
 } from 'react-native';
 import React from 'react';
-import Routes from './src/Routes/Index';
+// import Routes from './src/Routes/Index';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import hotUpdate from 'react-native-ota-hot-update';
 import {store} from './src/store/store';
 import Toast from 'react-native-toast-message';
-import Chats1 from './src/tests/Chats1';
+import SocketIO from './src/tests/SocketIO';
 import AppContext from './src/Context/AppContext';
-import LiveStreaming from './src/tests/LiveStreaming';
-// import RealTime from './src/tests/RealTime';
-// import Sw
 import {Provider} from 'react-redux';
 
 // Replace <TOKEN> with your actual GitHub token
@@ -112,11 +109,11 @@ export default function App() {
           {/* <Chat /> */}
           {/* <Chats1 /> */}
           <AppContext>
-            <Routes />
+            <SocketIO />
+            {/* <Routes /> */}
           </AppContext>
           {/* <RealTime /> */}
           {/* <Toast /> */}
-          {/* <BackDrop /> */}
         </Provider>
       </View>
     </GestureHandlerRootView>
