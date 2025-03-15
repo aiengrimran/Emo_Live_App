@@ -59,21 +59,6 @@ export default function HomeB() {
     useSelector((state: any) => state.chat);
   const {unread} = useSelector((state: any) => state.notification);
 
-  // useEffect(() => {
-  //   let initializedOnce = false; // Prevents duplicate initialization
-
-  //   if (!initialized && !initializedOnce && !connected) {
-  //     console.log('Network available, initializing chat SDK...Home');
-  //     // Initialize the chat SDK here
-  //     initializedOnce = true;
-
-  //     // initializedAgoraChat();
-  //   }
-  //   return () => {
-  //     // chatClient.removeAllConnectionListener();
-  //   };
-  // }, [initialized, connected]);
-
   useEffect(() => {
     if (!audioPlayerRef.current) {
       audioPlayerRef.current = new AudioRecorderPlayer();

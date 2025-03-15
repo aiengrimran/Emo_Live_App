@@ -15,6 +15,7 @@ import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance from '../../Api/axiosConfig';
 import appStyles from '../../styles/styles';
+import envVar from '../../config/envVar';
 import {
   GoogleSignin,
   statusCodes,
@@ -39,11 +40,9 @@ export default function Landing({navigation}: any) {
   useEffect(() => {
     // Initialize Google Sign-In
     GoogleSignin.configure({
-      webClientId:
-        '602860045229-m8m7r8u7pasqll3qh414um0lfe4u02bb.apps.googleusercontent.com', // Replace with your Web client ID from Google Console
+      webClientId: envVar.WEB_CLIENT_ID,
       offlineAccess: true,
-      iosClientId:
-        '602860045229-6tbupkgrkiqlhui0mtdfcsklr9hbfkud.apps.googleusercontent.com',
+      iosClientId: envVar.IOS_CLIENT_ID,
     });
   }, []);
 
